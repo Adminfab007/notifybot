@@ -129,6 +129,7 @@
 <li>If you dont know how to get your server Id, click <a href="tutorial.html" _blank>here</a></li>
 
         </ol>
+        <div class="alert-danger" style="padding: 20px;margin-bottom: 20px;">DO NOT ADD ANY SERVERS YOU ARE NOT IN AS THIS WILL CAUSE YOUR BOT TO CRASH. REINSTATION OF ACCOUNT WOULD ATTRACT A $15 FEE</div>
         <div class="card shadow-sm">
             <div class="card-body">
                 <ul class="list-group list-group-flush" id="itemList">
@@ -207,6 +208,14 @@
            $('.preloader').hide()
           },
           error: function (error) {
+            $('.preloader').hide()
+            Swal.fire({
+    title: 'Error!',
+    text: 'Failed to load details!',
+    icon: 'error',
+    confirmButtonText: 'OK'
+});
+
             console.log(error)
           }
         });
