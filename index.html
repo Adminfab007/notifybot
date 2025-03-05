@@ -35,7 +35,7 @@
                 <div class="card shadow-lg">
                     <div class="card-body p-5">
                         <h2 class="text-center mb-4"><img src="./logo.png" height="50px" width="150px" alt=""></h2>
-                        <form id="loginForm" >
+                        <form onsubmit="login(event)" >
                             <div class="mb-3">
                                 <label for="username" class="form-label" style="font-weight: 500;">Username</label>
                                 <input type="text" class="form-control" id="username" required>
@@ -44,7 +44,7 @@
                                 <label for="password" class="form-label" style="font-weight: 500;">Password</label>
                                 <input type="password" class="form-control" id="password" required>
                             </div>
-                            <button type="submit" id="btn" class="btn btn-primary w-100">Login</button>
+                            <button type="submit" id="btnn" class="btn btn-primary w-100">Login</button>
                         </form>
                     </div>
                 </div>
@@ -68,7 +68,8 @@
   
     </script>    
 <script>
-var btn=document.getElementById('btn');
+var btn=$('#btn');
+
 function red () {
  btn.style.opacity="1"
  btn.innerHTML="SignIn"
@@ -110,7 +111,7 @@ btn.innerHTML= "Loading . . ."
              
          },
          error: function (xhr, status, error,response) {
-             red();
+            $("#btnn").html("Login")
              console.log(error);
             //  $('.live-section').html("Incorrect Username or Password").addClass('alert-danger')
 
@@ -130,17 +131,23 @@ btn.innerHTML= "Loading . . ."
  }
 
 
-
- $('#btn').click(function (e) {
-     e.preventDefault(); // prevents page reload
+ function login(event) {
+        event.preventDefault(); // prevents page reload
      const usernamee = $('#username').val();
      const username=usernamee.toLowerCase()
      const password = $('#password').val();
-e.innerText='Loading. . .'
+$("#btnn").html("Loading. . .")
 console.log(username );
 
      loginUser({ username, password });
- });
+     blur()
+
+    }
+ $('#btn').click(function (e) {
+
+    login()
+ 
+      });
 </script>
      </script>
 </body>
