@@ -211,7 +211,9 @@
 
 
       async function deleteServer(serverName,serverId){
-
+        var usernamee = localStorage.getItem('username')
+        var username=usernamee.replace("%22",'')
+        
         
      var userconfirmed=  confirm("ARE YOU SURE YOU WANT TO REMOVE THIS SERVER" +" "+serverName)
      if (userconfirmed) {
@@ -219,7 +221,7 @@
   
       const response = await $.ajax({
       type: "DELETE",
-      url: `https://fierce-ocean-62608-27500ffd5d11.herokuapp.com/api/servers/kelly`,
+      url: `https://fierce-ocean-62608-27500ffd5d11.herokuapp.com/api/servers/${username}`,
       dataType: "json",
       data:{serverId:serverId},
       timeout: 30000,
