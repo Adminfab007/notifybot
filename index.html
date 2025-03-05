@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js" integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js" integrity="sha512-AA1Bzp5Q0K1KanKKmvN/4d3IRKVlv9PYgwFPvm32nPO6QS8yH1HO7LbgB1pgiOxPtfeg5zEn2ba64MUcqJx6CA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/2.1.2/sweetalert.min.js" integrity="sha512-AA1Bzp5Q0K1KanKKmvN/4d3IRKVlv9PYgwFPvm32nPO6QS8yH1HO7LbgB1pgiOxPtfeg5zEn2ba64MUcqJx6CA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
+
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<style>
+    *
+    {
+
+        font-family: "Archivo", sans-serif;
+  font-optical-sizing: auto;
+ 
+  font-style: normal;
+  font-variation-settings:
+    "wdth" 100;}
+</style>
+<body class="" style="background-color: rgb(8, 8, 41);">
+    <div class="container" >
+        <div class="row justify-content-center align-items-center min-vh-100">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow-lg">
+                    <div class="card-body p-5">
+                        <h2 class="text-center mb-4"><img src="./logo.png" height="50px" width="150px" alt=""></h2>
+                        <form id="loginForm" >
+                            <div class="mb-3">
+                                <label for="username" class="form-label" style="font-weight: 500;">Username</label>
+                                <input type="text" class="form-control" id="username" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label" style="font-weight: 500;">Password</label>
+                                <input type="password" class="form-control" id="password" required>
+                            </div>
+                            <button type="submit" id="btn" class="btn btn-primary w-100">Login</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Include SweetAlert2 CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.0/dist/sweetalert2.min.css">
+
+<!-- Include SweetAlert2 JS -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.6.0/dist/sweetalert2.min.js"></script>
+
+    <!-- <script src="script.js"></script> -->
+     
+
+<script>
+
+ 
+   
+  
+    </script>    
+<script>
+var btn=document.getElementById('btn');
+function red () {
+ btn.style.opacity="1"
+ btn.innerHTML="SignIn"
+
+                }
+
+function blurr (){
+
+btn.style.opacity="0.5"
+btn.innerHTML= "Loading . . ."
+
+}
+
+ async function loginUser({ username, password }) {
+     await $.ajax({
+         type: "POST",
+         url: "https://fierce-ocean-62608-27500ffd5d11.herokuapp.com/api/auth/login",
+         dataType: "json",
+         data: { username, password },
+         timeout: 30000,
+         success: function ({ data }) {
+             console.log(data);
+            //  $('.live-section').html("Login successful").addClass('alert-success')
+            Swal.fire({
+    title: 'Success!',
+    text: 'Your Login was successful!',
+    icon: 'success',
+    confirmButtonText: 'OK'
+});
+
+            console.log("login successful");
+            
+             localStorage.setItem("username", data.username)
+
+             setTimeout(() => {
+                  location.href="./list.html"
+             }, 3000);
+          
+             
+         },
+         error: function (xhr, status, error,response) {
+             red();
+             console.log(error);
+            //  $('.live-section').html("Incorrect Username or Password").addClass('alert-danger')
+
+            // Swal.fire({
+            //                     icon: 'error',
+            //                     text: 'Incorrect Username or Password!',
+            //                     confirmButtonText: 'OK',
+            //                     confirmButtonColor: '#3a64d1',
+            //                     allowOutsideClick: true,
+            //                     allowEscapeKey: true,
+            //                 });
+            console.log("Incorrect username or password");
+            
+         }
+     });
+
+ }
+
+
+
+ $('#btn').click(function (e) {
+     e.preventDefault(); // prevents page reload
+     const usernamee = $('#username').val();
+     const username=usernamee.toLowerCase()
+     const password = $('#password').val();
+e.innerText='Loading. . .'
+console.log(username );
+
+     loginUser({ username, password });
+ });
+</script>
+     </script>
+</body>
+</html>
