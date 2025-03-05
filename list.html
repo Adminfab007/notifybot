@@ -290,7 +290,9 @@
 });
   
              localStorage.setItem("username", JSON.stringify(data.username))
-            location.href="./list.html"
+
+             updateList()
+            // location.href="./list.html"
              
          },
          error: function (xhr, status, error,response) {
