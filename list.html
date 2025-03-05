@@ -131,8 +131,18 @@
 
         </ol>
         <div class="alert-danger" style="padding: 20px;margin-bottom: 20px;">DO NOT ADD ANY SERVERS YOU ARE NOT IN AS THIS WILL CAUSE YOUR BOT TO CRASH. REINSTATION OF ACCOUNT WOULD ATTRACT A $15 FEE</div>
+     
         <div class="card shadow-sm">
+            
+            <div style="padding: 10px;display: flex;">
+                <span><b>Servers</b></span>
+                <div>
+                    (<span id="serverNumber" style="color: green;"></span>)
+                </div>
+
+            </div>
             <div class="card-body">
+                
                 <ul class="list-group list-group-flush" id="itemList">
                     <!-- Sample item -->
                     <!-- <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -321,7 +331,7 @@
         const servers = await fetchUserInfo();
 
 var serverlist = $('#itemList');
-
+$("#serverNumber").text(servers.length)
 servers.map((server, index) => {
     const words = `
         <li class="list-group-item d-flex justify-content-between align-items-center">
