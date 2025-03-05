@@ -102,9 +102,13 @@
                 <ul class="list-group list-group-flush" id="itemList">
                    <li>
 
-                    <iframe width="560" height="315" src="https://youtu.be/mc3cV57m3mM?si=qm8r5SstyS00nJym" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                    <!-- <iframe width="560" height="315" src="https://youtu.be/mc3cV57m3mM?si=qm8r5SstyS00nJym" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe> -->
 
-
+<!-- <video src="https://youtu.be/mc3cV57m3mM?si=qm8r5SstyS00nJym"></video> -->
+<video width="260" height="360" controls>
+    <source src="https://youtu.be/mc3cV57m3mM?si=qm8r5SstyS00nJym" type="video/mp4">
+    Your browser does not support the video tag.
+  </video>
                    </li>
                 </ul>
             </div>
@@ -259,12 +263,7 @@ var serverlist = $('#itemList');
 
 servers.map((server, index) => {
     const words = `
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-            ${server.name}
-            <button class="btn btn-danger btn-sm" onclick="deleteServer('${server.name}', '${server.id}')">
-                <i class="bi bi-trash"></i>
-            </button>
-        </li>`;
+        `
 
     serverlist.append(words);  // Append the item to the list
 });
