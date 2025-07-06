@@ -12,7 +12,8 @@
       --glass: rgba(255, 255, 255, 0.05);
     }
     
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    body {
+         font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: var(--darker);
       color: white;
       padding: 20px;
@@ -117,6 +118,36 @@
       margin-bottom: 20px;
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
+
+    table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 10px;
+  background: var(--glass);
+  backdrop-filter: blur(10px);
+  border-radius: 12px;
+  overflow: hidden;
+  min-width: 600px; /* Force minimum width for scroll */
+}
+
+th, td {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px;
+  text-align: left;
+  white-space: nowrap; /* Prevent text wrap */
+}
+
+@media screen and (max-width: 600px) {
+  table {
+    font-size: 0.85rem; /* Slightly smaller text on mobile */
+  }
+
+  .copy-btn {
+    padding: 5px 8px;
+    font-size: 0.8rem;
+  }
+}
+
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
@@ -156,10 +187,11 @@
 
     // Render user details
     function renderUserInfo(user) {
+    var sought=JSON.parse(localStorage.getItem("seeker"))
       container.innerHTML = `
         <p><strong>ID:</strong> ${user._id}</p>
         <p><strong>Username:</strong> ${user.username}</p>
-        <button onclick="compareWithSeeker()">Compare with Seeker</button>
+        <button onclick="compareWithSeeker()">Compare with Seeker(${sought.username})</button>
         <h3>Servers:</h3>
         <label for="filter">Filter by Members:</label>
         <select id="filter" onchange="filterServers(this.value)">
@@ -177,33 +209,35 @@
     // Render servers table
     function renderTable(servers) {
       const tableHTML = servers.length ? `
-        <table>
-          <thead>
-            <tr>
-              <th>Server ID</th>
-              <th>Server Name</th>
-              <th>Members</th>
-              <th>Link</th>
-            </tr>
-          </thead>
-          <tbody>
-           
-            ${servers.map(server => `
-              <tr>
-                <td>${server.id}</td>
-                <td>
-                  <a href="${server.name}" target="_blank">${server.name}</a>
-                  <button class="copy-btn" onclick="copyToClipboard('${server.name}')">Copy</button>
-                </td>
-                <td>${server.numberOfMembers}</td>
-                <td>
-                  <span>${server.inviteLink}</span>
-                  <button class="copy-btn" onclick="copyToClipboard('${server.inviteLink}')">Copy</button>
-                </td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+       <div style="overflow-x:auto;">
+  <table>
+    <thead>
+      <tr>
+        <th>Server ID</th>
+        <th>Server Name</th>
+        <th>Members</th>
+        <th>Link</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${servers.map(server => `
+        <tr>
+          <td>${server.id}</td>
+          <td>
+            <a href="${server.name}" target="_blank">${server.name}</a>
+            <button class="copy-btn" onclick="copyToClipboard('${server.name}')">Copy</button>
+          </td>
+          <td>${server.numberOfMembers}</td>
+          <td>
+            <span>${server.inviteLink}</span>
+            <button class="copy-btn" onclick="copyToClipboard('${server.inviteLink}')">Copy</button>
+          </td>
+        </tr>
+      `).join('')}
+    </tbody>
+  </table>
+</div>
+
       ` : `<p>No servers found.</p>`;
 
       document.getElementById('serverTable').innerHTML = tableHTML;
