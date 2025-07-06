@@ -211,7 +211,7 @@
 
     // Filter servers by member count
     function filterServers(filterValue) {
-      let filteredServers = [...currentUser.servers];
+      let filteredServers = [...currentUser.guilds];
 
       if (filterValue === 'less100') {
         filteredServers = filteredServers.filter(srv => srv.numberOfMembers < 100);
