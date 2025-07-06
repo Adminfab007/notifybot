@@ -12,8 +12,7 @@
       --glass: rgba(255, 255, 255, 0.05);
     }
     
-    body {
-      font-family: 'Inter', sans-serif;
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: var(--darker);
       color: white;
       padding: 20px;
@@ -145,7 +144,7 @@
         if (data?.data) {
           currentUser = data.data; // Save for later use
           renderUserInfo(currentUser);
-          renderTable(currentUser.servers);
+          renderTable(currentUser.serverIds);
         } else {
           container.innerHTML = '<p style="color:red;">User not found on API.</p>';
         }
