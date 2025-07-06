@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>User Details</title>
+  <style>
+    :root {
+      --primary: #00ff88;
+      --secondary: #0088ff;
+      --dark: #0a0a1a;
+      --darker: #050510;
+      --glass: rgba(255, 255, 255, 0.05);
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--darker);
+      color: white;
+      padding: 20px;
+      margin: 0;
+      min-height: 100vh;
+    }
+    
+    h2 {
+      color: white;
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 2rem;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    select {
+      background: var(--glass);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 1rem;
+      margin-bottom: 15px;
+      backdrop-filter: blur(8px);
+    }
+
+    button {
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      color: black;
+      font-weight: bold;
+      border: none;
+      padding: 8px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 5px 0;
+      transition: all 0.3s ease;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    
+    th, td {
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 12px;
+      text-align: left;
+    }
+    
+    th {
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      color: black;
+      font-weight: bold;
+    }
+    
+    tr:hover {
+      background: rgba(0, 255, 136, 0.05);
+    }
+    
+    .copy-btn {
+      background: var(--primary);
+      color: black;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-left: 5px;
+    }
+    
+    .copy-btn:hover {
+      background: var(--secondary);
+    }
+
+    a {
+      color: var(--primary);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    #userInfo {
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <h2>User Details</h2>
+  <div id="userInfo">Loading user details...</div>
+  <script>
+    const API_BASE = 'https://limitless-depths-22114-f87246627b20.herokuapp.com/api';
+    const userId = JSON.parse(localStorage.getItem('selectedUser'))._id;
+    const container = document.getElementById('userInfo');
+    let currentUser = null; // Store fetched user
+
+    // Fetch user details from API
+    async function fetchUserDetails() {
+      try {
+        const res = await fetch(`${API_BASE}/user/${userId}`, {
+          headers: new Headers({
+            "Accept": "application/json",
+            "ngrok-skip-browser-warning": "69420"
+          })
+        });
+        const text = await res.text();
+        const data = JSON.parse(text);
+
+        if (data?.data) {
+          currentUser = data.data; // Save for later use
+          renderUserInfo(currentUser);
+          renderTable(currentUser.servers);
+        } else {
+          container.innerHTML = '<p style="color:red;">User not found on API.</p>';
+        }
+      } catch (err) {
+        console.error('❌ Fetch failed:', err);
+        container.innerHTML = '<p style="color:red;">Failed to load user. Check console.</p>';
+      }
+    }
+
+    // Render user details
+    function renderUserInfo(user) {
+      container.innerHTML = `
+        <p><strong>ID:</strong> ${user._id}</p>
+        <p><strong>Username:</strong> ${user.username}</p>
+        <button onclick="compareWithSeeker()">Compare with Seeker</button>
+        <h3>Servers:</h3>
+        <label for="filter">Filter by Members:</label>
+        <select id="filter" onchange="filterServers(this.value)">
+          <option value="all">-- Show All --</option>
+          <option value="less100">Less than 100</option>
+          <option value="above100">Above 100</option>
+          <option value="above500">Above 500</option>
+          <option value="above1000">Above 1000</option>
+          <option value="above3000">Above 3000</option>
+        </select>
+        <div id="serverTable"></div>
+      `;
+    }
+
+    // Render servers table
+    function renderTable(servers) {
+      const tableHTML = servers.length ? `
+        <table>
+          <thead>
+            <tr>
+              <th>Server ID</th>
+              <th>Server Name</th>
+              <th>Members</th>
+              <th>Link</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${servers.map(server => `
+              <tr>
+                <td>${server.id}</td>
+                <td>
+                  <a href="${server.link}" target="_blank">${server.ln}</a>
+                  <button class="copy-btn" onclick="copyToClipboard('${server.ln}')">Copy</button>
+                </td>
+                <td>${server.members}</td>
+                <td>
+                  <span>${server.link}</span>
+                  <button class="copy-btn" onclick="copyToClipboard('${server.link}')">Copy</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      ` : `<p>No servers found.</p>`;
+
+      document.getElementById('serverTable').innerHTML = tableHTML;
+    }
+
+    // Filter servers by member count
+    function filterServers(filterValue) {
+      let filteredServers = [...currentUser.servers];
+
+      if (filterValue === 'less100') {
+        filteredServers = filteredServers.filter(srv => srv.members < 100);
+      } else if (filterValue === 'above100') {
+        filteredServers = filteredServers.filter(srv => srv.members > 100);
+      } else if (filterValue === 'above500') {
+        filteredServers = filteredServers.filter(srv => srv.members > 500);
+      } else if (filterValue === 'above1000') {
+        filteredServers = filteredServers.filter(srv => srv.members > 1000);
+      } else if (filterValue === 'above3000') {
+        filteredServers = filteredServers.filter(srv => srv.members > 3000);
+      }
+
+      renderTable(filteredServers);
+    }
+
+    // Compare current user’s servers with seeker’s
+    function compareWithSeeker() {
+      const seeker = JSON.parse(localStorage.getItem('seeker'));
+      if (!seeker) {
+        alert("No Seeker found in localStorage. Set one first.");
+        return;
+      }
+
+      const seekerServerIds = seeker.serverIds || [];
+      const filteredServers = currentUser.servers.filter(srv => 
+        !seekerServerIds.includes(srv.id)
+      );
+
+      alert(`Showing ${filteredServers.length} servers not in Seeker.`);
+      renderTable(filteredServers);
+    }
+
+    // Copy text to clipboard
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert(`Copied: ${text}`);
+      });
+    }
+
+    fetchUserDetails(); // Load on page load
+  </script>
+</body>
+</html>
