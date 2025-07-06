@@ -237,7 +237,7 @@
       }
 
       const seekerServerIds = seeker.serverIds || [];
-      const filteredServers = currentUser.servers.filter(srv => 
+      const filteredServers = currentUser.guilds.filter(srv => 
         !seekerServerIds.includes(srv.id)
       );
 
