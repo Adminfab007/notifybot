@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>All User Servers Dashboard (by User ID)</title>
+  <style>
+    :root {
+      --primary: #00ff88;
+      --secondary: #0088ff;
+      --dark: #0a0a1a;
+      --darker: #050510;
+      --glass: rgba(255, 255, 255, 0.05);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--darker);
+      color: white;
+      padding: 20px;
+      margin: 0;
+      min-height: 100vh;
+    }
+
+    h2 {
+      color: white;
+      text-align: center;
+      margin-bottom: 20px;
+      font-size: 2rem;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 20px;
+      font-size: 1rem;
+      background: var(--glass);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    #serverTable {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--glass);
+      backdrop-filter: blur(10px);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    th {
+      background: var(--primary);
+      color: black;
+    }
+
+    tr:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .copy-btn {
+      margin-left: 8px;
+      background: var(--primary);
+      color: black;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border: none;
+    }
+
+    .copy-btn:hover {
+      background: var(--secondary);
+    }
+
+    .pagination {
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    .pagination button {
+      margin: 0 5px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    #loading {
+      text-align: center;
+      margin: 20px 0;
+    }
+  </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <h2>All Servers from All Users</h2>
+
+  <input type="text" id="searchInput" placeholder="Search by Server Name..." onkeyup="applySearch()" />
+
+  <div id="loading">Fetching servers, please wait...</div>
+  <div style="overflow-x:auto;">
+    <table id="serverTable" style="display:none;">
+      <thead>
+        <tr>
+          <th>Server ID</th>
+          <th>Server Name</th>
+          <th>Members</th>
+          <th>Invite Link</th>
+          <th>Owner</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="pagination" style="display:none;">
+    <button onclick="changePage(-1)" id="prevBtn">⬅ Prev</button>
+    <span id="pageInfo"></span>
+    <button onclick="changePage(1)" id="nextBtn">Next ➡</button>
+  </div>
+
+  <script>
+    const API_BASE_USERS = 'https://limitless-depths-22114-f87246627b20.herokuapp.com/api';
+    const API_BASE_SERVERS = 'https://fierce-ocean-62608-27500ffd5d11.herokuapp.com/api';
+
+    let allServers = [];  // Complete dataset
+    let filteredServers = []; // Filtered dataset
+    let currentPage = 1;
+    const itemsPerPage = 10;
+
+    async function fetchAllUsers() {
+      try {
+        const res = await fetch(`${API_BASE_USERS}/users?page=1&limit=1000`);
+        const data = await res.json();
+        return data.data?.users || [];
+      } catch (err) {
+        console.error('❌ Failed to fetch users:', err);
+        return [];
+      }
+    }
+
+    async function fetchUserServers(userId, username) {
+      try {
+        const response = await $.ajax({
+          headers: {
+            "ngrok-skip-browser-warning": "69420",
+          },
+          type: "GET",
+          url: `${API_BASE_SERVERS}/servers/${userId}`,
+          dataType: "json",
+          timeout: 30000,
+        });
+        return response.data.map(server => ({
+          id: server.id,
+          name: server.name,
+          numberOfMembers: server.numberOfMembers || 'N/A',
+          inviteLink: server.inviteLink || '#',
+          username: username
+        }));
+      } catch (err) {
+        console.error(`❌ Failed to fetch servers for user ID ${userId}:`, err);
+        return [];
+      }
+    }
+
+    async function loadAllUserServers() {
+      const users = await fetchAllUsers();
+      const serverPromises = users.map(async (user) => {
+        const servers = await fetchUserServers(user._id, user.username);
+        return servers;
+      });
+
+      const serversArray = await Promise.all(serverPromises);
+      allServers = serversArray.flat(); // Flatten nested arrays
+      filteredServers = [...allServers]; // Initialize filter dataset
+
+      console.log('✅ All servers loaded:', allServers);
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('serverTable').style.display = '';
+      document.querySelector('.pagination').style.display = '';
+
+      renderTable();
+    }
+
+    function renderTable() {
+      const tableBody = document.querySelector('#serverTable tbody');
+      tableBody.innerHTML = '';
+
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const paginatedServers = filteredServers.slice(startIndex, startIndex + itemsPerPage);
+
+      paginatedServers.forEach(server => {
+        const row = `<tr>
+          <td>${server.id}</td>
+          <td>
+            <a href="${server.inviteLink}" target="_blank">${server.name}</a>
+            <button class="copy-btn" onclick="copyToClipboard('${server.name}')">Copy</button>
+          </td>
+          <td>${server.numberOfMembers}</td>
+          <td>
+            <span>${server.inviteLink}</span>
+            <button class="copy-btn" onclick="copyToClipboard('${server.inviteLink}')">Copy</button>
+          </td>
+          <td>${server.username}</td>
+        </tr>`;
+        tableBody.innerHTML += row;
+      });
+
+      const totalPages = Math.ceil(filteredServers.length / itemsPerPage);
+      document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${totalPages}`;
+      document.getElementById('prevBtn').disabled = currentPage === 1;
+      document.getElementById('nextBtn').disabled = currentPage === totalPages;
+    }
+
+    function changePage(direction) {
+      const totalPages = Math.ceil(filteredServers.length / itemsPerPage);
+      const newPage = currentPage + direction;
+      if (newPage >= 1 && newPage <= totalPages) {
+        currentPage = newPage;
+        renderTable();
+      }
+    }
+
+    function applySearch() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      filteredServers = allServers.filter(server =>
+        server.name.toLowerCase().includes(query)
+      );
+      currentPage = 1; // Reset to first page
+      renderTable();
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert('Copied to clipboard!');
+      }).catch(err => {
+        console.error("❌ Copy failed:", err);
+        alert("Failed to copy!");
+      });
+    }
+
+    loadAllUserServers();
+  </script>
+</body>
+</html>
