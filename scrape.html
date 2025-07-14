@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>WiseWord - Best Discord Server Web Scraper</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+    :root {
+      --black: #000000;
+      --white: #ffffff;
+      --green: #00ff00;
+      --dark-green: #008000;
+      --gray-dark: #121212;
+      --gray-light: #222222;
+    }
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Share Tech Mono', monospace, monospace;
+      background-color: var(--black);
+      color: var(--white);
+      line-height: 1.6;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    header {
+      padding: 2rem 1rem;
+      text-align: center;
+      background-color: var(--gray-dark);
+      border-bottom: 2px solid var(--green);
+    }
+    header h1 {
+      margin: 0;
+      font-size: 2.5rem;
+      color: var(--green);
+      text-shadow: 0 0 8px var(--green);
+    }
+    header p {
+      margin-top: 0.5rem;
+      font-size: 1.2rem;
+      color: var(--white);
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    main {
+      flex-grow: 1;
+      padding: 2rem 1rem;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    section {
+      margin-bottom: 3rem;
+    }
+    h2 {
+      color: var(--green);
+      font-size: 2rem;
+      border-bottom: 2px solid var(--green);
+      padding-bottom: 0.5rem;
+      margin-bottom: 1rem;
+      text-shadow: 0 0 6px var(--green);
+    }
+    p {
+      font-size: 1.1rem;
+      color: var(--white);
+      max-width: 700px;
+      margin-bottom: 1rem;
+    }
+    .pricing {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    .plan {
+      background-color: var(--gray-light);
+      border: 2px solid var(--green);
+      border-radius: 8px;
+      padding: 1.5rem;
+      width: 250px;
+      box-shadow: 0 0 10px var(--green);
+      transition: transform 0.3s ease;
+      cursor: default;
+    }
+    .plan:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px var(--green);
+    }
+    .plan h3 {
+      margin-top: 0;
+      color: var(--green);
+      font-size: 1.5rem;
+      text-align: center;
+      text-shadow: 0 0 6px var(--green);
+    }
+    .plan .price {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--white);
+      text-align: center;
+      margin: 1rem 0;
+    }
+    .plan ul {
+      list-style: none;
+      padding-left: 0;
+      color: var(--white);
+      font-size: 1rem;
+    }
+    .plan ul li {
+      margin-bottom: 0.5rem;
+      padding-left: 1.2rem;
+      position: relative;
+    }
+    .plan ul li::before {
+      content: '\2713';
+      position: absolute;
+      left: 0;
+      color: var(--green);
+      font-weight: bold;
+    }
+    footer {
+      background-color: var(--gray-dark);
+      color: var(--white);
+      text-align: center;
+      padding: 1rem 1rem;
+      border-top: 2px solid var(--green);
+      font-size: 0.9rem;
+      user-select: none;
+    }
+    footer a {
+      color: var(--green);
+      text-decoration: none;
+      margin: 0 0.5rem;
+      transition: color 0.3s ease;
+    }
+    footer a:hover {
+      color: var(--white);
+      text-decoration: underline;
+    }
+    @media (max-width: 600px) {
+      .pricing {
+        flex-direction: column;
+        align-items: center;
+      }
+      .plan {
+        width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1 id="typed-header"></h1>
+    <p>The best web scraper for Discord servers — fast, reliable, and hacker-approved.</p>
+  <a href="signin.html" style="position: absolute; top: 1.5rem; right: 1.5rem; background-color: var(--green); color: var(--black); padding: 0.5rem 1rem; border-radius: 4px; font-weight: bold; text-decoration: none; font-family: 'Share Tech Mono', monospace; transition: background-color 0.3s ease;">Login</a>
+  </header>
+  <header>
+    <h1 id="typed-header"></h1>
+    <p>The best web scraper for Discord servers — fast, reliable, and hacker-approved.</p>
+  <a href="signin.html" style="position: absolute; top: 1.5rem; right: 1.5rem; background-color: var(--green); color: var(--black); padding: 0.5rem 1rem; border-radius: 4px; font-weight: bold; text-decoration: none; font-family: 'Share Tech Mono', monospace; transition: background-color 0.3s ease;">Login</a>
+  </header>
+  <main>
+    <section>
+      <h2>Why Choose WiseWord?</h2>
+      <p>WiseWord offers the most advanced and efficient web scraper tailored specifically for Discord servers. Whether you want to analyze server data, monitor activity, or gather insights, our tool delivers unparalleled accuracy and speed.</p>
+      <p>Built with cutting-edge technology , WiseWord ensures you get the data you need without hassle or delay. Our scraper respects privacy and operates within Discord's guidelines to keep your operations safe and compliant.</p>
+    </section>
+    <section>
+      <h2>Pricing Plans</h2>
+      <div class="pricing">
+        <div class="plan">
+          <h3>Basic</h3>
+          <div class="price">$9/mo</div>
+          <ul>
+            <li>Scrape up to 5 servers</li>
+            <li>Basic data export</li>
+            <li>Email support</li>
+          </ul>
+        </div>
+        <div class="plan">
+          <h3>Pro</h3>
+          <div class="price">$29/mo</div>
+          <ul>
+            <li>Scrape up to 50 servers</li>
+            <li>Advanced data export (CSV, JSON)</li>
+            <li>Priority email support</li>
+            <li>API access</li>
+          </ul>
+        </div>
+        <div class="plan">
+          <h3>Enterprise</h3>
+          <div class="price">Contact Us</div>
+          <ul>
+            <li>Unlimited server scraping</li>
+            <li>Custom data solutions</li>
+            <li>Dedicated support</li>
+            <li>On-premise deployment options</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <p>&copy; 2024 WiseWord. All rights reserved.</p>
+    <p>
+      <a href="#">Privacy Policy</a> |
+      <a href="#">Terms of Service</a> |
+      <a href="mailto:support@wiseword.com">Contact Us</a>
+    </p>
+  </footer>
+  <script>
+    const text = "WiseWord";
+    const typedHeader = document.getElementById('typed-header');
+    let index = 0;
+    let cursorVisible = true;
+
+    function type() {
+      if (index <= text.length) {
+        typedHeader.textContent = text.substring(0, index) + (cursorVisible ? '|' : '');
+        index++;
+        cursorVisible = !cursorVisible;
+        setTimeout(type, 200);
+      } else {
+        // After typing is done, keep blinking cursor
+        setInterval(() => {
+          typedHeader.textContent = text + (cursorVisible ? '|' : '');
+          cursorVisible = !cursorVisible;
+        }, 500);
+      }
+    }
+
+    type();
+  </script>
+</body>
+</html>
