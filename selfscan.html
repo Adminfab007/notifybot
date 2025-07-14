@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hacker Terminal Scraper</title>
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: #00FF00;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    h1 {
+      color: #00FF00;
+      text-shadow: 0 0 10px #00FF00;
+      margin: 20px 0;
+      font-size: 28px;
+    }
+
+    #controls {
+      margin-bottom: 10px;
+    }
+
+    .filter-btn {
+      background: black;
+      color: #00FF00;
+      border: 1px solid #00FF00;
+      margin: 5px;
+      padding: 8px 16px;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .filter-btn.active {
+      background: #00FF00;
+      color: black;
+    }
+
+    .filter-btn:hover {
+      background: #00FF00;
+      color: black;
+    }
+
+    #map {
+      width: 80%;
+      height: 300px;
+      background: url('https://i.imgur.com/4NJ9lZo.png') no-repeat center center;
+      background-size: contain;
+      position: relative;
+      border: 2px solid #00FF00;
+      box-shadow: 0 0 20px #00FF00;
+      margin-bottom: 20px;
+    }
+
+    .ping {
+      position: absolute;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #00FF00;
+      animation: ping 1s ease-out infinite;
+    }
+
+    @keyframes ping {
+      0% {
+        transform: scale(0.2);
+        opacity: 1;
+      }
+      100% {
+        transform: scale(2);
+        opacity: 0;
+      }
+    }
+
+    #log {
+      width: 80%;
+      height: 250px;
+      background: black;
+      border: 2px solid #00FF00;
+      box-shadow: 0 0 15px #00FF00;
+      overflow-y: auto;
+      padding: 10px;
+      font-size: 14px;
+    }
+
+    .log-line {
+      margin-bottom: 4px;
+    }
+
+    .success {
+      color: #00FF00;
+    }
+
+    .error {
+      color: #FF0000;
+    }
+
+    #startBtn {
+      margin-top: 15px;
+      padding: 10px 20px;
+      background: black;
+      color: #00FF00;
+      border: 2px solid #00FF00;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    #startBtn:hover {
+      background: #00FF00;
+      color: black;
+    }
+  </style>
+</head>
+<body>
+  <h1>👾 GLOBAL SERVER SCRAPER</h1>
+  <div id="controls">
+    <button class="filter-btn" data-tag="Reddit">Reddit</button>
+    <button class="filter-btn" data-tag="Twitter">Twitter</button>
+    <button class="filter-btn" data-tag="Web">Web</button>
+    <button class="filter-btn" data-tag="Facebook">Facebook</button>
+  </div>
+  <div id="map"></div>
+  <div id="log"></div>
+  <button id="startBtn">Start Scan</button>
+
+  <script>
+    const servers = [
+      "Reddit Alpha-1", "Twitter Beta-7", "Web Gamma-2", "Facebook Delta-5", "Reddit Epsilon-9",
+      "Web Zeta-4", "Twitter Eta-3", "Facebook Theta-8", "Web Iota-6", "Reddit Kappa-11",
+      "Twitter Lambda-12", "Web Mu-15", "Facebook Nu-10", "Reddit Xi-14", "Web Omicron-13",
+      "Twitter Pi-16", "Facebook Rho-17", "Reddit Sigma-19", "Web Tau-18", "Facebook Upsilon-20",
+      "Twitter Phi-21", "Web Chi-22", "Reddit Psi-23", "Facebook Omega-24", "Reddit Server-X",
+      "Twitter Server-Y", "Web Server-Z", "Facebook Node-Alpha", "Reddit Node-Beta", "Twitter Node-Gamma"
+    ];
+
+    const processingSteps = [
+      "Querying global DNS servers...",
+      "Decrypting packet headers...",
+      "Connecting to API endpoints...",
+      "Authenticating with OAuth tokens...",
+      "Crawling social media data...",
+      "Resolving IP addresses...",
+      "Scanning dark web nodes...",
+      "Pinging known server clusters...",
+      "Analyzing SSL certificates...",
+      "Parsing response data streams..."
+    ];
+
+    const logEl = document.getElementById("log");
+    const mapEl = document.getElementById("map");
+    const startBtn = document.getElementById("startBtn");
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    let activeTag = null;
+
+    function appendLog(message, type="success") {
+      const line = document.createElement("div");
+      line.classList.add("log-line", type);
+      line.textContent = message;
+      logEl.appendChild(line);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function createPing(x, y) {
+      const ping = document.createElement("div");
+      ping.classList.add("ping");
+      ping.style.left = `${x}%`;
+      ping.style.top = `${y}%`;
+      mapEl.appendChild(ping);
+      setTimeout(() => mapEl.removeChild(ping), 1000);
+    }
+
+    async function startScan() {
+      logEl.innerHTML = "";
+      startBtn.disabled = true;
+      appendLog("Initializing global scan...");
+      await new Promise(r => setTimeout(r, 1000));
+
+      // Show fake processing steps
+      for (let step of processingSteps) {
+        appendLog(`> ${step}`);
+        await new Promise(r => setTimeout(r, 500 + Math.random() * 700));
+      }
+
+      appendLog("✅ Processing complete. Discovering servers...", "success");
+      await new Promise(r => setTimeout(r, 1000));
+
+      // Filter servers by activeTag
+      let filteredServers = servers;
+      if (activeTag) {
+        filteredServers = servers.filter(s => s.includes(activeTag));
+        appendLog(`🔎 Filter applied: ${activeTag}`);
+      }
+
+      // Show servers
+      for (let i = 0; i < filteredServers.length; i++) {
+        const x = Math.random() * 90 + 5; // Random position on map
+        const y = Math.random() * 90 + 5;
+        createPing(x, y);
+        appendLog(`✅ ${filteredServers[i]} found and verified.`, "success");
+        await new Promise(r => setTimeout(r, 300 + Math.random() * 500));
+      }
+
+      appendLog("🎉 Scan complete. All servers operational.", "success");
+      startBtn.disabled = false;
+    }
+
+    startBtn.addEventListener("click", startScan);
+
+    filterBtns.forEach(btn => {
+      btn.addEventListener("click", () => {
+        filterBtns.forEach(b => b.classList.remove('active'));
+        if (activeTag === btn.dataset.tag) {
+          activeTag = null; // Toggle off
+        } else {
+          activeTag = btn.dataset.tag;
+          btn.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>
