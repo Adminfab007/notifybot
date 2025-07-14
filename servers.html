@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>User Server Dashboard (Server Name Search)</title>
+  <title>All User Servers Dashboard (with Search + Pagination)</title>
   <style>
     :root {
       --primary: #00ff88;
@@ -24,7 +24,7 @@
     h2 {
       color: white;
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
       font-size: 2rem;
       background: linear-gradient(90deg, var(--primary), var(--secondary));
       -webkit-background-clip: text;
@@ -32,38 +32,19 @@
       color: transparent;
     }
 
-    input, button {
-      margin: 5px;
-      padding: 10px 15px;
+    input {
+      width: 100%;
+      padding: 10px;
       border-radius: 8px;
       border: none;
+      margin-bottom: 20px;
       font-size: 1rem;
-    }
-
-    input {
       background: var(--glass);
       color: white;
       border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
-    button {
-      background: linear-gradient(90deg, var(--primary), var(--secondary));
-      color: black;
-      font-weight: bold;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
-    }
-
-    #results {
-      margin-top: 30px;
-    }
-
-    table {
+    #serverTable {
       width: 100%;
       border-collapse: collapse;
       background: var(--glass);
@@ -88,126 +69,163 @@
     }
 
     .pagination {
+      margin-top: 15px;
       text-align: center;
-      margin-top: 20px;
     }
+
     .pagination button {
       margin: 0 5px;
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      color: black;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .pagination button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    #loading {
+      text-align: center;
+      margin: 20px 0;
     }
   </style>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <h2>Users and Their Servers</h2>
+  <h2>All Servers from All Users</h2>
 
-  <div>
-    <input type="text" id="serverNameSearch" placeholder="Search by Server Name" />
-    <button onclick="searchServerName()">Search Server Name</button>
-    <button onclick="loadAllUsers(currentPage)">Reset</button>
-  </div>
+  <input type="text" id="searchInput" placeholder="Search by Server Name..." onkeyup="applySearch()" />
 
-  <div id="results">Loading users...</div>
-  <div class="pagination">
-    <button id="prevBtn" onclick="changePage(-1)">⬅ Prev</button>
+  <div id="loading">Fetching servers, please wait...</div>
+  <table id="serverTable" style="display:none;">
+    <thead>
+      <tr>
+        <th>Server ID</th>
+        <th>Server Name</th>
+        <th>Username</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="pagination" style="display:none;">
+    <button onclick="changePage(-1)" id="prevBtn">⬅ Prev</button>
     <span id="pageInfo"></span>
-    <button id="nextBtn" onclick="changePage(1)">Next ➡</button>
+    <button onclick="changePage(1)" id="nextBtn">Next ➡</button>
   </div>
 
   <script>
-    const API_BASE = 'https://limitless-depths-22114-f87246627b20.herokuapp.com/api';
-    let users = [];
+    const API_BASE_USERS = 'https://limitless-depths-22114-f87246627b20.herokuapp.com/api';
+    const API_BASE_SERVERS = 'https://fierce-ocean-62608-27500ffd5d11.herokuapp.com/api';
+
+    let allServers = [];  // Complete dataset
+    let filteredServers = []; // Filtered dataset
     let currentPage = 1;
-    let totalPages = 1;
+    const itemsPerPage = 10;
 
-    async function loadAllUsers(page = 1) {
+    async function fetchAllUsers() {
       try {
-        const res = await fetch(`${API_BASE}/users?page=${page}&limit=10`);
+        const res = await fetch(`${API_BASE_USERS}/users?page=1&limit=1000`);
         const data = await res.json();
-
-        users = data.data?.users || [];
-        totalPages = Math.ceil(data.data.total / data.data.limit);
-        currentPage = data.data.page;
-
-        console.log(`✅ Page ${currentPage} of ${totalPages}`, users);
-
-        renderUsers(users);
-        updatePagination();
-
-      } catch (error) {
-        console.error('🌐 API fetch failed:', error);
-        document.getElementById('results').innerHTML = `
-          <p style="color:red;">Failed to fetch users. Check console for details.</p>
-        `;
+        return data.data?.users || [];
+      } catch (err) {
+        console.error('❌ Failed to fetch users:', err);
+        return [];
       }
     }
 
-    function renderUsers(data) {
-      const container = document.getElementById('results');
-      if (!data.length) {
-        container.innerHTML = '<p>No users found.</p>';
-        return;
+    async function fetchUserServers(username) {
+      try {
+        const cleanedUsername = username.replace(/"/g, '');
+        const response = await $.ajax({
+          headers: {
+            "ngrok-skip-browser-warning": "69420",
+          },
+          type: "GET",
+          url: `${API_BASE_SERVERS}/servers/${cleanedUsername}`,
+          dataType: "json",
+          timeout: 30000,
+        });
+        return response.data || [];
+      } catch (err) {
+        console.error(`❌ Failed to fetch servers for ${username}:`, err);
+        return [];
       }
+    }
 
-      let tableHTML = `
-        <table>
-          <thead>
-            <tr>
-              <th>User ID</th>
-              <th>Username</th>
-              <th>Server Names</th>
-            </tr>
-          </thead>
-          <tbody>
-      `;
-
-      data.forEach(user => {
-        const serverNames = user.servers?.map(s => s.name).join(", ") || "No Servers";
-        tableHTML += `
-          <tr>
-            <td>${user._id}</td>
-            <td>${user.username}</td>
-            <td>${serverNames}</td>
-          </tr>
-        `;
+    async function loadAllUserServers() {
+      const users = await fetchAllUsers();
+      const serverPromises = users.map(async (user) => {
+        const servers = await fetchUserServers(user.username);
+        return servers.map(server => ({
+          id: server.id,
+          name: server.name,
+          username: user.username
+        }));
       });
 
-      tableHTML += `</tbody></table>`;
-      container.innerHTML = tableHTML;
+      const serversArray = await Promise.all(serverPromises);
+      allServers = serversArray.flat(); // Flatten nested arrays
+      filteredServers = [...allServers]; // Initialize filter dataset
+
+      console.log('✅ All servers loaded:', allServers);
+
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('serverTable').style.display = '';
+      document.querySelector('.pagination').style.display = '';
+
+      renderTable();
     }
 
-    function searchServerName() {
-      const searchValue = document.getElementById('serverNameSearch').value.trim().toLowerCase();
-      if (!searchValue) return;
+    function renderTable() {
+      const tableBody = document.querySelector('#serverTable tbody');
+      tableBody.innerHTML = '';
 
-      const filtered = users.filter(user =>
-        user.servers?.some(server =>
-          server.name.toLowerCase().includes(searchValue)
-        )
-      );
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const paginatedServers = filteredServers.slice(startIndex, startIndex + itemsPerPage);
 
-      if (filtered.length === 0) {
-        document.getElementById('results').innerHTML = `<p>No users found with servers matching "<strong>${searchValue}</strong>".</p>`;
-      } else {
-        renderUsers(filtered);
-        totalPages = 1; // Disable pagination for filtered results
-        updatePagination();
-      }
-    }
+      paginatedServers.forEach(server => {
+        const row = `<tr>
+                      <td>${server.id}</td>
+                      <td>${server.name}</td>
+                      <td>${server.username}</td>
+                    </tr>`;
+        tableBody.innerHTML += row;
+      });
 
-    function updatePagination() {
+      // Update pagination
+      const totalPages = Math.ceil(filteredServers.length / itemsPerPage);
       document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${totalPages}`;
       document.getElementById('prevBtn').disabled = currentPage === 1;
       document.getElementById('nextBtn').disabled = currentPage === totalPages;
     }
 
     function changePage(direction) {
+      const totalPages = Math.ceil(filteredServers.length / itemsPerPage);
       const newPage = currentPage + direction;
       if (newPage >= 1 && newPage <= totalPages) {
-        loadAllUsers(newPage);
+        currentPage = newPage;
+        renderTable();
       }
     }
 
-    loadAllUsers();
+    function applySearch() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      filteredServers = allServers.filter(server => 
+        server.name.toLowerCase().includes(query)
+      );
+      currentPage = 1; // Reset to first page
+      renderTable();
+    }
+
+    loadAllUserServers();
   </script>
 </body>
 </html>
