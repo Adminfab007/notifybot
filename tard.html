@@ -161,28 +161,38 @@
     }
 
     async function fetchUserServers(userId, username) {
-      try {
-        const response = await $.ajax({
-          headers: {
-            "ngrok-skip-browser-warning": "69420",
-          },
-          type: "GET",
-          url: `${API_BASE_USERS}/user/${userId}`,
-          dataType: "json",
-          timeout: 30000,
-        });
-        return response.data.map(server => ({
-          id: server.id,
-          name: server.name,
-          numberOfMembers: server.numberOfMembers || 'N/A',
-          inviteLink: server.inviteLink || '#',
-          username: username
-        }));
-      } catch (err) {
-        console.error(`❌ Failed to fetch servers for user ID ${userId}:`, err);
-        return [];
-      }
+  try {
+    const response = await $.ajax({
+      headers: {
+        "ngrok-skip-browser-warning": "69420",
+      },
+      type: "GET",
+      url: `${API_BASE_SERVERS}/user/${userId}`,
+      dataType: "json",
+      timeout: 30000,
+    });
+
+    // 🛡 Extract servers from user object
+    const user = response.data;
+
+    if (user && Array.isArray(user.guilds)) {
+      return user.guilds.map(server => ({
+        id: server.id,
+        name: server.name,
+        numberOfMembers: server.numberOfMembers || 'N/A',
+        inviteLink: server.inviteLink || '#',
+        username: username
+      }));
+    } else {
+      console.warn(`⚠️ No guilds found for user ${username} (ID: ${userId})`);
+      return [];
     }
+  } catch (err) {
+    console.error(`❌ Failed to fetch servers for user ID ${userId}:`, err);
+    return [];
+  }
+}
+
 
     async function loadAllUserServers() {
       const users = await fetchAllUsers();
