@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Hacker Login</title>
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: #00FF00;
+      font-family: 'Courier New', Courier, monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    h1 {
+      color: #00FF00;
+      text-shadow: 0 0 10px #00FF00;
+      margin-bottom: 20px;
+      font-size: 28px;
+    }
+
+    .login-box {
+      border: 2px solid #00FF00;
+      box-shadow: 0 0 20px #00FF00;
+      padding: 20px;
+      width: 300px;
+      text-align: center;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+      width: 90%;
+      padding: 8px;
+      margin: 10px 0;
+      background: black;
+      color: #00FF00;
+      border: 1px solid #00FF00;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 14px;
+    }
+
+    button {
+      width: 95%;
+      padding: 10px;
+      background: black;
+      color: #00FF00;
+      border: 2px solid #00FF00;
+      cursor: pointer;
+      font-family: 'Courier New', Courier, monospace;
+      font-size: 16px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    button:hover {
+      background: #00FF00;
+      color: black;
+    }
+
+    .message {
+      margin-top: 15px;
+      font-size: 14px;
+    }
+
+    .success {
+      color: #00FF00;
+    }
+
+    .error {
+      color: #FF0000;
+    }
+  </style>
+</head>
+<body>
+  <h1>👾  Login Terminal</h1>
+  <div class="login-box">
+    <input type="text" id="username" placeholder="Username" /><br />
+    <input type="password" id="password" placeholder="Password" /><br />
+    <button onclick="login()">Login</button>
+    <div id="message" class="message"></div>
+  </div>
+
+  <script>
+    function login() {
+      const username = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+      const message = document.getElementById("message");
+
+      if (username === "admin" && password === "admin") {
+        message.textContent = "✅ Login Successful!";
+        message.className = "message success";
+
+        // OPTIONAL: Redirect to your scraper page
+        setTimeout(() => {
+          window.location.href = "source.html"; // change to your scraper page
+        }, 1500);
+      } else {
+        message.textContent = "❌ Invalid credentials. Access denied.";
+        message.className = "message error";
+      }
+    }
+  </script>
+</body>
+</html>
