@@ -80,6 +80,21 @@
       }
     }
 
+    #progressBarContainer {
+      width: 80%;
+      height: 20px;
+      background: #333;
+      border: 1px solid #00FF00;
+      margin: 10px 0;
+    }
+
+    #progressBar {
+      width: 0%;
+      height: 100%;
+      background: #00FF00;
+      transition: width 0.3s ease;
+    }
+
     #log {
       width: 80%;
       height: 250px;
@@ -93,6 +108,7 @@
 
     .log-line {
       margin-bottom: 4px;
+      white-space: pre-wrap;
     }
 
     .success {
@@ -118,6 +134,16 @@
       background: #00FF00;
       color: black;
     }
+
+    .copy-btn {
+      background: #00FF00;
+      color: black;
+      border: none;
+      margin-left: 5px;
+      padding: 2px 5px;
+      font-size: 12px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -129,18 +155,21 @@
     <button class="filter-btn" data-tag="indices">indices</button>
   </div>
   <div id="map"></div>
+  <div id="progressBarContainer">
+    <div id="progressBar"></div>
+  </div>
   <div id="log"></div>
   <button id="startBtn">Start Scan</button>
 
   <script>
     const API_BASE = 'https://limitless-depths-22114-f87246627b20.herokuapp.com/api';
-    const API_SERVERS = 'https://fierce-ocean-62608-27500ffd5d11.herokuapp.com/api';
     const logEl = document.getElementById("log");
     const mapEl = document.getElementById("map");
+    const progressBar = document.getElementById("progressBar");
     const startBtn = document.getElementById("startBtn");
     const filterBtns = document.querySelectorAll('.filter-btn');
     let activeTag = null;
-    let allServers = []; // This will hold servers from API
+    let allServers = [];
 
     const processingSteps = [
       "Querying global DNS servers...",
@@ -155,10 +184,10 @@
       "Parsing response data streams..."
     ];
 
-    function appendLog(message, type="success") {
+    function appendLog(message, type = "success") {
       const line = document.createElement("div");
       line.classList.add("log-line", type);
-      line.textContent = message;
+      line.innerHTML = message; // use innerHTML for clickable links
       logEl.appendChild(line);
       logEl.scrollTop = logEl.scrollHeight;
     }
@@ -172,7 +201,6 @@
       setTimeout(() => mapEl.removeChild(ping), 1000);
     }
 
-    // Fetch all users and their servers
     async function fetchAllServers() {
       let servers = [];
       try {
@@ -180,7 +208,8 @@
         const usersData = await usersRes.json();
         const users = usersData.data?.users || [];
 
-        appendLog(`🔄 Fetching servers for ${users.length} users...`);
+        appendLog(`🔄 Fetching servers...`);
+        let count = 0;
 
         for (let user of users) {
           try {
@@ -194,27 +223,45 @@
                 members: srv.numberOfMembers || 'Unknown'
               });
             });
-          } catch (err) {
-            appendLog(`❌ Error fetching servers for ${user.username}`, "error");
+            count++;
+            progressBar.style.width = `${Math.min((count / users.length) * 100, 100)}%`;
+          } catch {
+            appendLog(`❌ Error fetching servers`, "error");
           }
         }
-        return servers;
-      } catch (err) {
+      } catch {
         appendLog("❌ Failed to fetch users", "error");
-        return [];
       }
+      return servers;
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        appendLog(`📋 Copied: ${text}`);
+      });
     }
 
     async function startScan() {
+      if (localStorage.getItem("scanComplete")) {
+        appendLog("⚠️ Scan already completed. Reload page to reset.", "error");
+        return;
+      }
+
+      if (!activeTag) {
+        appendLog("⚠️ Please select a filter tag before scanning.", "error");
+        return;
+      }
+
       logEl.innerHTML = "";
       startBtn.disabled = true;
+      progressBar.style.width = "0%";
+
       appendLog("Initializing global scan...");
       await new Promise(r => setTimeout(r, 1000));
 
       allServers = await fetchAllServers();
       appendLog(`✅ Total servers fetched: ${allServers.length}`);
 
-      // Simulate hacker terminal steps
       for (let step of processingSteps) {
         appendLog(`> ${step}`);
         await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
@@ -223,25 +270,30 @@
       appendLog("✅ Processing complete. Discovering servers...", "success");
       await new Promise(r => setTimeout(r, 1000));
 
-      // Filter servers based on activeTag
-      let filteredServers = allServers;
-      if (activeTag) {
-        filteredServers = allServers.filter(srv =>
-          srv.name.toLowerCase().includes(activeTag.toLowerCase())
-        );
-        appendLog(`🔎 Filter applied: ${activeTag}`);
-      }
+      let filteredServers = allServers.filter(srv =>
+        srv.name.toLowerCase().includes(activeTag.toLowerCase())
+      );
 
-      // Display servers
+      appendLog(`🔎 Filter applied: ${activeTag}`);
+
+      // Limit to 1–3 random servers
+      filteredServers = filteredServers.sort(() => 0.5 - Math.random()).slice(0, Math.ceil(Math.random() * 3));
+
       for (let srv of filteredServers) {
-        const x = Math.random() * 90 + 5; // Random map position
+        const x = Math.random() * 90 + 5;
         const y = Math.random() * 90 + 5;
         createPing(x, y);
-        appendLog(`✅ ${srv.name} (${srv.members} members)\n${srv.inviteLink}`, "success");
-        await new Promise(r => setTimeout(r, 300 + Math.random() * 500));
+        appendLog(
+          `✅ ${srv.name} (${srv.members} members)<br>
+          <a href="${srv.inviteLink}" target="_blank">${srv.inviteLink}</a>
+          <button class="copy-btn" onclick="copyToClipboard('${srv.inviteLink}')">Copy</button>`,
+          "success"
+        );
+        await new Promise(r => setTimeout(r, 400 + Math.random() * 500));
       }
 
       appendLog("🎉 Scan complete. All servers operational.", "success");
+      localStorage.setItem("scanComplete", "true"); // Prevent another scan
       startBtn.disabled = false;
     }
 

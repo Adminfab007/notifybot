@@ -1,8 +1,87 @@
+<!-- <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>User Server Dashboard</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    input { margin: 5px; padding: 5px; }
+    .user-card { border: 1px solid #ccc; margin: 10px 0; padding: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Users and Their Servers</h2>
+
+  <div>
+    <input type="text" id="serverSearch" placeholder="Filter by Server ID" />
+    <input type="text" id="usernameSearch" placeholder="Missing Servers for Username" />
+    <button onclick="searchServer()">Search Server</button>
+    <button onclick="searchUsername()">Search Username</button>
+    <button onclick="loadAllUsers()">Reset</button>
+  </div>
+
+  <div id="results"></div>
+
+  <script>
+    const API_BASE = 'http://localhost:3000';
+
+    async function loadAllUsers() {
+      const res = await fetch(`${API_BASE}/users`);
+      const users = await res.json();
+      renderUsers(users);
+    }
+
+    function renderUsers(users) {
+      const container = document.getElementById('results');
+      container.innerHTML = '';
+      users.forEach(user => {
+        const div = document.createElement('div');
+        div.className = 'user-card';
+        div.innerHTML = `
+          <strong>ID:</strong> ${user._id}<br />
+          <strong>Username:</strong> ${user.username}<br />
+          <strong>Servers:</strong> ${user.servers.join(', ')}
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    async function searchServer() {
+      const serverId = document.getElementById('serverSearch').value.trim();
+      if (!serverId) return;
+
+      const res = await fetch(`${API_BASE}/users/by-server/${serverId}`);
+      const users = await res.json();
+      renderUsers(users);
+    }
+
+    async function searchUsername() {
+      const username = document.getElementById('usernameSearch').value.trim();
+      if (!username) return;
+
+      const res = await fetch(`${API_BASE}/user/${username}/missing-servers`);
+      const servers = await res.json();
+      const container = document.getElementById('results');
+      container.innerHTML = `
+        <strong>Missing servers for <em>${username}</em>:</strong><br />
+        ${servers.length ? servers.join(', ') : 'None'}
+      `;
+    }
+
+    loadAllUsers(); // initial load
+  </script>
+</body>
+</html>
+ -->
+
+
+
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>User Server Dashboard (Pagination + Search + Global Seeker)</title>
+  <title>User Server Dashboard</title>
   <style>
     :root {
       --primary: #00ff88;
@@ -51,136 +130,64 @@
       color: black;
       font-weight: bold;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: background 0.2s;
     }
-    
-    button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
-    }
-    
-    #results {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 20px;
-      margin-top: 30px;
-    }
-    
-    .user-card {
-      background: var(--glass);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      padding: 20px;
-      transition: all 0.3s ease;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      position: relative;
-      overflow: hidden;
-      cursor: pointer;
-    }
-    
     .user-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
-      border: 1px solid var(--primary);
-    }
-    
-    .user-card strong {
-      color: var(--primary);
-    }
-
-    .copy-btn {
-      margin-left: 8px;
-      background: var(--primary);
-      color: black;
-      padding: 5px 10px;
-      border-radius: 6px;
-      font-size: 0.9rem;
-      cursor: pointer;
-    }
-
-    .copy-btn:hover {
-      background: var(--secondary);
-    }
-
-    .pagination {
-      text-align: center;
-      margin-top: 20px;
-    }
-    .pagination button {
-      margin: 0 5px;
+      background: #eaf6ff;
     }
   </style>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
   <h2>Users and Their Servers</h2>
 
   <div>
     <input type="text" id="serverSearch" placeholder="Filter by Server ID" />
-    <input type="text" id="usernameSearch" placeholder="Search Username" />
+    <input type="text" id="usernameSearch" placeholder="Missing Servers for Username" />
     <button onclick="searchServer()">Search Server</button>
     <button onclick="searchUsername()">Search Username</button>
-    <button onclick="loadAllUsers(currentPage)">Reset</button>
+    <button onclick="loadAllUsers()">Reset</button>
   </div>
 
-  <div style="margin-top: 15px;">
-    <input type="text" id="seekerInput" placeholder="Set Seeker Username" />
-    <button id="seekerBtn" onclick="setSeeker()">Set Seeker</button>
-  </div>
-
-  <div id="results">Loading users...</div>
-  <div class="pagination">
-    <button id="prevBtn" onclick="changePage(-1)">⬅ Prev</button>
-    <span id="pageInfo"></span>
-    <button id="nextBtn" onclick="changePage(1)">Next ➡</button>
-  </div>
+  <div id="results"></div>
 
   <script>
-    const API_BASE = 'https://limitless-depths-22114-f87246627b20.herokuapp.com/api';
-    let users = [];
-    let currentPage = 1;
-    let totalPages = 1;
-
-    async function loadAllUsers(page = 1) {
-      try {
-        const res = await fetch(`${API_BASE}/users?page=${page}&limit=10`, {
-          headers: new Headers({
-            "Accept": "application/json",
-           
-          }),
-          credentials:"include",
-
-        });
-
-        const text = await res.text();
-        console.log('📄 Raw API response:', text);
-
-        let data;
-        try {
-          data = JSON.parse(text);
-        } catch (err) {
-          console.error('❌ JSON parse error:', err);
-          document.getElementById('results').innerHTML = `
-            <p style="color:red;">Invalid JSON returned from API. See console for raw response.</p>
-          `;
-          return;
-        }
-
-        users = data.data?.users || [];
-        totalPages = Math.ceil(data.data.total / data.data.limit);
-        currentPage = data.data.page;
-
-        console.log(`✅ Page ${currentPage} of ${totalPages}`, users);
-
-        renderUsers(users);
-        updatePagination();
-
-      } catch (error) {
-        console.error('🌐 API fetch failed:', error);
-        document.getElementById('results').innerHTML = `
-          <p style="color:red;">Failed to fetch users. Check console for details.</p>
-        `;
+    // 🚀 Dummy Data (servers now have a link)
+    const users = [
+      {
+        _id: 'u1',
+        username: 'alice',
+        servers: [
+          { id: 'srv1', ln: 'Server Alpha', members: 120, link: 'https://server-alpha.example.com' },
+          { id: 'srv2', ln: 'Server Beta', members: 85, link: 'https://server-beta.example.com' },
+          { id: 'srv3', ln: 'Server Gamma', members: 200, link: 'https://server-gamma.example.com' }
+        ]
+      },
+      {
+        _id: 'u2',
+        username: 'bob',
+        servers: [
+          { id: 'srv2', ln: 'Server Beta', members: 85, link: 'https://server-beta.example.com' },
+          { id: 'srv4', ln: 'Server Delta', members: 50, link: 'https://server-delta.example.com' }
+        ]
+      },
+      {
+        _id: 'u3',
+        username: 'charlie',
+        servers: []
+      },
+      {
+        _id: 'u4',
+        username: 'diana',
+        servers: [
+          { id: 'srv1', ln: 'Server Alpha', members: 120, link: 'https://server-alpha.example.com' },
+          { id: 'srv3', ln: 'Server Gamma', members: 200, link: 'https://server-gamma.example.com' },
+          { id: 'srv5', ln: 'Server Epsilon', members: 75, link: 'https://server-epsilon.example.com' }
+        ]
       }
+    ];
+
+    function loadAllUsers() {
+      renderUsers(users);
     }
 
     function renderUsers(data) {
@@ -193,118 +200,42 @@
       data.forEach(user => {
         const div = document.createElement('div');
         div.className = 'user-card';
-        div.onclick = (e) => {
-          if (e.target.classList.contains('copy-btn')) return; // Don’t navigate if copy button clicked
+        div.onclick = () => {
           localStorage.setItem('selectedUser', JSON.stringify(user));
           window.location.href = 'user.html';
         };
         div.innerHTML = `
           <strong>ID:</strong> ${user._id}<br />
-          <strong>Username:</strong> ${user.username}
-          <button class="copy-btn" onclick="copyUsername(event, '${user.username}')">Copy</button><br />
-          <strong>Servers:</strong> ${user.serverIds?.length || 0}
+          <strong>Username:</strong> ${user.username}<br />
+          <strong>Servers:</strong> ${user.servers.length ? user.servers.map(s => s.ln).join(', ') : 'None'}
         `;
         container.appendChild(div);
-      });
-    }
-
-    function copyUsername(event, username) {
-      event.stopPropagation();
-      navigator.clipboard.writeText(username).then(() => {
-        const btn = event.target;
-        btn.textContent = "Copied!";
-        setTimeout(() => btn.textContent = "Copy", 1500);
-      }).catch(err => {
-        console.error("❌ Copy failed:", err);
-        alert("Failed to copy username!");
       });
     }
 
     function searchServer() {
       const serverId = document.getElementById('serverSearch').value.trim();
       if (!serverId) return;
-      const filtered = users.filter(user => user.serverIds?.includes(serverId));
+      const filtered = users.filter(user => user.servers.some(s => s.id === serverId));
       renderUsers(filtered);
     }
 
-    async function searchUsername() {
+    function searchUsername() {
       const username = document.getElementById('usernameSearch').value.trim().toLowerCase();
       if (!username) return;
-
-      try {
-        const res = await fetch(`${API_BASE}/users?page=1&limit=1000`, {
-          headers: new Headers({
-            "Accept": "application/json",
-            "ngrok-skip-browser-warning": "69420"
-          })
-        });
-
-        const text = await res.text();
-        const data = JSON.parse(text);
-        const allUsers = data.data?.users || [];
-
-        const filtered = allUsers.filter(u =>
-          u.username.toLowerCase().includes(username)
-        );
-
-        if (filtered.length === 0) {
-          document.getElementById('results').innerHTML = `<p>No users found for "<strong>${username}</strong>".</p>`;
-        } else {
-          renderUsers(filtered);
-          totalPages = 1; // Disable pagination for search results
-          updatePagination();
-        }
-
-      } catch (err) {
-        console.error('🔍 Username search failed:', err);
-        document.getElementById('results').innerHTML = `<p style="color:red;">Failed to search users. See console for details.</p>`;
+      const user = users.find(u => u.username.toLowerCase() === username);
+      const container = document.getElementById('results');
+      if (!user) {
+        container.innerHTML = `<p>User <strong>${username}</strong> not found.</p>`;
+        return;
       }
-    }
-
-    async function setSeeker() {
-      const seekerName = document.getElementById('seekerInput').value.trim().toLowerCase();
-      if (!seekerName) return alert("Please enter a username!");
-
-      try {
-        const res = await fetch(`${API_BASE}/users?page=1&limit=1000`, {
-          headers: new Headers({
-            "Accept": "application/json",
-            "ngrok-skip-browser-warning": "69420"
-          })
-        });
-        const text = await res.text();
-        const data = JSON.parse(text);
-        const allUsers = data.data?.users || [];
-
-        const foundUser = allUsers.find(u => u.username.toLowerCase() === seekerName);
-        if (foundUser) {
-          localStorage.setItem('seeker', JSON.stringify(foundUser));
-          alert("Seeker set!");
-          const btn = document.getElementById('seekerBtn');
-          btn.textContent = "Seeker Set";
-          btn.disabled = true;
-        } else {
-          alert(`User "${seekerName}" not found in all pages.`);
-        }
-      } catch (err) {
-        console.error('❌ Seeker search failed:', err);
-        alert("Failed to fetch users for Seeker. Check console.");
-      }
-    }
-
-    function updatePagination() {
-      document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${totalPages}`;
-      document.getElementById('prevBtn').disabled = currentPage === 1;
-      document.getElementById('nextBtn').disabled = currentPage === totalPages;
-    }
-
-    function changePage(direction) {
-      const newPage = currentPage + direction;
-      if (newPage >= 1 && newPage <= totalPages) {
-        loadAllUsers(newPage);
-        document.getElementById('seekerBtn').textContent = "Set Seeker";
-        document.getElementById('seekerBtn').disabled = false;
-      }
+      const missingServers = users.flatMap(u => u.servers).filter(
+        srv => !user.servers.some(us => us.id === srv.id)
+      );
+      container.innerHTML = `
+        <strong>Missing servers for <em>${user.username}</em>:</strong><br />
+        ${missingServers.length ? missingServers.map(s => s.ln).join(', ') : 'None'}
+      `;
     }
 
     loadAllUsers();
