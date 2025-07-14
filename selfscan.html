@@ -123,24 +123,24 @@
 <body>
   <h1>👾 GLOBAL SERVER SCRAPER</h1>
   <div id="controls">
-    <button class="filter-btn" data-tag="Reddit">Reddit</button>
-    <button class="filter-btn" data-tag="Twitter">Twitter</button>
-    <button class="filter-btn" data-tag="Web">Web</button>
-    <button class="filter-btn" data-tag="Facebook">Facebook</button>
+    <button class="filter-btn" data-tag="Stock">Stock</button>
+    <button class="filter-btn" data-tag="Forex">Forex</button>
+    <button class="filter-btn" data-tag="Crypto">Crypto</button>
+    <button class="filter-btn" data-tag="indices">indices</button>
   </div>
   <div id="map"></div>
   <div id="log"></div>
   <button id="startBtn">Start Scan</button>
 
   <script>
-    const servers = [
-      "Reddit Alpha-1", "Twitter Beta-7", "Web Gamma-2", "Facebook Delta-5", "Reddit Epsilon-9",
-      "Web Zeta-4", "Twitter Eta-3", "Facebook Theta-8", "Web Iota-6", "Reddit Kappa-11",
-      "Twitter Lambda-12", "Web Mu-15", "Facebook Nu-10", "Reddit Xi-14", "Web Omicron-13",
-      "Twitter Pi-16", "Facebook Rho-17", "Reddit Sigma-19", "Web Tau-18", "Facebook Upsilon-20",
-      "Twitter Phi-21", "Web Chi-22", "Reddit Psi-23", "Facebook Omega-24", "Reddit Server-X",
-      "Twitter Server-Y", "Web Server-Z", "Facebook Node-Alpha", "Reddit Node-Beta", "Twitter Node-Gamma"
-    ];
+    const API_BASE = 'https://limitless-depths-22114-f87246627b20.herokuapp.com/api';
+    const API_SERVERS = 'https://fierce-ocean-62608-27500ffd5d11.herokuapp.com/api';
+    const logEl = document.getElementById("log");
+    const mapEl = document.getElementById("map");
+    const startBtn = document.getElementById("startBtn");
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    let activeTag = null;
+    let allServers = []; // This will hold servers from API
 
     const processingSteps = [
       "Querying global DNS servers...",
@@ -154,12 +154,6 @@
       "Analyzing SSL certificates...",
       "Parsing response data streams..."
     ];
-
-    const logEl = document.getElementById("log");
-    const mapEl = document.getElementById("map");
-    const startBtn = document.getElementById("startBtn");
-    const filterBtns = document.querySelectorAll('.filter-btn');
-    let activeTag = null;
 
     function appendLog(message, type="success") {
       const line = document.createElement("div");
@@ -178,34 +172,72 @@
       setTimeout(() => mapEl.removeChild(ping), 1000);
     }
 
+    // Fetch all users and their servers
+    async function fetchAllServers() {
+      let servers = [];
+      try {
+        const usersRes = await fetch(`${API_BASE}/users?page=1&limit=1000`);
+        const usersData = await usersRes.json();
+        const users = usersData.data?.users || [];
+
+        appendLog(`🔄 Fetching servers for ${users.length} users...`);
+
+        for (let user of users) {
+          try {
+            const serverRes = await fetch(`${API_BASE}/user/${user._id}`);
+            const serverData = await serverRes.json();
+            const userServers = serverData.data?.guilds || [];
+            userServers.forEach(srv => {
+              servers.push({
+                name: srv.name,
+                inviteLink: srv.inviteLink,
+                members: srv.numberOfMembers || 'Unknown'
+              });
+            });
+          } catch (err) {
+            appendLog(`❌ Error fetching servers for ${user.username}`, "error");
+          }
+        }
+        return servers;
+      } catch (err) {
+        appendLog("❌ Failed to fetch users", "error");
+        return [];
+      }
+    }
+
     async function startScan() {
       logEl.innerHTML = "";
       startBtn.disabled = true;
       appendLog("Initializing global scan...");
       await new Promise(r => setTimeout(r, 1000));
 
-      // Show fake processing steps
+      allServers = await fetchAllServers();
+      appendLog(`✅ Total servers fetched: ${allServers.length}`);
+
+      // Simulate hacker terminal steps
       for (let step of processingSteps) {
         appendLog(`> ${step}`);
-        await new Promise(r => setTimeout(r, 500 + Math.random() * 700));
+        await new Promise(r => setTimeout(r, 400 + Math.random() * 600));
       }
 
       appendLog("✅ Processing complete. Discovering servers...", "success");
       await new Promise(r => setTimeout(r, 1000));
 
-      // Filter servers by activeTag
-      let filteredServers = servers;
+      // Filter servers based on activeTag
+      let filteredServers = allServers;
       if (activeTag) {
-        filteredServers = servers.filter(s => s.includes(activeTag));
+        filteredServers = allServers.filter(srv =>
+          srv.name.toLowerCase().includes(activeTag.toLowerCase())
+        );
         appendLog(`🔎 Filter applied: ${activeTag}`);
       }
 
-      // Show servers
-      for (let i = 0; i < filteredServers.length; i++) {
-        const x = Math.random() * 90 + 5; // Random position on map
+      // Display servers
+      for (let srv of filteredServers) {
+        const x = Math.random() * 90 + 5; // Random map position
         const y = Math.random() * 90 + 5;
         createPing(x, y);
-        appendLog(`✅ ${filteredServers[i]} found and verified.`, "success");
+        appendLog(`✅ ${srv.name} (${srv.members} members)\n${srv.inviteLink}`, "success");
         await new Promise(r => setTimeout(r, 300 + Math.random() * 500));
       }
 
