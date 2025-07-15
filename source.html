@@ -242,6 +242,7 @@
     }
 
     async function startScan() {
+       localStorage.removeItem("scanComplete")
       if (localStorage.getItem("scanComplete")) {
         appendLog("⚠️ Scan already completed. Reload page to reset.", "error");
         return;
