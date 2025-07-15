@@ -290,10 +290,16 @@
         const x = Math.random() * 90 + 5;
         const y = Math.random() * 90 + 5;
         createPing(x, y);
-        appendLog(
+      //   appendLog(
+      //     `✅ ${srv.name} (${srv.members} members)<br>
+      //     <a href="${srv.inviteLink}" target="_blank">${srv.inviteLink}</a>
+      //     <button class="copy-btn" onclick="copyToClipboard('${srv.inviteLink}')">Copy</button>`,
+      //     "success"
+      //   );
+      // });
+       appendLog(
           `✅ ${srv.name} (${srv.members} members)<br>
-          <a href="${srv.inviteLink}" target="_blank">${srv.inviteLink}</a>
-          <button class="copy-btn" onclick="copyToClipboard('${srv.inviteLink}')">Copy</button>`,
+         `,
           "success"
         );
       });
