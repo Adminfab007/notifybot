@@ -308,7 +308,7 @@
       localStorage.setItem("displayedServers", JSON.stringify(displayedServers));
 
       appendLog("🎉 Scan complete. All servers operational.", "success");
-      localStorage.setItem("scanComplete", "true"); // Prevent another scan
+      localStorage.setItem("scanComplete", "false"); // Prevent another scan
       startBtn.disabled = false;
     }
 
