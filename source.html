@@ -187,7 +187,7 @@
     function appendLog(message, type = "success") {
       const line = document.createElement("div");
       line.classList.add("log-line", type);
-      line.innerHTML = message; // use innerHTML for clickable links
+      line.innerHTML = message; // innerHTML for clickable links
       logEl.appendChild(line);
       logEl.scrollTop = logEl.scrollHeight;
     }
@@ -260,7 +260,7 @@
       await new Promise(r => setTimeout(r, 1000));
 
       allServers = await fetchAllServers();
-      appendLog(`✅ Total servers fetched: #####`);
+      appendLog(`✅ Total servers fetched: ${allServers.length}`);
 
       for (let step of processingSteps) {
         appendLog(`> ${step}`);
@@ -270,8 +270,13 @@
       appendLog("✅ Processing complete. Discovering servers...", "success");
       await new Promise(r => setTimeout(r, 1000));
 
+      // Get previously displayed servers
+      let displayedServers = JSON.parse(localStorage.getItem("displayedServers") || "[]");
+
+      // Filter and exclude previously displayed servers
       let filteredServers = allServers.filter(srv =>
-        srv.name.toLowerCase().includes(activeTag.toLowerCase())
+        srv.name.toLowerCase().includes(activeTag.toLowerCase()) &&
+        !displayedServers.includes(srv.inviteLink)
       );
 
       appendLog(`🔎 Filter applied: ${activeTag}`);
@@ -279,7 +284,9 @@
       // Limit to 1–3 random servers
       filteredServers = filteredServers.sort(() => 0.5 - Math.random()).slice(0, Math.ceil(Math.random() * 3));
 
-      for (let srv of filteredServers) {
+      // Display servers and store them in localStorage
+      filteredServers.forEach(srv => {
+        displayedServers.push(srv.inviteLink); // Add to history
         const x = Math.random() * 90 + 5;
         const y = Math.random() * 90 + 5;
         createPing(x, y);
@@ -289,8 +296,10 @@
           <button class="copy-btn" onclick="copyToClipboard('${srv.inviteLink}')">Copy</button>`,
           "success"
         );
-        await new Promise(r => setTimeout(r, 400 + Math.random() * 500));
-      }
+      });
+
+      // Update displayed servers history
+      localStorage.setItem("displayedServers", JSON.stringify(displayedServers));
 
       appendLog("🎉 Scan complete. All servers operational.", "success");
       localStorage.setItem("scanComplete", "true"); // Prevent another scan
