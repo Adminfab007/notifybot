@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Crypto Wallet System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #0d0d0d; color: #fff; }
+    .card { background-color: #1a1a1a; border: 1px solid #333; }
+    .btn-primary { background-color: #00ff9f; border: none; color: #000; }
+    .btn-danger { background-color: #ff4b5c; border: none; }
+  </style>
+</head>
+<body>
+
+<div class="container py-5">
+  <h2 class="text-center mb-4">Crypto Wallet System</h2>
+
+  <div class="row mb-5">
+    <div class="col-md-6">
+      <div class="card p-4">
+        <h4 class="text-light">User Submit Wallet</h4>
+        <input type="text" id="userWallet" class="form-control mb-3" placeholder="Enter your wallet address">
+        <button class="btn btn-primary w-100" onclick="submitWallet()">Submit</button>
+      </div>
+    </div>
+    
+    <div class="col-md-6">
+      <div class="card p-4">
+        <h4 class="text-light">User Login</h4>
+        <input type="text" id="loginWallet" class="form-control mb-3" placeholder="Enter your wallet to login">
+        <button class="btn btn-primary w-100" onclick="loginUser()">Login</button>
+        <div id="loginResult" class="mt-3"></div>
+        <div id="resetInfo" class="mt-2 text-warning small text-center"></div>
+        <div id="resetAlert" class="text-danger fw-bold text-center mt-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <hr style="border-color: #444;">
+
+  <div class="card p-4">
+    <h4 class="text-light">Admin Panel</h4>
+
+    <div>
+      <h6 class="text-light">Pending Wallets</h6>
+      <ul id="pendingList" class="list-group mb-3"></ul>
+    </div>
+
+    <div>
+      <h6 class="text-light">Approved Wallets</h6>
+      <ul id="approvedList" class="list-group"></ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+  const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+
+  function getData(key, fallback) {
+    return JSON.parse(localStorage.getItem(key)) || fallback;
+  }
+
+  function saveData(key, data) {
+    localStorage.setItem(key, JSON.stringify(data));
+  }
+
+  function submitWallet() {
+    const wallet = document.getElementById('userWallet').value.trim();
+    if (!wallet) return alert('Wallet address is required.');
+
+    const pending = getData('pendingWallets', []);
+    const approved = getData('approvedWallets', {});
+
+    if (pending.includes(wallet)) return alert('Wallet already submitted and pending.');
+    if (wallet in approved) return alert('Wallet is already approved.');
+
+    pending.push(wallet);
+    saveData('pendingWallets', pending);
+    alert('Wallet submitted. Awaiting admin approval.');
+    document.getElementById('userWallet').value = '';
+    renderLists();
+  }
+
+  function approveWallet(wallet) {
+    const pending = getData('pendingWallets', []);
+    const approved = getData('approvedWallets', {});
+
+    if (!(wallet in approved)) {
+      approved[wallet] = { approvedAt: Date.now() };
+    }
+
+    const newPending = pending.filter(w => w !== wallet);
+    saveData('pendingWallets', newPending);
+    saveData('approvedWallets', approved);
+
+    renderLists();
+  }
+
+  function loginUser() {
+    const wallet = document.getElementById('loginWallet').value.trim();
+    const approved = getData('approvedWallets', {});
+    const resultDiv = document.getElementById('loginResult');
+    const resetInfo = document.getElementById('resetInfo');
+    const resetAlert = document.getElementById('resetAlert');
+
+    if (wallet in approved) {
+      const approvedAt = approved[wallet].approvedAt;
+      const nextReset = approvedAt + ONE_MONTH_MS;
+      const now = Date.now();
+      const daysLeft = Math.ceil((nextReset - now) / (1000 * 60 * 60 * 24));
+
+      resultDiv.innerHTML = `
+        <div class="alert alert-success">
+          ✅ Welcome! Wallet is approved.<br><b>Wallet:</b> ${wallet}
+        </div>
+      `;
+
+      resetInfo.innerHTML = `Next reset date: <b>${new Date(nextReset).toDateString()}</b>`;
+
+      if (nextReset - now <= ONE_WEEK_MS) {
+        resetAlert.innerHTML = `
+          <marquee behavior="scroll" direction="left">
+            ⚠️ Pay your bills before ${new Date(nextReset).toDateString()} — Wallet data resets in ${daysLeft} day(s)! ⚠️
+          </marquee>
+        `;
+      } else {
+        resetAlert.innerHTML = '';
+      }
+    } else {
+      resultDiv.innerHTML = `
+        <div class="alert alert-danger">❌ Wallet not approved or doesn't exist.</div>
+      `;
+      resetInfo.innerHTML = '';
+      resetAlert.innerHTML = '';
+    }
+  }
+
+  function renderLists() {
+    const pending = getData('pendingWallets', []);
+    const approved = getData('approvedWallets', {});
+    const pendingList = document.getElementById('pendingList');
+    const approvedList = document.getElementById('approvedList');
+
+    pendingList.innerHTML = '';
+    approvedList.innerHTML = '';
+
+    pending.forEach(wallet => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-center bg-dark text-light';
+      li.innerHTML = `
+        ${wallet}
+        <button class="btn btn-sm btn-success" onclick="approveWallet('${wallet}')">Approve</button>
+      `;
+      pendingList.appendChild(li);
+    });
+
+    for (const [wallet, info] of Object.entries(approved)) {
+      const li = document.createElement('li');
+      li.className = 'list-group-item bg-success-subtle text-dark';
+
+      const approvedDate = info && info.approvedAt
+        ? new Date(info.approvedAt).toLocaleDateString()
+        : 'Unknown Date';
+
+      li.innerText = `${wallet} (Approved: ${approvedDate})`;
+      approvedList.appendChild(li);
+    }
+  }
+
+  // Initialize UI
+  renderLists();
+</script>
+
+</body>
+</html>
