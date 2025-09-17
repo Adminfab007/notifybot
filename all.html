@@ -136,7 +136,7 @@
   </div>
 
   <script>
-    const API_BASE = 'https://limitless-depths-22114-f87246627b20.herokuapp.com/api';
+    const API_BASE = 'https://7eae0cc39daf.ngrok-free.app/api';
     let users = [];
     let currentPage = 1;
     let totalPages = 1;
@@ -145,10 +145,11 @@
       try {
         const res = await fetch(`${API_BASE}/users?page=${page}&limit=10`, {
           headers: new Headers({
-            "Accept": "application/json",
+           
+            "ngrok-skip-browser-warning": "69420",
            
           }),
-          credentials:"include",
+         
 
         });
 
@@ -234,7 +235,7 @@
       try {
         const res = await fetch(`${API_BASE}/users?page=1&limit=1000`, {
           headers: new Headers({
-            "Accept": "application/json",
+           
             "ngrok-skip-browser-warning": "69420"
           })
         });
@@ -268,7 +269,7 @@
       try {
         const res = await fetch(`${API_BASE}/users?page=1&limit=1000`, {
           headers: new Headers({
-            "Accept": "application/json",
+           
             "ngrok-skip-browser-warning": "69420"
           })
         });

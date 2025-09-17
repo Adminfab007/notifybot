@@ -1,0 +1,567 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Discord Member Analytics Mockup</title>
+
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+  :root{
+    --bg:#0f1724;
+    --card:#0b1220;
+    --muted:#94a3b8;
+    --accent:#6ee7b7;
+    --glass: rgba(255,255,255,0.03);
+    --glass-2: rgba(255,255,255,0.02);
+    --text:#e6eef6;
+    --danger:#ff7b7b;
+    --success:#7ef0a4;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,#071124 0%, #071428 100%);color:var(--text)}
+  .wrap{max-width:1200px;margin:24px auto;padding:18px;display:grid;grid-template-columns:1fr 380px;gap:18px}
+  header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:56px;height:56px;background:linear-gradient(135deg,var(--accent),#60a5fa);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#052225}
+  h1{margin:0;font-size:18px}
+  .sub{color:var(--muted);font-size:13px}
+  .controls{display:flex;gap:8px;align-items:center}
+  input[type="date"], select{background:var(--card);color:var(--text);border:1px solid rgba(255,255,255,0.03);padding:8px;border-radius:8px}
+  button{background:linear-gradient(180deg,#122031,#0f1b2a);border:1px solid rgba(255,255,255,0.03);color:var(--text);padding:8px 10px;border-radius:8px;cursor:pointer}
+  .card{background:var(--card);padding:14px;border-radius:12px;border:1px solid var(--glass);box-shadow: 0 6px 20px rgba(2,6,23,0.6)}
+  .left-col{display:grid;gap:12px}
+  .metrics{display:flex;gap:12px;flex-wrap:wrap}
+  .metric{flex:1;min-width:150px;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent)}
+  .metric h3{margin:0;font-size:13px;color:var(--muted)} .metric p{font-size:20px;margin:6px 0 0}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .chart-wrap{height:260px;padding:6px}
+  .table {width:100%;border-collapse:collapse;margin-top:8px;color:var(--muted);font-size:13px}
+  .table th, .table td {text-align:left;padding:8px;border-bottom:1px solid var(--glass-2)}
+  .heatmap{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;margin-top:8px}
+  .heatcell{height:18px;border-radius:4px;background:#071826}
+  .legend{display:flex;gap:8px;align-items:center;margin-top:6px;font-size:13px;color:var(--muted)}
+  .right-col{display:grid;gap:12px}
+  .small{font-size:13px;color:var(--muted)}
+  .pill{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.02)}
+  footer{grid-column:1/-1;margin-top:8px;color:var(--muted);font-size:12px;text-align:center}
+  .row{display:flex;gap:12px;align-items:center}
+  .table-scroll{max-height:260px;overflow:auto}
+  .heat-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:6px}
+  .download {background:linear-gradient(90deg,#1f6feb,#4dd4b0);border:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">DA</div>
+      <div>
+        <h1>Discord Member Analytics — Mockup</h1>
+        <div class="sub">Dataset format follows Discord user + guild member objects (sample generated)</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <label class="small">Population</label>
+      <select id="populationSize">
+        <option value="120">120 members</option>
+        <option value="60" selected>60 members</option>
+        <option value="300">300 members</option>
+      </select>
+      <button id="regen">Regenerate Data</button>
+      <button id="export" class="download">Export JSON</button>
+    </div>
+  </header>
+
+  <section class="left-col">
+    <div class="card metrics">
+      <div class="metric">
+        <h3>Total members</h3>
+        <p id="totalMembers">—</p>
+      </div>
+      <div class="metric">
+        <h3>Active (online snapshot)</h3>
+        <p id="activeCount">—</p>
+      </div>
+      <div class="metric">
+        <h3>Bot %</h3>
+        <p id="botPct">—</p>
+      </div>
+      <div class="metric">
+        <h3>Boosters</h3>
+        <p id="boosters">—</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="small">Membership Growth</h3>
+      <div class="chart-wrap">
+        <canvas id="growthChart"></canvas>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3 class="small">Role Distribution</h3>
+        <div class="chart-wrap">
+          <canvas id="roleChart"></canvas>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="small">Presence Distribution</h3>
+        <div class="chart-wrap">
+          <canvas id="presenceChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <h3 class="small">Boost Loyalty (Top Boosters)</h3>
+        <div class="table-scroll">
+          <table class="table" id="boostTable">
+            <thead><tr><th>username</th><th>boosted since</th><th>days</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="small">Account Age Distribution</h3>
+        <div class="chart-wrap">
+          <canvas id="ageChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="small">Funnel (Joined → Passed Screening → Assigned Role → Active → Boosted)</h3>
+      <div style="margin-top:8px">
+        <canvas id="funnelChart" height="120"></canvas>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="small">Activity Heatmap (Hourly snapshot sample)</h3>
+      <div class="heat-labels"><span>00:00</span><span>12:00</span><span>23:00</span></div>
+      <div id="heatmap" class="heatmap"></div>
+      <div class="legend">
+        <div class="pill">Low</div>
+        <div class="pill">Medium</div>
+        <div class="pill">High</div>
+      </div>
+    </div>
+
+  </section>
+
+  <aside class="right-col">
+    <div class="card">
+      <h3 class="small">Top summary</h3>
+      <div style="margin-top:8px">
+        <div class="row"><div class="small">New members this period:</div><div style="margin-left:auto;font-weight:700" id="newMembers">—</div></div>
+        <div class="row"><div class="small">Churned:</div><div style="margin-left:auto;font-weight:700" id="churned">—</div></div>
+        <div class="row"><div class="small">Retention (7d):</div><div style="margin-left:auto;font-weight:700" id="ret7">—</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="small">Pending / Moderation</h3>
+      <div style="margin-top:8px">
+        <div class="row"><div class="small">Pending screeners</div><div style="margin-left:auto" id="pendingCount">—</div></div>
+        <div class="row" style="margin-top:8px"><div class="small">Timed-out users</div><div style="margin-left:auto" id="timeouts">—</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="small">Top roles overlap</h3>
+      <table class="table" id="overlapTable">
+        <thead><tr><th>role</th><th>count</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h3 class="small">Recent joins (sample)</h3>
+      <div class="table-scroll">
+        <table class="table" id="recentTable">
+          <thead><tr><th>username</th><th>joined_at</th><th>roles</th></tr></thead><tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+  </aside>
+
+  <footer>Mockup — generated sample data modeled on Discord Guild Member objects (user + guild_member + presence)</footer>
+</div>
+
+<script>
+/*
+  Sample dataset and analytics generator
+  - Generates a realistic-ish set of "member" objects with fields:
+    user: { id, username, global_name, avatar, bot }
+    guild_member: { nick, roles:[], joined_at, premium_since, pending, communication_disabled_until }
+    presence: { status, activities: [] }  // optional
+*/
+
+// Utility: random integer
+function rint(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
+function sample(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+
+// Roles for mock server
+const ROLE_POOL = [
+  {id:"r_admin",name:"Admin"},
+  {id:"r_mod",name:"Moderator"},
+  {id:"r_vip",name:"VIP"},
+  {id:"r_booster",name:"Booster"},
+  {id:"r_event",name:"EventParticipant"},
+  {id:"r_member",name:"Member"},
+  {id:"r_new",name:"Newbie"},
+  {id:"r_bot",name:"Bot"}
+];
+
+function makeDataset(nMembers){
+  // timeframe: last 90 days for join distribution
+  const now = Date.now();
+  const msDay = 24*60*60*1000;
+  const startTs = now - 90*msDay;
+
+  const dataset = [];
+  for(let i=0;i<nMembers;i++){
+    const id = (BigInt(Date.now()) + BigInt(i+1000)).toString();
+    const username = "user"+(1000+i);
+    const isBot = Math.random() < 0.06; // ~6% bots typical
+    const createdAgoDays = rint(10,4000);
+    const createdAt = new Date(now - createdAgoDays*msDay - rint(0,msDay)).toISOString();
+
+    // joined date skewed: more joins near now
+    const joinedOffset = Math.pow(Math.random(),1.6) * (now - startTs);
+    const joinedAt = new Date(startTs + joinedOffset).toISOString();
+
+    // sometimes booster
+    const isBooster = Math.random() < 0.12;
+    const premium_since = isBooster ? new Date(Date.now() - rint(2,400)*msDay).toISOString() : null;
+
+    // roles: everyone gets Member; some get others
+    const roles = ["r_member"];
+    if(Math.random() < 0.08) roles.push("r_vip");
+    if(Math.random() < 0.03) roles.push("r_admin");
+    if(Math.random() < 0.06) roles.push("r_mod");
+    if(isBooster) roles.push("r_booster");
+    if(Math.random() < 0.14) roles.push("r_event");
+    if(isBot) { roles.push("r_bot") }
+
+    // pending flag sometimes true for very recent
+    const pending = (new Date(joinedAt) > new Date(now - 3*msDay) && Math.random()<0.12);
+
+    // timeouts occasionally
+    const inTimeout = Math.random() < 0.03;
+    const communication_disabled_until = inTimeout ? new Date(Date.now() + rint(1,6)*msDay).toISOString() : null;
+
+    // presence snapshot (just a single sample)
+    const statuses = ["online","idle","dnd","offline"];
+    const status = isBot ? (Math.random()<0.1?"online":"offline") : sample(statuses);
+    const activities = [];
+    if(status !== "offline"){
+      const apps = ["Spotify","Minecraft","League of Legends","Chrome","Visual Studio","Custom Status","Lobby"];
+      activities.push({name: sample(apps)});
+    }
+
+    const member = {
+      user:{
+        id:id,
+        username:username,
+        global_name: username,
+        avatar: null,
+        bot: isBot,
+        created_at: createdAt
+      },
+      guild_member:{
+        nick: Math.random()<0.2 ? username+"_nick" : null,
+        roles: roles,
+        joined_at: joinedAt,
+        premium_since: premium_since,
+        pending: pending,
+        communication_disabled_until: communication_disabled_until
+      },
+      presence: {
+        status: status,
+        activities: activities
+      }
+    };
+    dataset.push(member);
+  }
+
+  // also simulate some churn: pick a small sample who left during timeframe
+  const churned = dataset.splice(0, Math.floor(dataset.length * 0.06)); // 6% left
+  // preserve churn list if needed (we will compute churn by snapshot diffs in real apps)
+  return {members: dataset, churned: churned, generated_at: new Date().toISOString()};
+}
+
+
+// ---------- Rendering & analytics ----------
+let currentData = makeDataset(60);
+
+function summarizeAndRender(){
+  const members = currentData.members;
+  const churned = currentData.churned;
+
+  // totals
+  const total = members.length;
+  const bots = members.filter(m=>m.user.bot).length;
+  const botPct = ((bots/total)*100).toFixed(1)+"%";
+  const active = members.filter(m=>m.presence && m.presence.status !== "offline").length;
+  const boosters = members.filter(m=>m.guild_member.premium_since).length;
+
+  document.getElementById('totalMembers').innerText = total;
+  document.getElementById('botPct').innerText = botPct;
+  document.getElementById('activeCount').innerText = active;
+  document.getElementById('boosters').innerText = boosters;
+
+  // New members over time (daily counts)
+  const joinDates = members.map(m => new Date(m.guild_member.joined_at));
+  const minDate = new Date(Math.min(...joinDates.map(d=>d.getTime())));
+  const maxDate = new Date(Math.max(...joinDates.map(d=>d.getTime())));
+  // build day buckets between minDate and maxDate
+  const msDay = 24*60*60*1000;
+  const days = Math.ceil((maxDate-minDate)/msDay)+1;
+  const labels = [];
+  const counts = new Array(days).fill(0);
+  for(let i=0;i<days;i++){
+    const day = new Date(minDate.getTime() + i*msDay);
+    labels.push(day.toISOString().slice(0,10));
+  }
+  joinDates.forEach(d=>{
+    const i = Math.floor((d - minDate)/msDay);
+    counts[i] = (counts[i]||0)+1;
+  });
+  const cumulative = counts.map((v,idx)=>counts.slice(0,idx+1).reduce((a,b)=>a+b,0));
+
+  // Role distribution
+  const roleCounts = {};
+  members.forEach(m=>{
+    m.guild_member.roles.forEach(r=>{
+      roleCounts[r] = (roleCounts[r]||0)+1;
+    });
+  });
+  // map role ids to names
+  const roleLabels = Object.keys(roleCounts).map(k => {
+    const found = ROLE_POOL.find(rr=>rr.id===k);
+    return found ? found.name : k;
+  });
+  const roleValues = Object.values(roleCounts);
+
+  // presence distribution
+  const pres = members.reduce((acc,m)=>{
+    const s = (m.presence && m.presence.status) || "offline";
+    acc[s] = (acc[s]||0)+1;
+    return acc;
+  },{});
+  const presLabels = Object.keys(pres);
+  const presValues = presLabels.map(l=>pres[l]);
+
+  // account ages distribution (bins)
+  const now = Date.now();
+  const agesDays = members.map(m => Math.floor((now - new Date(m.user.created_at))/msDay));
+  const ageBins = {"<30":0,"30-365":0,"1-3yr":0,">3yr":0};
+  agesDays.forEach(d=>{
+    if(d < 30) ageBins["<30"]++;
+    else if(d < 365) ageBins["30-365"]++;
+    else if(d < 365*3) ageBins["1-3yr"]++;
+    else ageBins[">3yr"]++;
+  });
+
+  // Boosters table
+  const boostersList = members.filter(m=>m.guild_member.premium_since)
+    .map(m=>({u:m.user.username, since:m.guild_member.premium_since, days: Math.floor((now - new Date(m.guild_member.premium_since))/msDay)}))
+    .sort((a,b)=>b.days - a.days).slice(0,10);
+
+  // Funnel: joined, passed screening, assigned role (excluding default), active, boosted
+  const joinedCount = members.length;
+  const passedScreen = members.filter(m=>!m.guild_member.pending).length;
+  const assignedRole = members.filter(m=>m.guild_member.roles.some(r=>r !== "r_member")).length;
+  const activeCount = active;
+  const boostedCount = boosters;
+  const funnelData = [joinedCount, passedScreen, assignedRole, activeCount, boostedCount];
+
+  // Heatmap: hourly sample of presence statuses: we will simulate online counts per hour
+  const hourCounts = new Array(24).fill(0);
+  members.forEach(m=>{
+    // if online or idle or dnd, assign them a pseudo active hour (random)
+    if(m.presence && m.presence.status !== "offline"){
+      const h = rint(0,23);
+      hourCounts[h] += 1;
+    } else {
+      // offline low probability still add random small presence
+      if(Math.random()<0.02){ hourCounts[rint(0,23)] += 1 }
+    }
+  });
+
+  // Recent joins sample
+  const recent = members.slice().sort((a,b)=> new Date(b.guild_member.joined_at)-new Date(a.guild_member.joined_at)).slice(0,10);
+
+  // Overlap table: sample counts by role (top roles)
+  const overlapRows = Object.keys(roleCounts).map(k=>({role: ROLE_POOL.find(rr=>rr.id===k)?.name || k, count: roleCounts[k]}))
+                         .sort((a,b)=>b.count - a.count).slice(0,8);
+
+  // Pending & timeouts
+  const pendingCount = members.filter(m=>m.guild_member.pending).length;
+  const timeouts = members.filter(m=>m.guild_member.communication_disabled_until).length;
+
+  // Basic retention: new members in last 30 days and retention after 7 days: we will approximate
+  const since30 = new Date(now - 30*msDay);
+  const newMembers30 = members.filter(m=>new Date(m.guild_member.joined_at) > since30).length;
+  // retention7: of members who joined 7-14 days ago, how many are still active? approximate
+  const joined7_14 = members.filter(m=>{
+    const j = new Date(m.guild_member.joined_at);
+    return j > new Date(now - 14*msDay) && j <= new Date(now - 7*msDay);
+  });
+  const ret7 = joined7_14.length ? Math.round((joined7_14.filter(m=>m.presence && m.presence.status!=="offline").length / joined7_14.length)*100) + "%" : "N/A";
+
+  // put values in DOM
+  document.getElementById('newMembers').innerText = newMembers30;
+  document.getElementById('churned').innerText = currentData.churned.length;
+  document.getElementById('ret7').innerText = ret7;
+  document.getElementById('pendingCount').innerText = pendingCount;
+  document.getElementById('timeouts').innerText = timeouts;
+
+  // fill booster table
+  const bt = document.querySelector('#boostTable tbody'); bt.innerHTML="";
+  boostersList.forEach(b=>{
+    const tr=document.createElement('tr'); tr.innerHTML = `<td>${b.u}</td><td>${new Date(b.since).toISOString().slice(0,10)}</td><td>${b.days}</td>`;
+    bt.appendChild(tr);
+  });
+
+  // fill recent joins
+  const rt = document.querySelector('#recentTable tbody'); rt.innerHTML="";
+  recent.forEach(m=>{
+    const tr=document.createElement('tr');
+    const roles = m.guild_member.roles.map(r => ROLE_POOL.find(rr=>rr.id===r)?.name || r).join(", ");
+    tr.innerHTML = `<td>${m.user.username}</td><td>${new Date(m.guild_member.joined_at).toISOString().slice(0,10)}</td><td>${roles}</td>`;
+    rt.appendChild(tr);
+  });
+
+  // overlap table
+  const ot = document.querySelector('#overlapTable tbody'); ot.innerHTML="";
+  overlapRows.forEach(r=>{
+    const tr=document.createElement('tr'); tr.innerHTML = `<td>${r.role}</td><td>${r.count}</td>`;
+    ot.appendChild(tr);
+  });
+
+  // heatmap render
+  const hm = document.getElementById('heatmap'); hm.innerHTML = "";
+  const maxCount = Math.max(...hourCounts,1);
+  for(let h=0;h<24;h++){
+    const div = document.createElement('div'); div.className='heatcell';
+    const normalized = hourCounts[h]/maxCount;
+    const green = Math.round(30 + 160*normalized);
+    const blue = Math.round(40 + 120*normalized);
+    const alpha = 0.2 + 0.75*normalized;
+    div.style.background = `rgba(${20},${green},${blue},${alpha})`;
+    div.title = `${h}:00 — ${hourCounts[h]} active`;
+    hm.appendChild(div);
+  }
+
+  // Charts using Chart.js
+  // Cleanup existing charts if any
+  if(window._growthChart) window._growthChart.destroy();
+  if(window._roleChart) window._roleChart.destroy();
+  if(window._presenceChart) window._presenceChart.destroy();
+  if(window._ageChart) window._ageChart.destroy();
+  if(window._funnelChart) window._funnelChart.destroy();
+
+ const ctxG = document.getElementById('growthChart').getContext('2d');
+
+window._growthChart = new Chart(ctxG, {
+  type: 'line',
+  data: {
+    labels: labels,
+    datasets: [
+      {
+        label: 'New members (daily)',
+        data: counts,
+        fill: true,
+        tension: 0.3
+      }
+    ]
+  },
+  options: {
+    plugins: {
+      legend: {
+        display: false
+      }
+    },
+    scales: {
+      x: {
+        display: true
+      },
+      y: {
+        display: true,
+        beginAtZero: true
+      }
+    }
+  }
+});
+
+
+  const ctxR = document.getElementById('roleChart').getContext('2d');
+  window._roleChart = new Chart(ctxR, {
+    type:'doughnut',
+    data:{labels:roleLabels, datasets:[{data:roleValues}]},
+    options:{plugins:{legend:{position:'right'}}}
+  });
+
+  const ctxP = document.getElementById('presenceChart').getContext('2d');
+  window._presenceChart = new Chart(ctxP, {
+    type:'pie',
+    data:{labels:presLabels, datasets:[{data:presValues}]},
+    options:{plugins:{legend:{position:'right'}}}
+  });
+
+  const ctxA = document.getElementById('ageChart').getContext('2d');
+  window._ageChart = new Chart(ctxA, {
+    type:'bar',
+    data:{labels:Object.keys(ageBins), datasets:[{label:'accounts', data:Object.values(ageBins)}]},
+    options:{plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}}}
+  });
+
+  const ctxF = document.getElementById('funnelChart').getContext('2d');
+  // We'll render funnel as a horizontal bar descending
+  window._funnelChart = new Chart(ctxF, {
+    type:'bar',
+    data:{labels:['Joined','Passed Screening','Assigned Role','Active','Boosted'], datasets:[{label:'members',data:funnelData}]},
+    options:{indexAxis:'y', plugins:{legend:{display:false}}, scales:{x:{beginAtZero:true}}}
+  });
+
+  // boost table and other DOM updates already done
+}
+
+// initial render
+summarizeAndRender();
+
+// controls
+document.getElementById('regen').addEventListener('click',()=>{
+  const n = parseInt(document.getElementById('populationSize').value,10);
+  currentData = makeDataset(n);
+  summarizeAndRender();
+});
+document.getElementById('populationSize').addEventListener('change',()=>{
+  // no immediate regenerate until button clicked
+});
+document.getElementById('export').addEventListener('click',()=>{
+  const blob = new Blob([JSON.stringify(currentData, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'discord_members_sample.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+</script>
+</body>
+</html>
+

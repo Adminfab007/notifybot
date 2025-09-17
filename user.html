@@ -171,8 +171,12 @@ th, td {
         });
         const text = await res.text();
         const data = JSON.parse(text);
+        
+        
 
         if (data?.data) {
+          console.log(data.data);
+          
           currentUser = data.data; // Save for later use
           renderUserInfo(currentUser);
           renderTable(currentUser.guilds);
@@ -185,13 +189,57 @@ th, td {
       }
     }
 
+
+     async function fetchServerDetails() {
+      try {
+        const res = await fetch(`${API_BASE}/servers/moore/1269152744711782521/members`, {
+          headers: new Headers({
+            "Accept": "application/json",
+            "ngrok-skip-browser-warning": "69420"
+          })
+        });
+        const text = await res.text();
+        const data = JSON.parse(text);
+        
+        
+
+        if (data?.data) {
+          console.log(data.data);
+          
+          serverData = data.data; // Save for later use
+          serverData.members.forEach(user => {
+              if(user.presence=="Online"){
+          console.log(serverData.user);
+          
+
+
+         }
+         else{
+
+          console.log("Nothlng llle that");
+          
+         }
+            
+          });
+
+       
+        } else {
+          console.log("no members found");
+          ;
+        }
+      } catch (err) {
+        console.error('❌ Fetch failed:', err);
+        container.innerHTML = '<p style="color:red;">Failed to load members. Check console.</p>';
+      }
+    }
+
     // Render user details
     function renderUserInfo(user) {
     var sought=JSON.parse(localStorage.getItem("seeker"))
       container.innerHTML = `
-        <p><strong>ID:</strong> ${user._id}</p>
-        <p><strong>Username:</strong> ${user.username}</p>
-        <button onclick="compareWithSeeker()">Compare with Seeker(${sought.username})</button>
+        <p><strong>ID:</strong> ${user?._id}</p>
+        <p><strong>Username:</strong> ${user?.username}</p>
+        <button onclick="compareWithSeeker()">Compare with Seeker(${sought?.username})</button>
         <h3>Servers:</h3>
         <label for="filter">Filter by Members:</label>
         <select id="filter" onchange="filterServers(this.value)">
@@ -287,6 +335,7 @@ th, td {
     }
 
     fetchUserDetails(); // Load on page load
+    fetchServerDetails()
   </script>
 </body>
 </html>
