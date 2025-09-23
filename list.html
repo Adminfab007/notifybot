@@ -234,7 +234,11 @@
         return response.data;
       }
 
-
+function move(params) {
+localStorage.setItem("serverId",params)
+    location.href="./ammend.html"
+    
+}
 
       async function deleteServer(serverName,serverId){
         var usernamee = localStorage.getItem('username')
@@ -336,6 +340,9 @@ servers.map((server, index) => {
     const words = `
         <li class="list-group-item d-flex justify-content-between align-items-center">
             ${server.name}
+            <button class="btn btn-danger btn-sm" onclick="move('${server.id}')">
+                <i class="bi bi-eye"></i>
+            </button>
             <button class="btn btn-danger btn-sm" onclick="deleteServer('${server.name}', '${server.id}')">
                 <i class="bi bi-trash"></i>
             </button>

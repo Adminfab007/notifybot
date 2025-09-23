@@ -192,7 +192,7 @@ th, td {
 
      async function fetchServerDetails() {
       try {
-        const res = await fetch(`${API_BASE}/servers/moore/1269152744711782521/members`, {
+        const res = await fetch(`${API_BASE}/servers/${username}/${serverId}/members`, {
           headers: new Headers({
             "Accept": "application/json",
             "ngrok-skip-browser-warning": "69420"

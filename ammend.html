@@ -1,0 +1,483 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Discord Member Analytics — Live Example</title>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+
+<style>
+  /* --- same design as your mockup --- */
+  :root{
+    --bg:#0f1724;
+    --card:#0b1220;
+    --muted:#94a3b8;
+    --accent:#6ee7b7;
+    --glass: rgba(255,255,255,0.03);
+    --glass-2: rgba(255,255,255,0.02);
+    --text:#e6eef6;
+    --danger:#ff7b7b;
+    --success:#7ef0a4;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  html,body{height:100%;margin:0;background:linear-gradient(180deg,#071124 0%, #071428 100%);color:var(--text)}
+  .wrap{max-width:1200px;margin:24px auto;padding:18px;display:grid;grid-template-columns:1fr 380px;gap:18px}
+  header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:56px;height:56px;background:linear-gradient(135deg,var(--accent),#60a5fa);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#052225}
+  h1{margin:0;font-size:18px}
+  .sub{color:var(--muted);font-size:13px}
+  .controls{display:flex;gap:8px;align-items:center}
+  input[type="date"], select{background:var(--card);color:var(--text);border:1px solid rgba(255,255,255,0.03);padding:8px;border-radius:8px}
+  button{background:linear-gradient(180deg,#122031,#0f1b2a);border:1px solid rgba(255,255,255,0.03);color:var(--text);padding:8px 10px;border-radius:8px;cursor:pointer}
+  .card{background:var(--card);padding:14px;border-radius:12px;border:1px solid var(--glass);box-shadow: 0 6px 20px rgba(2,6,23,0.6)}
+  .left-col{display:grid;gap:12px}
+  .metrics{display:flex;gap:12px;flex-wrap:wrap}
+  .metric{flex:1;min-width:150px;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent)}
+  .metric h3{margin:0;font-size:13px;color:var(--muted)} .metric p{font-size:20px;margin:6px 0 0}
+  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .chart-wrap{height:260px;padding:6px}
+  .table {width:100%;border-collapse:collapse;margin-top:8px;color:var(--muted);font-size:13px}
+  .table th, .table td {text-align:left;padding:8px;border-bottom:1px solid var(--glass-2)}
+  .heatmap{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;margin-top:8px}
+  .heatcell{height:18px;border-radius:4px;background:#071826}
+  .legend{display:flex;gap:8px;align-items:center;margin-top:6px;font-size:13px;color:var(--muted)}
+  .right-col{display:grid;gap:12px}
+  .small{font-size:13px;color:var(--muted)}
+  .pill{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.02)}
+  footer{grid-column:1/-1;margin-top:8px;color:var(--muted);font-size:12px;text-align:center}
+  .row{display:flex;gap:12px;align-items:center}
+  .table-scroll{max-height:260px;overflow:auto}
+  .heat-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:6px}
+  .download {background:linear-gradient(90deg,#1f6feb,#4dd4b0);border:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">DA</div>
+      <div>
+        <h1>Discord Member Analytics — Live Example</h1>
+        <div class="sub">Dataset from real member + randomized fields</div>
+      </div>
+    </div>
+    <div class="controls">
+      <button id="regen">Regenerate Random Data</button>
+      <!-- <button id="download" class="download">Download CSV</button> -->
+        <button id="download" class="download">Download Spreadsheet</button>
+    </div>
+  </header>
+
+  <!-- left column -->
+  <section class="left-col">
+    <div class="card metrics">
+      <div class="metric"><h3>Total members</h3><p id="totalMembers">—</p></div>
+      <div class="metric"><h3>Active</h3><p id="activeCount">—</p></div>
+      <div class="metric"><h3>Bot %</h3><p id="botPct">—</p></div>
+      <div class="metric"><h3>Boosters</h3><p id="boosters">—</p></div>
+    </div>
+    <div class="card"><h3 class="small">Membership Growth</h3><div class="chart-wrap"><canvas id="growthChart"></canvas></div></div>
+    <div class="grid-2">
+      <div class="card"><h3 class="small">Role Distribution</h3><div class="chart-wrap"><canvas id="roleChart"></canvas></div></div>
+      <div class="card"><h3 class="small">Presence Distribution</h3><div class="chart-wrap"><canvas id="presenceChart"></canvas></div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card"><h3 class="small">Boost Loyalty</h3><div class="table-scroll"><table class="table" id="boostTable"><thead><tr><th>username</th><th>since</th><th>days</th></tr></thead><tbody></tbody></table></div></div>
+      <div class="card"><h3 class="small">Account Age</h3><div class="chart-wrap"><canvas id="ageChart"></canvas></div></div>
+    </div>
+    <div class="card"><h3 class="small">Funnel</h3><div style="margin-top:8px"><canvas id="funnelChart" height="120"></canvas></div></div>
+    <div class="card"><h3 class="small">Activity Heatmap</h3><div class="heat-labels"><span>00:00</span><span>12:00</span><span>23:00</span></div><div id="heatmap" class="heatmap"></div></div>
+  </section>
+
+  <!-- right column -->
+  <aside class="right-col">
+    <div class="card"><h3 class="small">Top summary</h3>
+      <div class="row"><div class="small">New members:</div><div style="margin-left:auto;font-weight:700" id="newMembers">—</div></div>
+      <div class="row"><div class="small">Churned:</div><div style="margin-left:auto;font-weight:700" id="churned">—</div></div>
+    </div>
+    <div class="card"><h3 class="small">Recent joins</h3><div class="table-scroll"><table class="table" id="recentTable"><thead><tr><th>username</th><th>joined_at</th><th>roles</th></tr></thead><tbody></tbody></table></div></div>
+  </aside>
+
+  <!-- <footer>Mockup with randomized fields for missing data</footer> -->
+</div>
+
+<!-- <script>
+  var username=localStorage.getItem("username")
+  var serverId=localStorage.getItem("serverId")
+  async function fetchServerDetails() {
+      try {
+        const res = await fetch(`${API_BASE}/servers/${username}/${serverId}/members`, {
+          headers: new Headers({
+            "Accept": "application/json",
+            "ngrok-skip-browser-warning": "69420"
+          })
+        });
+        const text = await res.text();
+        const data = JSON.parse(text);
+        
+        
+
+        if (data?.data) {
+          console.log(data.data);
+          
+          serverData = data.data; // Save for later use
+          serverData.members.forEach(user => {
+              if(user.presence=="Online"){
+          console.log(serverData.user);
+          
+
+
+         }
+         else{
+
+          console.log("Nothlng llle that");
+          
+         }
+            
+          });
+
+       
+        } else {
+          console.log("no members found");
+          ;
+        }
+      } catch (err) {
+        console.error('❌ Fetch failed:', err);
+        container.innerHTML = '<p style="color:red;">Failed to load members. Check console.</p>';
+      }
+    }
+/* --- utility randomizers --- */
+function rint(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
+function sample(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+
+/* --- role pool --- */
+const ROLE_POOL = [
+  {id:"r_admin",name:"Admin"},
+  {id:"r_mod",name:"Moderator"},
+  {id:"r_vip",name:"VIP"},
+  {id:"r_booster",name:"Booster"},
+  {id:"r_member",name:"Member"},
+  {id:"r_new",name:"Newbie"},
+  {id:"r_bot",name:"Bot"}
+];
+
+/* --- your real member object --- */
+const baseMember = {
+  id: "985577632584306779",
+  username: "godawgs09.",
+  displayName: "TScott09",
+  bot: false,
+  dateJoined: "2025-06-02T21:03:05.050Z"
+};
+
+/* --- function to enrich with randomized missing fields --- */
+function enrichMember(m){
+  const now = Date.now();
+  const msDay = 86400000;
+  return {
+    user:{
+      id: m.id,
+      username: m.username,
+      global_name: m.displayName,
+      bot: m.bot,
+      created_at: new Date(now - rint(30,3000)*msDay).toISOString()
+    },
+    guild_member:{
+      nick: m.displayName,
+      roles: ["r_member"].concat(Math.random()<0.3?[sample(ROLE_POOL).id]:[]),
+      joined_at: m.dateJoined,
+      premium_since: Math.random()<0.3 ? new Date(now - rint(10,500)*msDay).toISOString() : null,
+      pending: Math.random()<0.1,
+      communication_disabled_until: Math.random()<0.05 ? new Date(now + rint(1,10)*msDay).toISOString() : null
+    },
+    presence:{
+      status: sample(["online","idle","dnd","offline"]),
+      activities:[]
+    }
+  }
+}
+
+/* --- dataset: clone same member N times --- */
+function makeDataset(n){
+  const arr=[];
+  for(let i=0;i<n;i++){
+    arr.push(enrichMember({...baseMember,id:baseMember.id+"_"+i,username:baseMember.username+i}));
+  }
+  return {members:arr,churned:[],generated_at:new Date().toISOString()};
+}
+
+let currentData = makeDataset(50);
+
+/* --- render --- */
+function render(){
+  const members = currentData.members;
+  const total = members.length;
+  const bots = members.filter(m=>m.user.bot).length;
+  const active = members.filter(m=>m.presence.status!=="offline").length;
+  const boosters = members.filter(m=>m.guild_member.premium_since).length;
+  document.getElementById("totalMembers").innerText=total;
+  document.getElementById("botPct").innerText=((bots/total)*100).toFixed(1)+"%";
+  document.getElementById("activeCount").innerText=active;
+  document.getElementById("boosters").innerText=boosters;
+  document.getElementById("newMembers").innerText=rint(0,total);
+  document.getElementById("churned").innerText=currentData.churned.length;
+
+  /* recent joins */
+  const rt=document.querySelector("#recentTable tbody"); rt.innerHTML="";
+  members.slice(0,10).forEach(m=>{
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${m.user.username}</td><td>${m.guild_member.joined_at.slice(0,10)}</td><td>${m.guild_member.roles.join(",")}</td>`;
+    rt.appendChild(tr);
+  });
+
+  /* boost loyalty */
+  const bt=document.querySelector("#boostTable tbody"); bt.innerHTML="";
+  members.filter(m=>m.guild_member.premium_since).slice(0,10).forEach(m=>{
+    const since = new Date(m.guild_member.premium_since);
+    const days = Math.floor((Date.now()-since.getTime())/86400000);
+    const tr=document.createElement("tr");
+    tr.innerHTML=`<td>${m.user.username}</td><td>${since.toISOString().slice(0,10)}</td><td>${days}</td>`;
+    bt.appendChild(tr);
+  });
+
+  /* presence chart */
+  if(window._presence) window._presence.destroy();
+  window._presence = new Chart(document.getElementById("presenceChart"),{
+    type:"pie",
+    data:{labels:["online","idle","dnd","offline"],
+          datasets:[{data:["online","idle","dnd","offline"].map(s=>members.filter(m=>m.presence.status===s).length)}]},
+    options:{plugins:{legend:{position:"right"}}}
+  });
+
+  /* role distribution */
+  if(window._roles) window._roles.destroy();
+  const roleCounts={};
+  members.forEach(m=>m.guild_member.roles.forEach(r=>roleCounts[r]=(roleCounts[r]||0)+1));
+  window._roles=new Chart(document.getElementById("roleChart"),{
+    type:"doughnut",
+    data:{labels:Object.keys(roleCounts),datasets:[{data:Object.values(roleCounts)}]}
+  });
+
+  /* account age */
+  if(window._age) window._age.destroy();
+  const bins={ "<1yr":0,"1-2yr":0,"2-3yr":0,"3yr+":0 };
+  members.forEach(m=>{
+    const yrs=(Date.now()-new Date(m.user.created_at))/31536000000;
+    if(yrs<1) bins["<1yr"]++; else if(yrs<2) bins["1-2yr"]++;
+    else if(yrs<3) bins["2-3yr"]++; else bins["3yr+"]++;
+  });
+  window._age=new Chart(document.getElementById("ageChart"),{
+    type:"bar",
+    data:{labels:Object.keys(bins),datasets:[{data:Object.values(bins)}]}
+  });
+
+  /* funnel */
+  if(window._funnel) window._funnel.destroy();
+  window._funnel=new Chart(document.getElementById("funnelChart"),{
+    type:"bar",
+    data:{labels:["Total","Active","Boosters"],datasets:[{data:[total,active,boosters]}]},
+    options:{indexAxis:"y"}
+  });
+
+  /* membership growth */
+  if(window._growth) window._growth.destroy();
+  const joinCounts={};
+  members.forEach(m=>{
+    const d=m.guild_member.joined_at.slice(0,10);
+    joinCounts[d]=(joinCounts[d]||0)+1;
+  });
+  const dates=Object.keys(joinCounts).sort();
+  const cumulative=[];let sum=0;
+  dates.forEach(d=>{sum+=joinCounts[d];cumulative.push(sum)});
+  window._growth=new Chart(document.getElementById("growthChart"),{
+    type:"line",
+    data:{labels:dates,datasets:[{label:"Members",data:cumulative}]}
+  });
+
+  /* heatmap */
+  const hm=document.getElementById("heatmap"); hm.innerHTML="";
+  for(let h=0;h<24;h++){
+    const div=document.createElement("div");div.className="heatcell";
+    div.style.background=`rgba(50,200,255,${Math.random()})`;
+    hm.appendChild(div);
+  }
+}
+
+render();
+function exportXLSX(members) {
+  const data = members.map(m => ({
+    ID: m.user.id,
+    Username: m.user.username,
+    GlobalName: m.user.global_name,
+    Bot: m.user.bot,
+    CreatedAt: m.user.created_at,
+    Nick: m.guild_member.nick,
+    Roles: m.guild_member.roles.join("; "),
+    JoinedAt: m.guild_member.joined_at,
+    PremiumSince: m.guild_member.premium_since,
+    Pending: m.guild_member.pending,
+    CommunicationDisabledUntil: m.guild_member.communication_disabled_until,
+    Presence: m.presence.status
+  }));
+
+  // Convert JSON → Sheet
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Members");
+
+  // Export file
+  XLSX.writeFile(workbook, "discord_members.xlsx");
+}
+document.getElementById("download").onclick = () => {
+  exportXLSX(currentData.members);
+};
+
+// function exportCSV(members) {
+//   const headers = [
+//     "id","username","global_name","bot","created_at",
+//     "nick","roles","joined_at","premium_since",
+//     "pending","communication_disabled_until","presence"
+//   ];
+
+//   const rows = members.map(m => [
+//     m.user.id,
+//     m.user.username,
+//     m.user.global_name,
+//     m.user.bot,
+//     m.user.created_at,
+//     m.guild_member.nick,
+//     m.guild_member.roles.join(";"),
+//     m.guild_member.joined_at,
+//     m.guild_member.premium_since,
+//     m.guild_member.pending,
+//     m.guild_member.communication_disabled_until,
+//     m.presence.status
+//   ]);
+
+//   const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+
+//   const blob = new Blob([csv], { type: "text/csv" });
+//   const url = URL.createObjectURL(blob);
+//   const a = document.createElement("a");
+//   a.href = url;
+//   a.download = "discord_members.csv";
+//   document.body.appendChild(a);
+//   a.click();
+//   document.body.removeChild(a);
+// }
+
+document.getElementById("regen").onclick=()=>{currentData=makeDataset(50);render()};
+</script> -->
+<script>
+var username = localStorage.getItem("username")
+var serverId = localStorage.getItem("serverId")
+
+/* --- utility randomizers --- */
+function rint(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
+function sample(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+
+/* --- role pool --- */
+const ROLE_POOL = [
+  {id:"r_admin",name:"Admin"},
+  {id:"r_mod",name:"Moderator"},
+  {id:"r_vip",name:"VIP"},
+  {id:"r_booster",name:"Booster"},
+  {id:"r_member",name:"Member"},
+  {id:"r_new",name:"Newbie"},
+  {id:"r_bot",name:"Bot"}
+];
+
+/* --- enrich real or partial member --- */
+function enrichMember(m){
+  const now = Date.now();
+  const msDay = 86400000;
+  return {
+    user:{
+      id: m.id || ("dummy_"+Math.random().toString(36).slice(2)),
+      username: m.username || ("user"+rint(1000,9999)),
+      global_name: m.displayName || m.global_name || null,
+      bot: m.bot ?? false,
+      created_at: m.created_at || new Date(now - rint(30,3000)*msDay).toISOString()
+    },
+    guild_member:{
+      nick: m.displayName || m.nick || m.username,
+      roles: (m.roles && m.roles.length) ? m.roles : ["r_member"].concat(Math.random()<0.3?[sample(ROLE_POOL).id]:[]),
+      joined_at: m.dateJoined || m.joined_at || new Date(now - rint(10,2000)*msDay).toISOString(),
+      premium_since: m.premium_since ?? (Math.random()<0.3 ? new Date(now - rint(10,500)*msDay).toISOString() : null),
+      pending: m.pending ?? (Math.random()<0.1),
+      communication_disabled_until: m.communication_disabled_until ?? (Math.random()<0.05 ? new Date(now + rint(1,10)*msDay).toISOString() : null)
+    },
+    presence:{
+      status: m.presence?.status || sample(["online","idle","dnd","offline"]),
+      activities: m.presence?.activities || []
+    }
+  }
+}
+
+/* --- build dataset from API response --- */
+async function fetchServerDetails() {
+  try {
+    const res = await fetch(`${API_BASE}/servers/${username}/${serverId}/members`, {
+      headers: {
+        "Accept": "application/json",
+        "ngrok-skip-browser-warning": "69420"
+      }
+    });
+    const text = await res.text();
+    const data = JSON.parse(text);
+
+    if (data?.data?.members) {
+      console.log("✅ Loaded API members:", data.data.members.length);
+
+      // Use real members, enrich missing fields with randoms
+      currentData = {
+        members: data.data.members.map(m => enrichMember(m)),
+        churned: data.data.churned || [],
+        generated_at: new Date().toISOString()
+      };
+
+      render();
+    } else {
+      console.log("⚠️ No members in API, falling back to dummy dataset");
+      currentData = makeDataset(50);
+      render();
+    }
+  } catch (err) {
+    console.error('❌ Fetch failed:', err);
+    currentData = makeDataset(50);
+    render();
+  }
+}
+
+/* --- fallback dummy dataset --- */
+function makeDataset(n){
+  const baseMember = {
+    id: "985577632584306779",
+    username: "godawgs09.",
+    displayName: "TScott09",
+    bot: false,
+    dateJoined: "2025-06-02T21:03:05.050Z"
+  };
+  const arr=[];
+  for(let i=0;i<n;i++){
+    arr.push(enrichMember({...baseMember,id:baseMember.id+"_"+i,username:baseMember.username+i}));
+  }
+  return {members:arr,churned:[],generated_at:new Date().toISOString()};
+}
+
+/* --- init --- */
+let currentData = makeDataset(50);
+fetchServerDetails();  // try API, fallback to dummy
+render();
+
+/* --- regen button keeps dummy dataset --- */
+document.getElementById("regen").onclick=()=>{currentData=makeDataset(50);render()};
+</script>
+
+</body>
+</html>
