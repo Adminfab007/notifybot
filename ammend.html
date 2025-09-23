@@ -748,18 +748,18 @@ function enrichMember(m) {
   return {
     user: {
       id: m.id || ("u_" + Math.random().toString(36).slice(2)),
-      username: m.username || ("user" + rint(1000,9999)),
-      bot: m.bot ?? (Math.random()<0.1),
-      created_at: m.created_at || new Date(now - rint(365,3000)*msDay).toISOString()
+      username: m.username || m.displayName || ("Guest" + rint(100,999)),
+      bot: m.bot ?? (Math.random() < 0.1),
+      created_at: m.created_at || new Date(now - rint(365,3000) * msDay).toISOString()
     },
     guild_member: {
       nick: m.displayName || m.nick || m.username || "Guest" + rint(100,999),
       roles: (m.roles && m.roles.length)
         ? m.roles
-        : ["Member"].concat(Math.random()<0.2 ? [sample(ROLE_POOL)] : []),
-      joined_at: m.dateJoined || m.joined_at || new Date(now - rint(30,1500)*msDay).toISOString(),
-      premium_since: m.premiumSince || (Math.random()<0.2 ? new Date(now - rint(10,400)*msDay).toISOString() : null),
-      pending: m.pending ?? (Math.random()<0.05)
+        : ["Member"].concat(Math.random() < 0.2 ? [sample(ROLE_POOL)] : []),
+      joined_at: m.dateJoined || m.joined_at || new Date(now - rint(30,1500) * msDay).toISOString(),
+      premium_since: m.premiumSince || (Math.random() < 0.2 ? new Date(now - rint(10,400) * msDay).toISOString() : null),
+      pending: m.pending ?? (Math.random() < 0.05)
     },
     presence: {
       status: m.presence?.status || sample(PRESENCE_POOL),
@@ -767,6 +767,7 @@ function enrichMember(m) {
     }
   };
 }
+
 
 /* --- dummy fallback dataset --- */
 function makeDataset(n) {
