@@ -376,12 +376,53 @@ document.getElementById("download").onclick = () => {
 document.getElementById("regen").onclick=()=>{currentData=makeDataset(50);render()};
 </script> -->
 <script>
-var username = localStorage.getItem("username")
-var serverId = localStorage.getItem("serverId")
-var API_BASE="https://limitless-depths-22114-f87246627b20.herokuapp.com/api"
+var username = localStorage.getItem("username");
+var serverId = localStorage.getItem("serverId");
+var API_BASE = "https://limitless-depths-22114-f87246627b20.herokuapp.com/api";
+
 /* --- utility randomizers --- */
-function rint(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
-function sample(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+function rint(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
+function sample(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+/* --- role pool --- */
+const ROLE_POOL = [
+  {id:"r_admin",name:"Admin"},
+  {id:"r_mod",name:"Moderator"},
+  {id:"r_vip",name:"VIP"},
+  {id:"r_booster",name:"Booster"},
+  {id:"r_member",name:"Member"},
+  {id:"r_new",name:"Newbie"},
+  {id:"r_bot",name:"Bot"}
+];
+
+/* --- enrich real or partial member --- */
+function enrichMember(m) {
+  const now = Date.now();
+  const msDay = 86400000;
+  return {
+    user: {
+      id: m.id || ("dummy_" + Math.random().toString(36).slice(2)),
+      username: m.username || ("user" + rint(1000,9999)),
+      global_name: m.displayName || m.global_name || null,
+      bot: m.bot ?? false,
+      created_at: m.created_at || new Date(now - rint(30,3000)*msDay).toISOString()
+    },
+    guild_member: {
+      nick: m.displayName || m.nick || m.username,
+      roles: (m.roles && m.roles.length) ? m.roles : ["r_member"].concat(Math.random()<0.3 ? [sample(ROLE_POOL).id] : []),
+      joined_at: m.dateJoined || m.joined_at || new Date(now - rint(10,2000)*msDay).toISOString(),
+      premium_since: m.premiumSince || m.premium_since || (Math.random()<0.3 ? new Date(now - rint(10,500)*msDay).toISOString() : null),
+      pending: m.pending ?? (Math.random() < 0.1),
+      communication_disabled_until: m.communication_disabled_until ?? (Math.random()<0.05 ? new Date(now + rint(1,10)*msDay).toISOString() : null)
+    },
+    presence: {
+      status: m.presence?.status || sample(["online","idle","dnd","offline"]),
+      activities: m.presence?.activities || []
+    }
+  };
+}
+
+/* --- render into DOM --- */
 function render() {
   const container = document.getElementById("memberList");
   if (!container) {
@@ -400,7 +441,7 @@ function render() {
         <small class="text-muted">(${m.user.id})</small><br>
         Roles: ${m.guild_member.roles.join(", ")}
       </div>
-      <span class="badge bg-${m.presence.status === 'online' ? 'success' : 'secondary'}">
+      <span class="badge bg-${m.presence.status === "online" ? "success" : "secondary"}">
         ${m.presence.status}
       </span>
     `;
@@ -409,61 +450,38 @@ function render() {
 
   console.log(`👥 Rendered ${currentData.members.length} members`);
 }
-/* --- role pool --- */
-const ROLE_POOL = [
-  {id:"r_admin",name:"Admin"},
-  {id:"r_mod",name:"Moderator"},
-  {id:"r_vip",name:"VIP"},
-  {id:"r_booster",name:"Booster"},
-  {id:"r_member",name:"Member"},
-  {id:"r_new",name:"Newbie"},
-  {id:"r_bot",name:"Bot"}
-];
-
-/* --- enrich real or partial member --- */
-function enrichMember(m){
-  const now = Date.now();
-  const msDay = 86400000;
-  return {
-    user:{
-      id: m.id || ("dummy_"+Math.random().toString(36).slice(2)),
-      username: m.username || ("user"+rint(1000,9999)),
-      global_name: m.displayName || m.global_name || null,
-      bot: m.bot ?? false,
-      created_at: m.created_at || new Date(now - rint(30,3000)*msDay).toISOString()
-    },
-    guild_member:{
-      nick: m.displayName || m.nick || m.username,
-      roles: (m.roles && m.roles.length) ? m.roles : ["r_member"].concat(Math.random()<0.3?[sample(ROLE_POOL).id]:[]),
-      joined_at: m.dateJoined || m.joined_at || new Date(now - rint(10,2000)*msDay).toISOString(),
-      premium_since: m.premium_since ?? (Math.random()<0.3 ? new Date(now - rint(10,500)*msDay).toISOString() : null),
-      pending: m.pending ?? (Math.random()<0.1),
-      communication_disabled_until: m.communication_disabled_until ?? (Math.random()<0.05 ? new Date(now + rint(1,10)*msDay).toISOString() : null)
-    },
-    presence:{
-      status: m.presence?.status || sample(["online","idle","dnd","offline"]),
-      activities: m.presence?.activities || []
-    }
-  }
-}
 
 /* --- build dataset from API response --- */
 async function fetchServerDetails() {
   try {
+    if (!username || !serverId) {
+      console.warn("⚠️ Missing username/serverId in localStorage, using dummy data");
+      currentData = makeDataset(50);
+      render();
+      return;
+    }
+
     const res = await fetch(`${API_BASE}/servers/${username}/${serverId}/members`, {
       headers: {
         "Accept": "application/json",
         "ngrok-skip-browser-warning": "69420"
       }
     });
+
     const text = await res.text();
-    const data = JSON.parse(text);
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      console.error("❌ Response was not JSON:", text.slice(0, 200));
+      currentData = makeDataset(50);
+      render();
+      return;
+    }
 
     if (data?.data?.members) {
       console.log("✅ Loaded API members:", data.data.members.length);
-console.log(data.data.members);
 
-      // Use real members, enrich missing fields with randoms
       currentData = {
         members: data.data.members.map(m => enrichMember(m)),
         churned: data.data.churned || [],
@@ -472,19 +490,19 @@ console.log(data.data.members);
 
       render();
     } else {
-      console.log("⚠️ No members in API, falling back to dummy dataset");
+      console.log("⚠️ No members in API, using dummy dataset");
       currentData = makeDataset(50);
       render();
     }
   } catch (err) {
-    console.error('❌ Fetch failed:', err);
+    console.error("❌ Fetch failed:", err);
     currentData = makeDataset(50);
     render();
   }
 }
 
 /* --- fallback dummy dataset --- */
-function makeDataset(n){
+function makeDataset(n) {
   const baseMember = {
     id: "985577632584306779",
     username: "godawgs09.",
@@ -492,11 +510,15 @@ function makeDataset(n){
     bot: false,
     dateJoined: "2025-06-02T21:03:05.050Z"
   };
-  const arr=[];
-  for(let i=0;i<n;i++){
-    arr.push(enrichMember({...baseMember,id:baseMember.id+"_"+i,username:baseMember.username+i}));
+  const arr = [];
+  for (let i=0; i<n; i++) {
+    arr.push(enrichMember({
+      ...baseMember,
+      id: baseMember.id + "_" + i,
+      username: baseMember.username + i
+    }));
   }
-  return {members:arr,churned:[],generated_at:new Date().toISOString()};
+  return {members: arr, churned: [], generated_at: new Date().toISOString()};
 }
 
 /* --- init --- */
@@ -505,7 +527,10 @@ fetchServerDetails();  // try API, fallback to dummy
 render();
 
 /* --- regen button keeps dummy dataset --- */
-document.getElementById("regen").onclick=()=>{currentData=makeDataset(50);render()};
+const regenBtn = document.getElementById("regen");
+if (regenBtn) {
+  regenBtn.onclick = () => { currentData = makeDataset(50); render(); };
+}
 </script>
 
 </body>
