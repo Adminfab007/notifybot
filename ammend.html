@@ -805,6 +805,8 @@ async function fetchServerDetails() {
 
     if (data?.data?.members) {
       console.log("✅ Got API members:", data.data.members.length);
+      console.log(data.data.members);
+      
       return {
         members: data.data.members.map(enrichMember),
         churned: data.data.churned || [],
