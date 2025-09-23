@@ -200,7 +200,7 @@ function enrichMember(m){
       communication_disabled_until: Math.random()<0.05 ? new Date(now + rint(1,10)*msDay).toISOString() : null
     },
     presence:{
-      status: sample(["online","idle","dnd","offline"]),
+      status: sample(["online","idle","offline"]),
       activities:[]
     }
   }
@@ -253,8 +253,8 @@ function render(){
   if(window._presence) window._presence.destroy();
   window._presence = new Chart(document.getElementById("presenceChart"),{
     type:"pie",
-    data:{labels:["online","idle","dnd","offline"],
-          datasets:[{data:["online","idle","dnd","offline"].map(s=>members.filter(m=>m.presence.status===s).length)}]},
+    data:{labels:["online","idle","offline"],
+          datasets:[{data:["online","idle","offline"].map(s=>members.filter(m=>m.presence.status===s).length)}]},
     options:{plugins:{legend:{position:"right"}}}
   });
 
@@ -418,7 +418,7 @@ function enrichMember(m) {
       communication_disabled_until: m.communication_disabled_until ?? (Math.random()<0.05 ? new Date(now + rint(1,10)*msDay).toISOString() : null)
     },
     presence: {
-      status: m.presence?.status || sample(["online","idle","dnd","offline"]),
+      status: m.presence?.status || sample(["online","idle","offline"]),
       activities: m.presence?.activities || []
     }
   };
@@ -542,7 +542,7 @@ function sample(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 /* --- role & presence pool --- */
 const ROLE_POOL = ["Admin", "Moderator", "VIP", "Booster", "Member", "Newbie", "Bot"];
-const PRESENCE_POOL = ["online","idle","dnd","offline"];
+const PRESENCE_POOL = ["online","idle","offline"];
 
 /* --- dummy dataset --- */
 function makeDataset(n) {
@@ -739,7 +739,7 @@ function sample(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 
 /* --- pools --- */
 const ROLE_POOL = ["Admin","Moderator","VIP","Booster","Member","Newbie","Bot"];
-const PRESENCE_POOL = ["online","idle","dnd","offline"];
+const PRESENCE_POOL = ["online","idle","offline"];
 
 /* --- enrich API member (patch missing fields) --- */
 function enrichMember(m) {
