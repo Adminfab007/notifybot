@@ -461,6 +461,7 @@ async function fetchServerDetails() {
 
     if (data?.data?.members) {
       console.log("✅ Loaded API members:", data.data.members.length);
+console.log(data.data.members);
 
       // Use real members, enrich missing fields with randoms
       currentData = {
