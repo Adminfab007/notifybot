@@ -1019,7 +1019,7 @@ function exportCSV(members) {
     m.user.global_name || "",
     m.user.bot ? "Yes" : "No",
     m.user.created_at,
-    m.guild_member.nick,
+    m.displayName,
     (m.guild_member.roles || []).join(";"),
     m.guild_member.joined_at,
     m.guild_member.premium_since || "",
