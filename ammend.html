@@ -70,6 +70,8 @@
       <!-- <button id="regen">Regenerate Data</button> -->
       <!-- <button id="download" class="download">Download CSV</button> -->
         <button id="download" class="download">Download Spreadsheet</button>
+        <!-- New button for bots -->
+<button id="downloadBots" class="btn btn-warning">Download Bots Only</button>
     </div>
   </header>
 
@@ -1039,6 +1041,47 @@ function exportCSV(members) {
   a.click();
   document.body.removeChild(a);
 }
+
+function exportBotsXLSX(members) {
+  // filter only bots
+  const bots = members.filter(m => m.user.bot);
+
+  // map same structure as exportXLSX
+  const data = bots.map(m => ({
+    ID: m.user.id,
+    Username: m.user.username,
+    GlobalName: m.user.global_name || "",
+    Bot: "Yes",  // always bots
+    CreatedAt: m.user.created_at,
+    Nick: m.guild_member?.nick || "",
+    Roles: (m.guild_member?.roles || []).join("; "),
+    JoinedAt: m.guild_member?.joined_at || "",
+    PremiumSince: m.guild_member?.premium_since || "",
+    Pending: m.guild_member?.pending ? "Yes" : "No",
+    CommunicationDisabledUntil: m.guild_member?.communication_disabled_until || "",
+    Presence: m.presence?.status || ""
+  }));
+
+  if (data.length === 0) {
+    alert("No bots found in the server.");
+    return;
+  }
+
+  // Convert JSON → Sheet
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Bots");
+
+  // Export file
+  XLSX.writeFile(workbook, "discord_bots.xlsx");
+}
+
+// Example: bind to a new button
+document.getElementById("downloadBots").onclick = () => {
+  exportBotsXLSX(currentData.members);
+};
+
+
 </script>
 
 </body>
