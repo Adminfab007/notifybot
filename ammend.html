@@ -67,7 +67,7 @@
       </div>
     </div>
     <div class="controls">
-      <button id="regen">Regenerate Data</button>
+      <!-- <button id="regen">Regenerate Data</button> -->
       <!-- <button id="download" class="download">Download CSV</button> -->
         <button id="download" class="download">Download Spreadsheet</button>
     </div>
@@ -967,11 +967,76 @@ let currentData;
   renderAll(currentData);
 })();
 
+
 /* --- regen --- */
 document.getElementById("regen").onclick=async()=>{
   currentData = await fetchServerDetails();
   renderAll(currentData);
 };
+</script>
+<script>
+function exportXLSX(members) {
+  const data = members.map(m => ({
+    ID: m.user.id,
+    Username: m.user.username,
+    GlobalName: m.user.global_name || "",
+    Bot: m.user.bot ? "Yes" : "No",
+    CreatedAt: m.user.created_at,
+    Nick: m.guild_member.nick,
+    Roles: (m.guild_member.roles || []).join("; "),
+    JoinedAt: m.guild_member.joined_at,
+    PremiumSince: m.guild_member.premium_since || "",
+    Pending: m.guild_member.pending ? "Yes" : "No",
+    CommunicationDisabledUntil: m.guild_member.communication_disabled_until || "",
+    Presence: m.presence.status
+  }));
+
+  // Convert JSON → Sheet
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Members");
+
+  // Export file
+  XLSX.writeFile(workbook, "discord_members.xlsx");
+}
+
+document.getElementById("download").onclick = () => {
+  exportXLSX(currentData.members);
+};
+
+function exportCSV(members) {
+  const headers = [
+    "id","username","global_name","bot","created_at",
+    "nick","roles","joined_at","premium_since",
+    "pending","communication_disabled_until","presence"
+  ];
+
+  const rows = members.map(m => [
+    m.user.id,
+    m.user.username,
+    m.user.global_name || "",
+    m.user.bot ? "Yes" : "No",
+    m.user.created_at,
+    m.guild_member.nick,
+    (m.guild_member.roles || []).join(";"),
+    m.guild_member.joined_at,
+    m.guild_member.premium_since || "",
+    m.guild_member.pending ? "Yes" : "No",
+    m.guild_member.communication_disabled_until || "",
+    m.presence.status
+  ]);
+
+  const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "discord_members.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+}
 </script>
 
 </body>
