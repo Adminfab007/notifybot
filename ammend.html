@@ -828,7 +828,7 @@ function renderAll(data) {
   document.getElementById("totalMembers").textContent = members.length;
   document.getElementById("activeCount").textContent = members.filter(m=>m.presence.status!=="offline").length;
   const botCount = members.filter(m=>m.user.bot).length;
-  document.getElementById("botPct").textContent = ((botCount/members.length)*100).toFixed(1)+"%";
+  document.getElementById("botPct").textContent = ((botCount/members.length)*100).toFixed(1)+"%"+"("+botCount+")";
   const boosters = members.filter(m=>m.guild_member.premium_since).length;
   document.getElementById("boosters").textContent = boosters;
 
