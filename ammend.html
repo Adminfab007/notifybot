@@ -380,7 +380,33 @@ var API_BASE="https://limitless-depths-22114-f87246627b20.herokuapp.com"
 /* --- utility randomizers --- */
 function rint(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
 function sample(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+function render() {
+  const container = document.getElementById("memberList");
+  if (!container) {
+    console.warn("⚠️ No #memberList container found in DOM");
+    return;
+  }
 
+  container.innerHTML = ""; // clear before re-render
+
+  currentData.members.forEach(m => {
+    const li = document.createElement("li");
+    li.className = "list-group-item d-flex justify-content-between align-items-center";
+    li.innerHTML = `
+      <div>
+        <strong>${m.user.username}</strong>
+        <small class="text-muted">(${m.user.id})</small><br>
+        Roles: ${m.guild_member.roles.join(", ")}
+      </div>
+      <span class="badge bg-${m.presence.status === 'online' ? 'success' : 'secondary'}">
+        ${m.presence.status}
+      </span>
+    `;
+    container.appendChild(li);
+  });
+
+  console.log(`👥 Rendered ${currentData.members.length} members`);
+}
 /* --- role pool --- */
 const ROLE_POOL = [
   {id:"r_admin",name:"Admin"},
