@@ -101,7 +101,7 @@
       <div class="row"><div class="small">Churned:</div><div style="margin-left:auto;font-weight:700" id="churned">—</div></div>
     </div>
     <div class="card"><h3 class="small">Recent joins</h3><div class="table-scroll"><table class="table" id="recentTable"><thead><tr><th>username</th><th>joined_at</th><th>roles</th></tr></thead><tbody></tbody></table></div></div>
- <ul id="memberList" class="list-group"></ul>
+ <!-- <ul id="memberList" class="list-group"></ul> -->
 
   </aside>
 
@@ -856,22 +856,22 @@ function renderAll(data) {
   });
 
   // member list
-  const memberList=document.getElementById("memberList");
-  memberList.innerHTML="";
-  members.forEach(m=>{
-    const li=document.createElement("li");
-    li.className="list-group-item d-flex justify-content-between align-items-center";
-    li.innerHTML=`
-      <div>
-        <strong>${m.user.username}</strong>
-        <small class="text-muted">(${m.user.id})</small><br>
-        Roles: ${m.guild_member.roles.join(", ")}
-      </div>
-      <span class="badge bg-${m.presence.status==="online"?"success":"secondary"}">
-        ${m.presence.status}
-      </span>`;
-    memberList.appendChild(li);
-  });
+  // const memberList=document.getElementById("memberList");
+  // memberList.innerHTML="";
+  // members.forEach(m=>{
+  //   const li=document.createElement("li");
+  //   li.className="list-group-item d-flex justify-content-between align-items-center";
+  //   li.innerHTML=`
+  //     <div>
+  //       <strong>${m.user.username}</strong>
+  //       <small class="text-muted">(${m.user.id})</small><br>
+  //       Roles: ${m.guild_member.roles.join(", ")}
+  //     </div>
+  //     <span class="badge bg-${m.presence.status==="online"?"success":"secondary"}">
+  //       ${m.presence.status}
+  //     </span>`;
+  //   memberList.appendChild(li);
+  // });
 
   renderCharts(data);
 }
