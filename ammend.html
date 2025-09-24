@@ -730,7 +730,6 @@ document.getElementById("regen").onclick = () => {
   renderAll(currentData);
 };
 </script> -->
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 /* --- util randoms --- */
@@ -741,33 +740,33 @@ function sample(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
 const ROLE_POOL = ["Admin","Moderator","VIP","Booster","Member","Newbie","Bot"];
 const PRESENCE_POOL = ["online","idle","offline"];
 
-/* --- enrich API member (patch missing fields) --- */
-function enrichMember(m) {
+/* --- enrich API member (preserve API data, only fake if dummy) --- */
+function enrichMember(m, isDummy = false) {
   const now = Date.now();
   const msDay = 86400000;
+
   return {
     user: {
-      id: m.id || ("u_" + Math.random().toString(36).slice(2)),
-      username: m.username || m.displayName || ("Guest" + rint(100,999)),
-      bot: m.bot ?? (Math.random() < 0.1),
+      id: m.id || (isDummy ? ("u_" + Math.random().toString(36).slice(2)) : ""),
+      username: m.username || m.displayName || (isDummy ? "Guest" + rint(100,999) : ""),
+      bot: m.bot ?? false,
       created_at: m.created_at || new Date(now - rint(365,3000) * msDay).toISOString()
     },
     guild_member: {
-      nick: m.displayName || m.nick || m.username || "Guest" + rint(100,999),
+      nick: m.displayName || m.nick || m.username || (isDummy ? "Guest" + rint(100,999) : ""),
       roles: (m.roles && m.roles.length)
         ? m.roles
-        : ["Member"].concat(Math.random() < 0.2 ? [sample(ROLE_POOL)] : []),
+        : (isDummy ? ["Member"].concat(Math.random() < 0.2 ? [sample(ROLE_POOL)] : []) : ["Member"]),
       joined_at: m.dateJoined || m.joined_at || new Date(now - rint(30,1500) * msDay).toISOString(),
-      premium_since: m.premiumSince || (Math.random() < 0.2 ? new Date(now - rint(10,400) * msDay).toISOString() : null),
-      pending: m.pending ?? (Math.random() < 0.05)
+      premium_since: m.premiumSince || null,
+      pending: m.pending ?? false
     },
     presence: {
-      status: m.presence?.status || sample(PRESENCE_POOL),
+      status: m.presence?.status || (isDummy ? sample(PRESENCE_POOL) : "offline"),
       activities: m.presence?.activities || []
     }
   };
 }
-
 
 /* --- dummy fallback dataset --- */
 function makeDataset(n) {
@@ -776,7 +775,7 @@ function makeDataset(n) {
     arr.push(enrichMember({
       id:"dummy"+i,
       username:"user"+i
-    }));
+    }, true)); // ✅ mark as dummy
   }
   return {members:arr,churned:[],generated_at:new Date().toISOString()};
 }
@@ -811,7 +810,7 @@ async function fetchServerDetails() {
       console.log(data.data.members);
       
       return {
-        members: data.data.members.map(enrichMember),
+        members: data.data.members.map(m => enrichMember(m, false)), // ✅ real mode
         churned: data.data.churned || [],
         generated_at: new Date().toISOString()
       };
@@ -860,33 +859,14 @@ function renderAll(data) {
     boostTable.appendChild(tr);
   });
 
-  // member list
-  // const memberList=document.getElementById("memberList");
-  // memberList.innerHTML="";
-  // members.forEach(m=>{
-  //   const li=document.createElement("li");
-  //   li.className="list-group-item d-flex justify-content-between align-items-center";
-  //   li.innerHTML=`
-  //     <div>
-  //       <strong>${m.user.username}</strong>
-  //       <small class="text-muted">(${m.user.id})</small><br>
-  //       Roles: ${m.guild_member.roles.join(", ")}
-  //     </div>
-  //     <span class="badge bg-${m.presence.status==="online"?"success":"secondary"}">
-  //       ${m.presence.status}
-  //     </span>`;
-  //   memberList.appendChild(li);
-  // });
-
   renderCharts(data);
 }
 
-/* --- charts (same as earlier) --- */
+/* --- charts (unchanged) --- */
 let charts={};
 function renderCharts(data){
   const members=data.members;
 
-  /* --- Role Distribution --- */
   let roleCounts={}; ROLE_POOL.forEach(r=>roleCounts[r]=0);
   members.forEach(m=>m.guild_member.roles.forEach(r=>{
     if(roleCounts[r]!=null) roleCounts[r]++
@@ -897,7 +877,6 @@ function renderCharts(data){
     data:{labels:Object.keys(roleCounts),datasets:[{data:Object.values(roleCounts)}]}
   });
 
-  /* --- Presence Distribution --- */
   let presCounts={online:0,idle:0,dnd:0,offline:0};
   members.forEach(m=>presCounts[m.presence.status]++);
   charts.pres?.destroy();
@@ -906,15 +885,14 @@ function renderCharts(data){
     data:{labels:Object.keys(presCounts),datasets:[{data:Object.values(presCounts)}]}
   });
 
-  /* --- Membership Growth (line chart by join date) --- */
   let growthMap={};
   members.forEach(m=>{
     const d=new Date(m.guild_member.joined_at).toISOString().slice(0,10);
     growthMap[d]=(growthMap[d]||0)+1;
   });
- const dates = Object.keys(growthMap).sort();
-let running = 0;
-const counts = dates.map(d => running += growthMap[d]);
+  const dates = Object.keys(growthMap).sort();
+  let running = 0;
+  const counts = dates.map(d => running += growthMap[d]);
 
   charts.growth?.destroy();
   charts.growth=new Chart(document.getElementById("growthChart"),{
@@ -922,7 +900,6 @@ const counts = dates.map(d => running += growthMap[d]);
     data:{labels:dates,datasets:[{label:"Total Members",data:counts,fill:true}]}
   });
 
-  /* --- Account Age (histogram of created_at) --- */
   let ageBuckets={"<1yr":0,"1-2yr":0,"2-3yr":0,"3yr+":0};
   members.forEach(m=>{
     const ageYears=(Date.now()-new Date(m.user.created_at))/31536000000;
@@ -937,10 +914,9 @@ const counts = dates.map(d => running += growthMap[d]);
     data:{labels:Object.keys(ageBuckets),datasets:[{data:Object.values(ageBuckets)}]}
   });
 
-  /* --- Funnel (new vs active vs retained) --- */
   let total=members.length;
   let active=members.filter(m=>m.presence.status!=="offline").length;
-  let retained=Math.floor(active*0.7); // fake retention approx
+  let retained=Math.floor(active*0.7);
   charts.funnel?.destroy();
   charts.funnel=new Chart(document.getElementById("funnelChart"),{
     type:"bar",
@@ -951,10 +927,8 @@ const counts = dates.map(d => running += growthMap[d]);
     options:{indexAxis:"y"}
   });
 
-  /* --- Activity Heatmap --- */
   const heatmap=document.getElementById("heatmap");
   heatmap.innerHTML="";
-  // fake hourly distribution
   let hours=new Array(24).fill(0);
   members.forEach(()=>{ hours[rint(0,23)]++; });
   hours.forEach((val,i)=>{
@@ -972,118 +946,12 @@ let currentData;
   renderAll(currentData);
 })();
 
-
-/* --- regen --- */
 document.getElementById("regen").onclick=async()=>{
   currentData = await fetchServerDetails();
   renderAll(currentData);
 };
 </script>
-<script>
-function exportXLSX(members) {
-  const data = members.map(m => ({
-    ID: m.user.id,
-    Username: m.user.username,
-    GlobalName: m.user.global_name || "",
-    Bot: m.user.bot ? "Yes" : "No",
-    CreatedAt: m.user.created_at,
-    Nick: m.guild_member.nick,
-    Roles: (m.guild_member.roles || []).join("; "),
-    JoinedAt: m.guild_member.joined_at,
-    PremiumSince: m.guild_member.premium_since || "",
-    Pending: m.guild_member.pending ? "Yes" : "No",
-    CommunicationDisabledUntil: m.guild_member.communication_disabled_until || "",
-    Presence: m.presence.status
-  }));
 
-  // Convert JSON → Sheet
-  const worksheet = XLSX.utils.json_to_sheet(data);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Members");
-
-  // Export file
-  XLSX.writeFile(workbook, "discord_members.xlsx");
-}
-
-document.getElementById("download").onclick = () => {
-  exportXLSX(currentData.members);
-};
-
-function exportCSV(members) {
-  const headers = [
-    "id","username","global_name","bot","created_at",
-    "nick","roles","joined_at","premium_since",
-    "pending","communication_disabled_until","presence"
-  ];
-
-  const rows = members.map(m => [
-    m.user.id,
-    m.user.username,
-    m.user.global_name || "",
-    m.user.bot ? "Yes" : "No",
-    m.user.created_at,
-    m.displayName,
-    (m.guild_member.roles || []).join(";"),
-    m.guild_member.joined_at,
-    m.guild_member.premium_since || "",
-    m.guild_member.pending ? "Yes" : "No",
-    m.guild_member.communication_disabled_until || "",
-    m.presence.status
-  ]);
-
-  const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-
-  const blob = new Blob([csv], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "discord_members.csv";
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-
-function exportBotsXLSX(members) {
-  // filter only bots
-  const bots = members.filter(m => m.user.bot);
-
-  // map same structure as exportXLSX
-  const data = bots.map(m => ({
-    ID: m.user.id,
-    Username: m.user.username,
-    GlobalName: m.user.global_name || "",
-    Bot: "Yes",  // always bots
-    CreatedAt: m.user.created_at,
-    Nick: m.guild_member?.nick || "",
-    Roles: (m.guild_member?.roles || []).join("; "),
-    JoinedAt: m.guild_member?.joined_at || "",
-    PremiumSince: m.guild_member?.premium_since || "",
-    Pending: m.guild_member?.pending ? "Yes" : "No",
-    CommunicationDisabledUntil: m.guild_member?.communication_disabled_until || "",
-    Presence: m.presence?.status || ""
-  }));
-
-  if (data.length === 0) {
-    alert("No bots found in the server.");
-    return;
-  }
-
-  // Convert JSON → Sheet
-  const worksheet = XLSX.utils.json_to_sheet(data);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Bots");
-
-  // Export file
-  XLSX.writeFile(workbook, "discord_bots.xlsx");
-}
-
-// Example: bind to a new button
-document.getElementById("downloadBots").onclick = () => {
-  exportBotsXLSX(currentData.members);
-};
-
-
-</script>
 
 </body>
 </html>
