@@ -786,7 +786,7 @@ document.getElementById("regen").onclick = () => {
 <script>
 /* --- util randoms --- */
 function rint(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
-function sample(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function sample(arr) { return Math.floor(Math.random() * arr.length) >= 0 ? arr[Math.floor(Math.random() * arr.length)] : null; }
 
 /* --- pools --- */
 const ROLE_POOL = ["Admin","Moderator","VIP","Booster","Member","Newbie","Bot"];
@@ -794,42 +794,42 @@ const PRESENCE_POOL = ["online","idle","offline"];
 
 /* --- enrich API member (preserve API data, only fake if dummy) --- */
 function enrichMember(m, isDummy = false) {
-  const now = Date.now();
-  const msDay = 86400000;
+  try {
+    const now = Date.now();
+    const msDay = 86400000;
 
-  return {
-    user: {
-      id: m.id || (isDummy ? ("u_" + Math.random().toString(36).slice(2)) : ""),
-      username: m.username || m.displayName || (isDummy ? "Guest" + rint(100,999) : ""),
-      bot: m.bot ?? false,
-      created_at: m.created_at || new Date(now - rint(365,3000) * msDay).toISOString()
-    },
-    guild_member: {
-      nick: m.displayName || m.nick || m.username || (isDummy ? "Guest" + rint(100,999) : ""),
-      roles: (m.roles && m.roles.length)
-        ? m.roles
-        : (isDummy ? ["Member"].concat(Math.random() < 0.2 ? [sample(ROLE_POOL)] : []) : ["Member"]),
-      joined_at: m.dateJoined || m.joined_at || new Date(now - rint(30,1500) * msDay).toISOString(),
-      premium_since: m.premiumSince || null,
-      pending: m.pending ?? false
-    },
-    presence: {
-      status: m.presence?.status || (isDummy ? sample(PRESENCE_POOL) : "offline"),
-      activities: m.presence?.activities || []
-    }
-  };
+    return {
+      user: {
+        id: m.id || (isDummy ? ("u_" + Math.random().toString(36).slice(2)) : ""),
+        username: m.username || m.displayName || (isDummy ? "Guest" + rint(100,999) : ""),
+        bot: m.bot ?? false,
+        created_at: m.created_at || new Date(now - rint(365,3000) * msDay).toISOString()
+      },
+      guild_member: {
+        nick: m.displayName || m.nick || m.username || (isDummy ? "Guest" + rint(100,999) : ""),
+        roles: (m.roles && m.roles.length)
+          ? m.roles
+          : (isDummy ? ["Member"].concat(Math.random() < 0.2 ? [sample(ROLE_POOL)] : []) : ["Member"]),
+        joined_at: m.dateJoined || m.joined_at || new Date(now - rint(30,1500) * msDay).toISOString(),
+        premium_since: m.premiumSince || null,
+        pending: m.pending ?? false
+      },
+      presence: {
+        status: m.presence?.status || (isDummy ? sample(PRESENCE_POOL) : "offline"),
+        activities: m.presence?.activities || []
+      }
+    };
+  } catch (err) {
+    console.warn("⚠️ enrichMember failed:", err.message);
+    return null;
+  }
 }
 
 /* --- dummy fallback dataset --- */
 function makeDataset(n) {
   const arr = [];
-  for (let i=0;i<n;i++) {
-    arr.push(enrichMember({
-      id:"dummy"+i,
-      username:"user"+i
-    }, true)); // ✅ mark as dummy
-  }
-  return {members:arr,churned:[],generated_at:new Date().toISOString()};
+  for (let i = 0; i < n; i++) arr.push(enrichMember({ id:"dummy"+i, username:"user"+i }, true));
+  return { members: arr.filter(Boolean), churned: [], generated_at: new Date().toISOString() };
 }
 
 /* --- API fetch --- */
@@ -840,169 +840,215 @@ async function fetchServerDetails() {
 
   try {
     if (!username || !serverId) {
-      console.warn("⚠️ No username/serverId, fallback to dummy");
+      console.warn("⚠️ Missing username/serverId — using dummy data.");
       return makeDataset(50);
     }
 
     const res = await fetch(`${API_BASE}/servers/${username}/${serverId}/members`, {
-      headers: {"Accept":"application/json","ngrok-skip-browser-warning":"69420"}
+      headers: { "Accept":"application/json","ngrok-skip-browser-warning":"69420" }
     });
 
     const text = await res.text();
     let data;
     try {
       data = JSON.parse(text);
-    } catch(e) {
-      console.error("❌ Invalid JSON:", text.slice(0,200));
+    } catch (e) {
+      console.error("❌ Invalid JSON from API:", text.slice(0,200));
       return makeDataset(50);
     }
 
-    if (data?.data?.members) {
-      console.log("✅ Got API members:", data.data.members.length);
-      console.log(data.data.members);
-      
+    if (data?.data?.members?.length) {
+      console.log("✅ Loaded API members:", data.data.members.length);
       return {
-        members: data.data.members.map(m => enrichMember(m, false)), // ✅ real mode
+        members: data.data.members.map(m => enrichMember(m, false)).filter(Boolean),
         churned: data.data.churned || [],
         generated_at: new Date().toISOString()
       };
     } else {
-      console.warn("⚠️ No members in API, fallback to dummy");
+      console.warn("⚠️ API returned no members — fallback to dummy.");
       return makeDataset(50);
     }
-  } catch(err) {
-    console.error("❌ Fetch failed:", err);
+  } catch (err) {
+    console.error("❌ Fetch failed:", err.message);
     return makeDataset(50);
   }
 }
 
-/* --- render tables, metrics, charts --- */
+/* --- renderAll with guards --- */
 function renderAll(data) {
-  const members = data.members;
+  try {
+    const members = data.members || [];
 
-  // metrics
-  document.getElementById("totalMembers").textContent = members.length;
-  document.getElementById("activeCount").textContent = members.filter(m=>m.presence.status!=="offline").length;
-  const botCount = members.filter(m=>m.user.bot).length;
-  document.getElementById("botPct").textContent = ((botCount/members.length)*100).toFixed(1)+"%"+"("+botCount+")";
-  const boosters = members.filter(m=>m.guild_member.premium_since).length;
-  document.getElementById("boosters").textContent = boosters;
+    const setText = (id, text) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = text;
+    };
 
-  // summary
-  document.getElementById("newMembers").textContent = rint(1,10);
-  document.getElementById("churned").textContent = data.churned.length;
+    // metrics
+    setText("totalMembers", members.length);
+    setText("activeCount", members.filter(m => m.presence.status !== "offline").length);
+    const botCount = members.filter(m => m.user.bot).length;
+    setText("botPct", ((botCount / members.length) * 100).toFixed(1) + "%" + " (" + botCount + ")");
+    const boosters = members.filter(m => m.guild_member.premium_since).length;
+    setText("boosters", boosters);
 
-  // recent joins
-  const recentTable=document.querySelector("#recentTable tbody");
-  recentTable.innerHTML="";
-  members.slice(0,10).forEach(m=>{
-    const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${m.user.username}</td><td>${m.guild_member.joined_at}</td><td>${m.guild_member.roles.join(", ")}</td>`;
-    recentTable.appendChild(tr);
-  });
+    setText("newMembers", rint(1,10));
+    setText("churned", data.churned.length);
 
-  // boost table
-  const boostTable=document.querySelector("#boostTable tbody");
-  boostTable.innerHTML="";
-  members.filter(m=>m.guild_member.premium_since).slice(0,10).forEach(m=>{
-    const days=Math.floor((Date.now()-new Date(m.guild_member.premium_since))/86400000);
-    const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${m.user.username}</td><td>${m.guild_member.premium_since}</td><td>${days}</td>`;
-    boostTable.appendChild(tr);
-  });
+    // tables
+    const recentTable = document.querySelector("#recentTable tbody");
+    if (recentTable) {
+      recentTable.innerHTML = "";
+      members.slice(0,10).forEach(m => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${m.user.username}</td><td>${m.guild_member.joined_at}</td><td>${m.guild_member.roles.join(", ")}</td>`;
+        recentTable.appendChild(tr);
+      });
+    }
 
-  renderCharts(data);
+    const boostTable = document.querySelector("#boostTable tbody");
+    if (boostTable) {
+      boostTable.innerHTML = "";
+      members.filter(m => m.guild_member.premium_since).slice(0,10).forEach(m => {
+        const days = Math.floor((Date.now() - new Date(m.guild_member.premium_since)) / 86400000);
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${m.user.username}</td><td>${m.guild_member.premium_since}</td><td>${days}</td>`;
+        boostTable.appendChild(tr);
+      });
+    }
+
+    // charts
+    renderCharts(data);
+  } catch (err) {
+    console.error("❌ renderAll failed:", err.message);
+  }
 }
 
-/* --- charts (unchanged) --- */
-let charts={};
-function renderCharts(data){
-  const members=data.members;
+/* --- renderCharts with guards --- */
+let charts = {};
+function renderCharts(data) {
+  try {
+    const members = data.members || [];
+    const getCtx = id => {
+      const el = document.getElementById(id);
+      return el ? el.getContext("2d") : null;
+    };
 
-  let roleCounts={}; ROLE_POOL.forEach(r=>roleCounts[r]=0);
-  members.forEach(m=>m.guild_member.roles.forEach(r=>{
-    if(roleCounts[r]!=null) roleCounts[r]++
-  }));
-  charts.roles?.destroy();
-  charts.roles=new Chart(document.getElementById("roleChart"),{
-    type:"pie",
-    data:{labels:Object.keys(roleCounts),datasets:[{data:Object.values(roleCounts)}]}
-  });
+    const destroyIfExists = key => { if (charts[key]) charts[key].destroy(); };
 
-  let presCounts={online:0,idle:0,dnd:0,offline:0};
-  members.forEach(m=>presCounts[m.presence.status]++);
-  charts.pres?.destroy();
-  charts.pres=new Chart(document.getElementById("presenceChart"),{
-    type:"doughnut",
-    data:{labels:Object.keys(presCounts),datasets:[{data:Object.values(presCounts)}]}
-  });
+    // Role Chart
+    const ctxRole = getCtx("roleChart");
+    if (ctxRole) {
+      destroyIfExists("roles");
+      const roleCounts = Object.fromEntries(ROLE_POOL.map(r => [r, 0]));
+      members.forEach(m => m.guild_member.roles.forEach(r => roleCounts[r] = (roleCounts[r] || 0) + 1));
+      charts.roles = new Chart(ctxRole, {
+        type: "pie",
+        data: { labels: Object.keys(roleCounts), datasets: [{ data: Object.values(roleCounts) }] }
+      });
+    }
 
-  let growthMap={};
-  members.forEach(m=>{
-    const d=new Date(m.guild_member.joined_at).toISOString().slice(0,10);
-    growthMap[d]=(growthMap[d]||0)+1;
-  });
-  const dates = Object.keys(growthMap).sort();
-  let running = 0;
-  const counts = dates.map(d => running += growthMap[d]);
+    // Presence Chart
+    const ctxPres = getCtx("presenceChart");
+    if (ctxPres) {
+      destroyIfExists("pres");
+      const presCounts = { online: 0, idle: 0, dnd: 0, offline: 0 };
+      members.forEach(m => presCounts[m.presence.status]++);
+      charts.pres = new Chart(ctxPres, {
+        type: "doughnut",
+        data: { labels: Object.keys(presCounts), datasets: [{ data: Object.values(presCounts) }] }
+      });
+    }
 
-  charts.growth?.destroy();
-  charts.growth=new Chart(document.getElementById("growthChart"),{
-    type:"line",
-    data:{labels:dates,datasets:[{label:"Total Members",data:counts,fill:true}]}
-  });
+    // Growth Chart
+    const ctxGrowth = getCtx("growthChart");
+    if (ctxGrowth) {
+      destroyIfExists("growth");
+      const growthMap = {};
+      members.forEach(m => {
+        const d = new Date(m.guild_member.joined_at).toISOString().slice(0,10);
+        growthMap[d] = (growthMap[d] || 0) + 1;
+      });
+      const dates = Object.keys(growthMap).sort();
+      let running = 0;
+      const counts = dates.map(d => running += growthMap[d]);
+      charts.growth = new Chart(ctxGrowth, {
+        type: "line",
+        data: { labels: dates, datasets: [{ label: "Total Members", data: counts, fill: true }] }
+      });
+    }
 
-  let ageBuckets={"<1yr":0,"1-2yr":0,"2-3yr":0,"3yr+":0};
-  members.forEach(m=>{
-    const ageYears=(Date.now()-new Date(m.user.created_at))/31536000000;
-    if(ageYears<1) ageBuckets["<1yr"]++;
-    else if(ageYears<2) ageBuckets["1-2yr"]++;
-    else if(ageYears<3) ageBuckets["2-3yr"]++;
-    else ageBuckets["3yr+"]++;
-  });
-  charts.age?.destroy();
-  charts.age=new Chart(document.getElementById("ageChart"),{
-    type:"bar",
-    data:{labels:Object.keys(ageBuckets),datasets:[{data:Object.values(ageBuckets)}]}
-  });
+    // Age Chart
+    const ctxAge = getCtx("ageChart");
+    if (ctxAge) {
+      destroyIfExists("age");
+      const ageBuckets = {"<1yr":0,"1-2yr":0,"2-3yr":0,"3yr+":0};
+      members.forEach(m => {
+        const ageYears = (Date.now() - new Date(m.user.created_at)) / 31536000000;
+        if (ageYears < 1) ageBuckets["<1yr"]++;
+        else if (ageYears < 2) ageBuckets["1-2yr"]++;
+        else if (ageYears < 3) ageBuckets["2-3yr"]++;
+        else ageBuckets["3yr+"]++;
+      });
+      charts.age = new Chart(ctxAge, {
+        type: "bar",
+        data: { labels: Object.keys(ageBuckets), datasets: [{ data: Object.values(ageBuckets) }] }
+      });
+    }
 
-  let total=members.length;
-  let active=members.filter(m=>m.presence.status!=="offline").length;
-  let retained=Math.floor(active*0.7);
-  charts.funnel?.destroy();
-  charts.funnel=new Chart(document.getElementById("funnelChart"),{
-    type:"bar",
-    data:{
-      labels:["Total","Active","Retained"],
-      datasets:[{data:[total,active,retained]}]
-    },
-    options:{indexAxis:"y"}
-  });
+    // Funnel Chart
+    const ctxFunnel = getCtx("funnelChart");
+    if (ctxFunnel) {
+      destroyIfExists("funnel");
+      const total = members.length;
+      const active = members.filter(m => m.presence.status !== "offline").length;
+      const retained = Math.floor(active * 0.7);
+      charts.funnel = new Chart(ctxFunnel, {
+        type: "bar",
+        data: {
+          labels: ["Total", "Active", "Retained"],
+          datasets: [{ data: [total, active, retained] }]
+        },
+        options: { indexAxis: "y" }
+      });
+    }
 
-  const heatmap=document.getElementById("heatmap");
-  heatmap.innerHTML="";
-  let hours=new Array(24).fill(0);
-  members.forEach(()=>{ hours[rint(0,23)]++; });
-  hours.forEach((val,i)=>{
-    const cell=document.createElement("div");
-    cell.className="heat-cell";
-    cell.style.backgroundColor=`rgba(0,150,255,${val/Math.max(...hours)})`;
-    heatmap.appendChild(cell);
-  });
+    // Heatmap
+    const heatmap = document.getElementById("heatmap");
+    if (heatmap) {
+      heatmap.innerHTML = "";
+      const hours = new Array(24).fill(0);
+      members.forEach(() => { hours[rint(0,23)]++; });
+      const max = Math.max(...hours);
+      hours.forEach((val, i) => {
+        const cell = document.createElement("div");
+        cell.className = "heat-cell";
+        cell.style.backgroundColor = `rgba(0,150,255,${val/max})`;
+        heatmap.appendChild(cell);
+      });
+    }
+
+  } catch (err) {
+    console.error("❌ renderCharts failed:", err.message);
+  }
 }
 
 /* --- init --- */
-let currentData;
-(async ()=>{
-  currentData = await fetchServerDetails();
-  renderAll(currentData);
+(async () => {
+  try {
+    const data = await fetchServerDetails();
+    renderAll(data);
+    const regen = document.getElementById("regen");
+    if (regen) regen.onclick = async () => {
+      const refreshed = await fetchServerDetails();
+      renderAll(refreshed);
+    };
+  } catch (err) {
+    console.error("❌ Initialization failed:", err.message);
+  }
 })();
-
-document.getElementById("regen").onclick=async()=>{
-  currentData = await fetchServerDetails();
-  renderAll(currentData);
-};
 </script>
+
 
 
 </body>
