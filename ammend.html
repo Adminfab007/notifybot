@@ -785,51 +785,83 @@ document.getElementById("regen").onclick = () => {
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 /* --- util randoms --- */
-function rint(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
-function sample(arr) { return Math.floor(Math.random() * arr.length) >= 0 ? arr[Math.floor(Math.random() * arr.length)] : null; }
+function rint(a, b) {
+  return Math.floor(Math.random() * (b - a + 1)) + a;
+}
+function sample(arr) {
+  return Math.floor(Math.random() * arr.length) >= 0
+    ? arr[Math.floor(Math.random() * arr.length)]
+    : null;
+}
 
 /* --- pools --- */
-const ROLE_POOL = ["Admin","Moderator","VIP","Booster","Member","Newbie","Bot"];
-const PRESENCE_POOL = ["online","idle","offline"];
+const ROLE_POOL = ["Admin", "Moderator", "VIP", "Booster", "Member", "Newbie", "Bot"];
+const PRESENCE_POOL = ["online", "idle", "offline"];
+
+console.log("📦 ROLE_POOL initialized:", ROLE_POOL);
+console.log("📦 PRESENCE_POOL initialized:", PRESENCE_POOL);
 
 /* --- enrich API member (preserve API data, only fake if dummy) --- */
 function enrichMember(m, isDummy = false) {
+  console.log("🔧 enrichMember called for:", m.username || m.id, "Dummy:", isDummy);
   try {
     const now = Date.now();
     const msDay = 86400000;
 
-    return {
+    const enriched = {
       user: {
-        id: m.id || (isDummy ? ("u_" + Math.random().toString(36).slice(2)) : ""),
-        username: m.username || m.displayName || (isDummy ? "Guest" + rint(100,999) : ""),
+        id: m.id || (isDummy ? "u_" + Math.random().toString(36).slice(2) : ""),
+        username: m.username || m.displayName || (isDummy ? "Guest" + rint(100, 999) : ""),
         bot: m.bot ?? false,
-        created_at: m.created_at || new Date(now - rint(365,3000) * msDay).toISOString()
+        created_at: m.created_at || new Date(now - rint(365, 3000) * msDay).toISOString(),
       },
       guild_member: {
-        nick: m.displayName || m.nick || m.username || (isDummy ? "Guest" + rint(100,999) : ""),
-        roles: (m.roles && m.roles.length)
-          ? m.roles
-          : (isDummy ? ["Member"].concat(Math.random() < 0.2 ? [sample(ROLE_POOL)] : []) : ["Member"]),
-        joined_at: m.dateJoined || m.joined_at || new Date(now - rint(30,1500) * msDay).toISOString(),
+        nick:
+          m.displayName ||
+          m.nick ||
+          m.username ||
+          (isDummy ? "Guest" + rint(100, 999) : ""),
+        roles:
+          m.roles && m.roles.length
+            ? m.roles
+            : isDummy
+            ? ["Member"].concat(Math.random() < 0.2 ? [sample(ROLE_POOL)] : [])
+            : ["Member"],
+        joined_at:
+          m.dateJoined ||
+          m.joined_at ||
+          new Date(now - rint(30, 1500) * msDay).toISOString(),
         premium_since: m.premiumSince || null,
-        pending: m.pending ?? false
+        pending: m.pending ?? false,
       },
       presence: {
         status: m.presence?.status || (isDummy ? sample(PRESENCE_POOL) : "offline"),
-        activities: m.presence?.activities || []
-      }
+        activities: m.presence?.activities || [],
+      },
     };
+
+    console.log("✅ enriched member:", enriched);
+    return enriched;
   } catch (err) {
-    console.warn("⚠️ enrichMember failed:", err.message);
+    console.warn("⚠️ enrichMember failed:", err.message, "Input:", m);
     return null;
   }
 }
 
 /* --- dummy fallback dataset --- */
 function makeDataset(n) {
+  console.log("🧩 Creating dummy dataset of size", n);
   const arr = [];
-  for (let i = 0; i < n; i++) arr.push(enrichMember({ id:"dummy"+i, username:"user"+i }, true));
-  return { members: arr.filter(Boolean), churned: [], generated_at: new Date().toISOString() };
+  for (let i = 0; i < n; i++) {
+    arr.push(enrichMember({ id: "dummy" + i, username: "user" + i }, true));
+  }
+  const dataset = {
+    members: arr.filter(Boolean),
+    churned: [],
+    generated_at: new Date().toISOString(),
+  };
+  console.log("✅ Dummy dataset generated:", dataset);
+  return dataset;
 }
 
 /* --- API fetch --- */
@@ -838,31 +870,39 @@ async function fetchServerDetails() {
   const serverId = localStorage.getItem("serverId");
   const API_BASE = "https://limitless-depths-22114-f87246627b20.herokuapp.com/api";
 
+  console.log("🌍 Fetching server details for:", { username, serverId });
+
   try {
     if (!username || !serverId) {
       console.warn("⚠️ Missing username/serverId — using dummy data.");
       return makeDataset(50);
     }
 
-    const res = await fetch(`${API_BASE}/servers/${username}/${serverId}/members`, {
-      headers: { "Accept":"application/json","ngrok-skip-browser-warning":"69420" }
+    const url = `${API_BASE}/servers/${username}/${serverId}/members`;
+    console.log("📡 API Request URL:", url);
+
+    const res = await fetch(url, {
+      headers: { Accept: "application/json", "ngrok-skip-browser-warning": "69420" },
     });
 
+    console.log("🔄 API Response Status:", res.status);
     const text = await res.text();
+    console.log("📜 Raw API Response (truncated):", text.slice(0, 500));
+
     let data;
     try {
       data = JSON.parse(text);
     } catch (e) {
-      console.error("❌ Invalid JSON from API:", text.slice(0,200));
+      console.error("❌ Invalid JSON from API:", e.message);
       return makeDataset(50);
     }
 
     if (data?.data?.members?.length) {
       console.log("✅ Loaded API members:", data.data.members.length);
       return {
-        members: data.data.members.map(m => enrichMember(m, false)).filter(Boolean),
+        members: data.data.members.map((m) => enrichMember(m, false)).filter(Boolean),
         churned: data.data.churned || [],
-        generated_at: new Date().toISOString()
+        generated_at: new Date().toISOString(),
       };
     } else {
       console.warn("⚠️ API returned no members — fallback to dummy.");
@@ -874,47 +914,65 @@ async function fetchServerDetails() {
   }
 }
 
-/* --- renderAll with guards --- */
+/* --- renderAll with logs --- */
 function renderAll(data) {
+  console.log("🖼 Rendering all data:", data);
+
   try {
     const members = data.members || [];
 
     const setText = (id, text) => {
       const el = document.getElementById(id);
-      if (el) el.textContent = text;
+      if (el) {
+        el.textContent = text;
+        console.log("📝 Set text for", id, "=>", text);
+      } else {
+        console.warn("⚠️ Element not found for ID:", id);
+      }
     };
 
     // metrics
     setText("totalMembers", members.length);
-    setText("activeCount", members.filter(m => m.presence.status !== "offline").length);
-    const botCount = members.filter(m => m.user.bot).length;
+    const activeCount = members.filter((m) => m.presence.status !== "offline").length;
+    setText("activeCount", activeCount);
+
+    const botCount = members.filter((m) => m.user.bot).length;
     setText("botPct", ((botCount / members.length) * 100).toFixed(1) + "%" + " (" + botCount + ")");
-    const boosters = members.filter(m => m.guild_member.premium_since).length;
+
+    const boosters = members.filter((m) => m.guild_member.premium_since).length;
     setText("boosters", boosters);
 
-    setText("newMembers", rint(1,10));
-    setText("churned", data.churned.length);
+    const churnedCount = data.churned.length;
+    setText("newMembers", rint(1, 10));
+    setText("churned", churnedCount);
 
     // tables
     const recentTable = document.querySelector("#recentTable tbody");
     if (recentTable) {
+      console.log("📋 Populating recentTable...");
       recentTable.innerHTML = "";
-      members.slice(0,10).forEach(m => {
+      members.slice(0, 10).forEach((m) => {
         const tr = document.createElement("tr");
         tr.innerHTML = `<td>${m.user.username}</td><td>${m.guild_member.joined_at}</td><td>${m.guild_member.roles.join(", ")}</td>`;
         recentTable.appendChild(tr);
       });
+      console.log("✅ recentTable updated with", Math.min(10, members.length), "rows");
     }
 
     const boostTable = document.querySelector("#boostTable tbody");
     if (boostTable) {
+      console.log("📋 Populating boostTable...");
       boostTable.innerHTML = "";
-      members.filter(m => m.guild_member.premium_since).slice(0,10).forEach(m => {
-        const days = Math.floor((Date.now() - new Date(m.guild_member.premium_since)) / 86400000);
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${m.user.username}</td><td>${m.guild_member.premium_since}</td><td>${days}</td>`;
-        boostTable.appendChild(tr);
-      });
+      members
+        .filter((m) => m.guild_member.premium_since)
+        .slice(0, 10)
+        .forEach((m) => {
+          const days = Math.floor((Date.now() - new Date(m.guild_member.premium_since)) / 86400000);
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td>${m.user.username}</td><td>${m.guild_member.premium_since}</td><td>${days}</td>`;
+          boostTable.appendChild(tr);
+        });
+      console.log("✅ boostTable updated");
     }
 
     // charts
@@ -924,27 +982,38 @@ function renderAll(data) {
   }
 }
 
-/* --- renderCharts with guards --- */
+/* --- renderCharts with logs --- */
 let charts = {};
 function renderCharts(data) {
+  console.log("📊 renderCharts called with dataset:", data);
+
   try {
     const members = data.members || [];
-    const getCtx = id => {
+    const getCtx = (id) => {
       const el = document.getElementById(id);
+      if (!el) console.warn("⚠️ Chart canvas missing:", id);
       return el ? el.getContext("2d") : null;
     };
 
-    const destroyIfExists = key => { if (charts[key]) charts[key].destroy(); };
+    const destroyIfExists = (key) => {
+      if (charts[key]) {
+        console.log("🧹 Destroying previous chart:", key);
+        charts[key].destroy();
+      }
+    };
 
     // Role Chart
     const ctxRole = getCtx("roleChart");
     if (ctxRole) {
       destroyIfExists("roles");
-      const roleCounts = Object.fromEntries(ROLE_POOL.map(r => [r, 0]));
-      members.forEach(m => m.guild_member.roles.forEach(r => roleCounts[r] = (roleCounts[r] || 0) + 1));
+      const roleCounts = Object.fromEntries(ROLE_POOL.map((r) => [r, 0]));
+      members.forEach((m) =>
+        m.guild_member.roles.forEach((r) => (roleCounts[r] = (roleCounts[r] || 0) + 1))
+      );
+      console.log("📈 Role distribution:", roleCounts);
       charts.roles = new Chart(ctxRole, {
         type: "pie",
-        data: { labels: Object.keys(roleCounts), datasets: [{ data: Object.values(roleCounts) }] }
+        data: { labels: Object.keys(roleCounts), datasets: [{ data: Object.values(roleCounts) }] },
       });
     }
 
@@ -953,10 +1022,11 @@ function renderCharts(data) {
     if (ctxPres) {
       destroyIfExists("pres");
       const presCounts = { online: 0, idle: 0, dnd: 0, offline: 0 };
-      members.forEach(m => presCounts[m.presence.status]++);
+      members.forEach((m) => presCounts[m.presence.status]++);
+      console.log("📈 Presence counts:", presCounts);
       charts.pres = new Chart(ctxPres, {
         type: "doughnut",
-        data: { labels: Object.keys(presCounts), datasets: [{ data: Object.values(presCounts) }] }
+        data: { labels: Object.keys(presCounts), datasets: [{ data: Object.values(presCounts) }] },
       });
     }
 
@@ -965,16 +1035,17 @@ function renderCharts(data) {
     if (ctxGrowth) {
       destroyIfExists("growth");
       const growthMap = {};
-      members.forEach(m => {
-        const d = new Date(m.guild_member.joined_at).toISOString().slice(0,10);
+      members.forEach((m) => {
+        const d = new Date(m.guild_member.joined_at).toISOString().slice(0, 10);
         growthMap[d] = (growthMap[d] || 0) + 1;
       });
       const dates = Object.keys(growthMap).sort();
       let running = 0;
-      const counts = dates.map(d => running += growthMap[d]);
+      const counts = dates.map((d) => (running += growthMap[d]));
+      console.log("📈 Growth chart data:", { dates, counts });
       charts.growth = new Chart(ctxGrowth, {
         type: "line",
-        data: { labels: dates, datasets: [{ label: "Total Members", data: counts, fill: true }] }
+        data: { labels: dates, datasets: [{ label: "Total Members", data: counts, fill: true }] },
       });
     }
 
@@ -982,17 +1053,18 @@ function renderCharts(data) {
     const ctxAge = getCtx("ageChart");
     if (ctxAge) {
       destroyIfExists("age");
-      const ageBuckets = {"<1yr":0,"1-2yr":0,"2-3yr":0,"3yr+":0};
-      members.forEach(m => {
+      const ageBuckets = { "<1yr": 0, "1-2yr": 0, "2-3yr": 0, "3yr+": 0 };
+      members.forEach((m) => {
         const ageYears = (Date.now() - new Date(m.user.created_at)) / 31536000000;
         if (ageYears < 1) ageBuckets["<1yr"]++;
         else if (ageYears < 2) ageBuckets["1-2yr"]++;
         else if (ageYears < 3) ageBuckets["2-3yr"]++;
         else ageBuckets["3yr+"]++;
       });
+      console.log("📈 Age buckets:", ageBuckets);
       charts.age = new Chart(ctxAge, {
         type: "bar",
-        data: { labels: Object.keys(ageBuckets), datasets: [{ data: Object.values(ageBuckets) }] }
+        data: { labels: Object.keys(ageBuckets), datasets: [{ data: Object.values(ageBuckets) }] },
       });
     }
 
@@ -1001,15 +1073,16 @@ function renderCharts(data) {
     if (ctxFunnel) {
       destroyIfExists("funnel");
       const total = members.length;
-      const active = members.filter(m => m.presence.status !== "offline").length;
+      const active = members.filter((m) => m.presence.status !== "offline").length;
       const retained = Math.floor(active * 0.7);
+      console.log("📈 Funnel data:", { total, active, retained });
       charts.funnel = new Chart(ctxFunnel, {
         type: "bar",
         data: {
           labels: ["Total", "Active", "Retained"],
-          datasets: [{ data: [total, active, retained] }]
+          datasets: [{ data: [total, active, retained] }],
         },
-        options: { indexAxis: "y" }
+        options: { indexAxis: "y" },
       });
     }
 
@@ -1018,16 +1091,20 @@ function renderCharts(data) {
     if (heatmap) {
       heatmap.innerHTML = "";
       const hours = new Array(24).fill(0);
-      members.forEach(() => { hours[rint(0,23)]++; });
+      members.forEach(() => {
+        hours[rint(0, 23)]++;
+      });
       const max = Math.max(...hours);
-      hours.forEach((val, i) => {
+      console.log("🔥 Heatmap hours data:", hours);
+      hours.forEach((val) => {
         const cell = document.createElement("div");
         cell.className = "heat-cell";
-        cell.style.backgroundColor = `rgba(0,150,255,${val/max})`;
+        cell.style.backgroundColor = `rgba(0,150,255,${val / max})`;
         heatmap.appendChild(cell);
       });
     }
 
+    console.log("✅ All charts rendered successfully");
   } catch (err) {
     console.error("❌ renderCharts failed:", err.message);
   }
@@ -1035,14 +1112,21 @@ function renderCharts(data) {
 
 /* --- init --- */
 (async () => {
+  console.log("🚀 Initialization started...");
   try {
     const data = await fetchServerDetails();
+    console.log("📦 Data received:", data);
     renderAll(data);
+
     const regen = document.getElementById("regen");
-    if (regen) regen.onclick = async () => {
-      const refreshed = await fetchServerDetails();
-      renderAll(refreshed);
-    };
+    if (regen) {
+      regen.onclick = async () => {
+        console.log("🔁 Regeneration button clicked");
+        const refreshed = await fetchServerDetails();
+        renderAll(refreshed);
+      };
+    }
+    console.log("✅ Initialization complete");
   } catch (err) {
     console.error("❌ Initialization failed:", err.message);
   }
