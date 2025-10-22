@@ -240,55 +240,100 @@ localStorage.setItem("serverId",params)
     
 }
 
-      async function deleteServer(serverName,serverId){
-        var usernamee = localStorage.getItem('username')
-        var username=usernamee.replace("%22",'')
+//       async function deleteServer(serverName,serverId){
+//         var usernamee = localStorage.getItem('username')
+//         var username=usernamee.replace("%22",'')
         
         
-     var userconfirmed=  confirm("ARE YOU SURE YOU WANT TO REMOVE THIS SERVER" +" "+serverName)
-     if (userconfirmed) {
+//      var userconfirmed=  confirm("ARE YOU SURE YOU WANT TO REMOVE THIS SERVER" +" "+serverName)
+//      if (userconfirmed) {
    
   
-      const response = await $.ajax({
-      type: "DELETE",
-      url: `https://limitless-depths-22114-f87246627b20.herokuapp.com/api/servers/${username}`,
-      dataType: "json",
-      data:{serverId:serverId},
-      timeout: 30000,
-      success: function () {
-          $('.live-section').addClass("alert-danger").text("Server deleted successfully");
-          Swal.fire({
-    title: 'Success!',
-    text: 'Your server has been deleted!',
-    icon: 'success',
-    confirmButtonText: 'OK'
-});
+//       const response = await $.ajax({
+//       type: "DELETE",
+//       url: `https://limitless-depths-22114-f87246627b20.herokuapp.com/api/servers/${username}`,
+//       dataType: "json",
+//       data:{serverId:serverId},
+//       timeout: 30000,
+//       success: function () {
+//           $('.live-section').addClass("alert-danger").text("Server deleted successfully");
+//           Swal.fire({
+//     title: 'Success!',
+//     text: 'Your server has been deleted!',
+//     icon: 'success',
+//     confirmButtonText: 'OK'
+// });
 
-          setTimeout(function () {
-              $(location).prop('href', './list.html');
-          }, 2000); // Redirect after 2 seconds
-      },
-      error: function (xhr, status, error) {
-        Swal.fire({
-    title: 'Error!',
-    text: "Failed to delete Server: " + error,
-    icon: 'success',
-    confirmButtonText: 'OK'
-});
+//           setTimeout(function () {
+//               $(location).prop('href', './list.html');
+//           }, 2000); // Redirect after 2 seconds
+//       },
+//       error: function (xhr, status, error) {
+//         Swal.fire({
+//     title: 'Error!',
+//     text: "Failed to delete Server: " + error,
+//     icon: 'success',
+//     confirmButtonText: 'OK'
+// });
 
-        //   alert("Failed to delete Server: " + error);
-          console.error("Error details:", status, error);
-      }
-  });
+//         //   alert("Failed to delete Server: " + error);
+//           console.error("Error details:", status, error);
+//       }
+//   });
   
     
-  }
-  else{
+//   }
+//   else{
   
-    alert("kept")}
+//     alert("kept")}
   
    
-   }
+//    }
+
+async function deleteServer(button) {
+  const serverName = button.getAttribute('data-server-name');
+  const serverId = button.getAttribute('data-server-id');
+  const usernamee = localStorage.getItem('username');
+  const username = usernamee.replace("%22", "");
+
+  const userConfirmed = confirm("ARE YOU SURE YOU WANT TO REMOVE THIS SERVER " + serverName);
+
+  if (userConfirmed) {
+    try {
+      await $.ajax({
+        type: "DELETE",
+        url: `https://limitless-depths-22114-f87246627b20.herokuapp.com/api/servers/${username}`,
+        dataType: "json",
+        data: { serverId },
+        timeout: 30000,
+        success: function () {
+          $('.live-section').addClass("alert-danger").text("Server deleted successfully");
+          Swal.fire({
+            title: 'Success!',
+            text: 'Your server has been deleted!',
+            icon: 'success',
+            confirmButtonText: 'OK'
+          });
+          setTimeout(() => $(location).prop('href', './list.html'), 2000);
+        },
+        error: function (xhr, status, error) {
+          Swal.fire({
+            title: 'Error!',
+            text: "Failed to delete Server: " + error,
+            icon: 'error',
+            confirmButtonText: 'OK'
+          });
+          console.error("Error details:", status, error);
+        }
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  } else {
+    alert("kept");
+  }
+}
+
 
 
 
@@ -339,20 +384,18 @@ $("#serverNumber").text(servers.length)
 servers.map((server, index) => {
     const words = `
         <li class="list-group-item d-flex justify-content-between align-items-center">
-            ${server.name}
-            <button class="btn btn-primary btn-sm" onclick="move('${server.id}')">
-                <i class="bi bi-eye"></i>
-            </button>
-            <button class="btn btn-danger btn-sm"
-        data-server-name="${server.name}"
-        data-server-id="${server.id}"
-        onclick="deleteServer(this)">
-  Delete
-</button>
-
-                <i class="bi bi-trash"></i>
-            </button>
-        </li>`;
+  ${server.name}
+  <button class="btn btn-primary btn-sm" onclick="move('${server.id}')">
+      <i class="bi bi-eye"></i>
+  </button>
+  <button class="btn btn-danger btn-sm"
+          data-server-name="${server.name}"
+          data-server-id="${server.id}"
+          onclick="deleteServer(this)">
+      <i class="bi bi-trash"></i>
+  </button>
+</li>
+`;
 
     serverlist.append(words);  // Append the item to the list
 });
