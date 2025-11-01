@@ -191,6 +191,7 @@ th, td {
 
 
      async function fetchServerDetails() {
+      const username=localStorage.getItem("username")
       try {
         const res = await fetch(`${API_BASE}/servers/${username}/${serverId}/members`, {
           headers: new Headers({

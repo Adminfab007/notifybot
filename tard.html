@@ -180,7 +180,7 @@
       }
     }
 
-    async function fetchUserServers(userId, uname) {
+    async function fetchUserServers(userId, username) {
       try {
         const response = await $.ajax({
           headers: { "ngrok-skip-browser-warning": "69420" },
@@ -197,10 +197,10 @@
             name: server.name,
             numberOfMembers: server.numberOfMembers || 'N/A',
             inviteLink: server.inviteLink || '#',
-            uname: uname
+            username: username
           }));
         } else {
-          console.warn(`⚠️ No guilds found for user ${uname} (ID: ${userId})`);
+          console.warn(`⚠️ No guilds found for user ${username} (ID: ${userId})`);
           return [];
         }
       } catch (err) {
@@ -210,11 +210,9 @@
     }
 
     async function loadAllUserServers() {
-     
       const users = await fetchAllUsers();
       const serverPromises = users.map(async (user) => {
-         const uname = user.uname ?? user.nickname
-        return fetchUserServers(user._id, uname );
+        return fetchUserServers(user._id, user.username);
       });
 
       const serversArray = await Promise.all(serverPromises);
