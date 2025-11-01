@@ -190,49 +190,49 @@ th, td {
     }
 
 
-     async function fetchServerDetails() {
-      const username=localStorage.getItem("username")
-      try {
-        const res = await fetch(`${API_BASE}/servers/${username}/${serverId}/members`, {
-          headers: new Headers({
-            "Accept": "application/json",
-            "ngrok-skip-browser-warning": "69420"
-          })
-        });
-        const text = await res.text();
-        const data = JSON.parse(text);
+    //  async function fetchServerDetails() {
+    //   const username=localStorage.getItem("username")
+    //   try {
+    //     const res = await fetch(`${API_BASE}/servers/${username}/${serverId}/members`, {
+    //       headers: new Headers({
+    //         "Accept": "application/json",
+    //         "ngrok-skip-browser-warning": "69420"
+    //       })
+    //     });
+    //     const text = await res.text();
+    //     const data = JSON.parse(text);
         
         
 
-        if (data?.data) {
-          console.log(data.data);
+    //     if (data?.data) {
+    //       console.log(data.data);
           
-          serverData = data.data; // Save for later use
-          serverData.members.forEach(user => {
-              if(user.presence=="Online"){
-          console.log(serverData.user);
+    //       serverData = data.data; // Save for later use
+    //       serverData.members.forEach(user => {
+    //           if(user.presence=="Online"){
+    //       console.log(serverData.user);
           
 
 
-         }
-         else{
+    //      }
+    //      else{
 
-          console.log("Nothlng llle that");
+    //       console.log("Nothlng llle that");
           
-         }
+    //      }
             
-          });
+    //       });
 
        
-        } else {
-          console.log("no members found");
-          ;
-        }
-      } catch (err) {
-        console.error('❌ Fetch failed:', err);
-        container.innerHTML = '<p style="color:red;">Failed to load members. Check console.</p>';
-      }
-    }
+    //     } else {
+    //       console.log("no members found");
+    //       ;
+    //     }
+    //   } catch (err) {
+    //     console.error('❌ Fetch failed:', err);
+    //     container.innerHTML = '<p style="color:red;">Failed to load members. Check console.</p>';
+    //   }
+    // }
 
     // Render user details
     function renderUserInfo(user) {
@@ -336,7 +336,7 @@ th, td {
     }
 
     fetchUserDetails(); // Load on page load
-    fetchServerDetails()
+    // fetchServerDetails()
   </script>
 </body>
 </html>
