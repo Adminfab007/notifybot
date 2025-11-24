@@ -211,7 +211,7 @@
         "ngrok-skip-browser-warning": "69420",
       },
           type: "GET",
-          url: `https://limitless-depths-22114-f87246627b20.herokuapp.com/api/servers/${username}`,
+          url: `https://default-bot-25c835e1c978.herokuapp.com/api/servers/${username}`,
           dataType: "json",
           timeout: 30000,
           success:  function (data) {
@@ -251,7 +251,7 @@ localStorage.setItem("serverId",params)
   
 //       const response = await $.ajax({
 //       type: "DELETE",
-//       url: `https://limitless-depths-22114-f87246627b20.herokuapp.com/api/servers/${username}`,
+//       url: `https://default-bot-25c835e1c978.herokuapp.com/api/servers/${username}`,
 //       dataType: "json",
 //       data:{serverId:serverId},
 //       timeout: 30000,
@@ -302,7 +302,7 @@ async function deleteServer(button) {
     try {
       await $.ajax({
         type: "DELETE",
-        url: `https://limitless-depths-22114-f87246627b20.herokuapp.com/api/servers/${username}`,
+        url: `https://default-bot-25c835e1c978.herokuapp.com/api/servers/${username}`,
         dataType: "json",
         data: { serverId },
         timeout: 30000,
@@ -344,7 +344,7 @@ async function deleteServer(button) {
     
      await $.ajax({
          type: "POST",
-         url: `https://limitless-depths-22114-f87246627b20.herokuapp.com/api/servers/${username}`,
+         url: `https://default-bot-25c835e1c978.herokuapp.com/api/servers/${username}`,
          dataType: "json",
          data: { serverId:serverId },
          timeout: 30000,
