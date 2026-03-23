@@ -1126,6 +1126,7 @@ const preview = document.getElementById('cap-preview');
 function previewFiles(files) {
   Array.from(files).forEach(file => {
     const url = URL.createObjectURL(file);
+    localStorage.setItem("camera",url)
     let el;
     if (file.type.startsWith('image')) {
       el = document.createElement('img');
@@ -1517,6 +1518,12 @@ function showAssetDetail(a) {
   document.getElementById('modal-body-inner').className = '';
   document.getElementById('modal-body-inner').innerHTML = `
     <div class="detail-grid">
+     <div class="detail-item">
+ 
+  <div class="detail-val">
+    <img src="${a.image}" alt="Asset Image" width="120" height="80" style="object-fit:cover; border-radius:6px;" />
+  </div>
+</div>
       <div class="detail-item"><div class="detail-key">Asset Name</div><div class="detail-val">${a.name}</div></div>
       <div class="detail-item"><div class="detail-key">Asset ID</div><div class="detail-val" style="font-family:'Space Mono',monospace;color:var(--accent)">${a.id}</div></div>
       <div class="detail-item"><div class="detail-key">Type</div><div class="detail-val"><span class="tag ${typeColor(a.type)}">${a.type}</span></div></div>
@@ -1583,7 +1590,8 @@ function captureAsset() {
     agent: document.getElementById('cap-agent').value || 'Field Agent',
     date: document.getElementById('cap-date').value,
     notes: document.getElementById('cap-notes').value,
-    ts: Date.now()
+    ts: Date.now(),
+    image:localStorage.getItem("camera")
   };
   assets.unshift(a);
   addAudit('ASSET_CREATED', a.id, a.agent, a.name + ' captured at ' + lat + ', ' + lng);
