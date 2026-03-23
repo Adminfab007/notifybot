@@ -310,6 +310,7 @@ html,body{height:100%;font-family:var(--font-body);background:var(--surface);col
   padding:16px 24px;border-bottom:1px solid var(--border);
   transition:background .18s;cursor:default;
   animation:slideIn .35s ease both;
+  flex-wrap:wrap;
 }
 .server-item:last-child{border-bottom:none}
 .server-item:hover{background:var(--surface)}
@@ -322,8 +323,8 @@ html,body{height:100%;font-family:var(--font-body);background:var(--surface);col
   flex-shrink:0;box-shadow:0 4px 12px rgba(67,97,238,.25);
   text-transform:uppercase;
 }
-.server-info{flex:1;min-width:0}
-.server-name{font-family:var(--font-display);font-weight:700;font-size:.92rem;color:var(--tx);margin-bottom:.2rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.server-info{flex:1;min-width:180px}
+.server-name{font-family:var(--font-display);font-weight:700;font-size:.92rem;color:var(--tx);margin-bottom:.2rem;word-break:break-word;}
 .server-id{font-family:var(--font-mono);font-size:.7rem;color:var(--tx3)}
 .server-status{
   display:flex;align-items:center;gap:.4rem;
