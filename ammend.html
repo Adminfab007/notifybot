@@ -1,1139 +1,643 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Discord Member Analytics — Live Example</title>
-
-<!-- Chart.js -->
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Server Analytics</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.all.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
 <style>
-  :root{
-    --bg:#0f1724;
-    --card:#0b1220;
-    --muted:#94a3b8;
-    --accent:#6ee7b7;
-    --glass: rgba(255,255,255,0.03);
-    --glass-2: rgba(255,255,255,0.02);
-    --text:#e6eef6;
-    --danger:#ff7b7b;
-    --success:#7ef0a4;
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  }
-  html,body{
-    height:100%;
-    margin:0;
-    background:linear-gradient(180deg,#071124 0%, #071428 100%);
-    color:var(--text)
-  }
-
-  .wrap{
-    max-width:1200px;
-    margin:24px auto;
-    padding:18px;
-    display:grid;
-    grid-template-columns:1fr 380px;
-    gap:18px;
-  }
-
-  header{
-    grid-column:1/-1;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:12px;
-    flex-wrap:wrap;
-  }
-
-  .brand{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-  .logo{width:56px;height:56px;background:linear-gradient(135deg,var(--accent),#60a5fa);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#052225}
-  h1{margin:0;font-size:18px}
-  .sub{color:var(--muted);font-size:13px}
-  .controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
-  input[type="date"], select{background:var(--card);color:var(--text);border:1px solid rgba(255,255,255,0.03);padding:8px;border-radius:8px}
-  button{background:linear-gradient(180deg,#122031,#0f1b2a);border:1px solid rgba(255,255,255,0.03);color:var(--text);padding:8px 10px;border-radius:8px;cursor:pointer}
-  .download {background:linear-gradient(90deg,#1f6feb,#4dd4b0);border:none}
-
-  .card{background:var(--card);padding:14px;border-radius:12px;border:1px solid var(--glass);box-shadow:0 6px 20px rgba(2,6,23,0.6)}
-  .left-col{display:grid;gap:12px}
-  .metrics{display:flex;gap:12px;flex-wrap:wrap}
-  .metric{flex:1;min-width:150px;padding:12px;border-radius:10px;background:linear-gradient(180deg,rgba(255,255,255,0.02),transparent)}
-  .metric h3{margin:0;font-size:13px;color:var(--muted)}
-  .metric p{font-size:20px;margin:6px 0 0}
-
-  .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .chart-wrap{height:260px;padding:6px}
-  .table {width:100%;border-collapse:collapse;margin-top:8px;color:var(--muted);font-size:13px}
-  .table th, .table td {text-align:left;padding:8px;border-bottom:1px solid var(--glass-2)}
-
-  .heatmap{display:grid;grid-template-columns:repeat(24,1fr);gap:3px;margin-top:8px}
-  .heatcell{height:18px;border-radius:4px;background:#071826}
-  .legend{display:flex;gap:8px;align-items:center;margin-top:6px;font-size:13px;color:var(--muted)}
-
-  .right-col{display:grid;gap:12px}
-  .small{font-size:13px;color:var(--muted)}
-  .pill{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(255,255,255,0.02)}
-  footer{grid-column:1/-1;margin-top:8px;color:var(--muted);font-size:12px;text-align:center}
-  .row{display:flex;gap:12px;align-items:center}
-  .table-scroll{max-height:260px;overflow:auto}
-  .heat-labels{display:flex;justify-content:space-between;color:var(--muted);font-size:12px;margin-top:6px}
-
-  /* ✅ Responsive Enhancements */
-  @media (max-width: 992px) {
-    .wrap {grid-template-columns:1fr;gap:20px}
-    header {flex-direction:column;align-items:flex-start}
-    .controls {width:100%;justify-content:flex-start}
-    .grid-2 {grid-template-columns:1fr}
-    .chart-wrap {height:220px}
-    h1 {font-size:16px}
-  }
-
-  @media (max-width: 768px) {
-    .wrap {padding:12px}
-    .metric {min-width:130px}
-    .card {padding:10px}
-    .chart-wrap {height:200px}
-    .logo {width:46px;height:46px;font-size:14px}
-    h1 {font-size:15px}
-  }
-
-  @media (max-width: 480px) {
-    .metrics {flex-direction:column}
-    .wrap {gap:12px}
-    .grid-2 {grid-template-columns:1fr}
-    .controls {flex-direction:column;align-items:stretch}
-    button {width:100%;text-align:center}
-    .card {padding:10px}
-    .table {font-size:11px}
-    h1 {font-size:14px}
-    .sub {font-size:12px}
-  }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  /* ── Light theme — matches list.html ── */
+  --bg:#f0f2f8;--bg2:#ffffff;--card:#ffffff;--card2:#f0f2f8;
+  --border:rgba(11,15,26,.08);--border2:rgba(11,15,26,.15);
+  --a:#4361ee;--a2:#10b981;--a3:#7c3aed;
+  --gold:#f59e0b;--danger:#e63757;--success:#10b981;--warn:#f59e0b;
+  --muted:#8a95aa;--text:#0b0f1a;--text2:#4a5568;
+  --fd:'Syne',sans-serif;--fb:'DM Sans',sans-serif;--fm:'Space Mono',monospace;
+  --r:14px;--rs:8px;
+  --shadow:0 2px 12px rgba(11,15,26,.07),0 1px 3px rgba(11,15,26,.05);
+  --shadow-lg:0 12px 40px rgba(11,15,26,.12),0 4px 12px rgba(11,15,26,.06);
+  --accent-glow:rgba(67,97,238,.12);
+}
+html,body{height:100%;font-family:var(--fb);background:var(--bg);color:var(--text);-webkit-font-smoothing:antialiased}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
+.layout{display:grid;grid-template-columns:228px 1fr;min-height:100vh}
+@media(max-width:960px){.layout{grid-template-columns:1fr}}
+.sb{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:20px 0;position:sticky;top:0;height:100vh;overflow-y:auto}
+@media(max-width:960px){.sb{display:none}}
+.sb-logo{display:flex;align-items:center;gap:10px;padding:0 18px 20px;border-bottom:1px solid var(--border);margin-bottom:6px}
+.sb-ico{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,var(--a),var(--a2));display:flex;align-items:center;justify-content:center;color:#041a1a;font-weight:800;font-size:.8rem;flex-shrink:0;font-family:var(--fd)}
+.sb-txt{font-family:var(--fd);font-size:.9rem;font-weight:700;color:var(--text)}.sb-txt span{color:var(--a)}
+.sb-sec{font-size:.58rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);padding:14px 18px 5px}
+.sb-a{display:flex;align-items:center;gap:9px;padding:9px 18px;margin:1px 8px;border-radius:var(--rs);color:var(--text2);font-size:.82rem;font-weight:500;text-decoration:none;cursor:pointer;transition:all .15s;border:none;background:none;width:calc(100% - 16px);text-align:left;font-family:var(--fb)}
+.sb-a i{font-size:.9rem;width:16px;flex-shrink:0}.sb-a:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.sb-a.on{background:rgba(56,189,248,.09);color:var(--a);border:1px solid rgba(56,189,248,.18)}
+.sb-foot{margin-top:auto;padding:18px 18px 0;border-top:1px solid var(--border)}
+.sb-user{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--rs);background:rgba(255,255,255,.03)}
+.u-av{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--a3));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.65rem;flex-shrink:0}
+.u-name{font-size:.78rem;font-weight:600;color:var(--text)}.u-role{font-size:.65rem;color:var(--muted)}
+.main{display:flex;flex-direction:column;min-height:100vh}
+.tb{background:#ffffff;border-bottom:1px solid var(--border);padding:0 26px;height:60px;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:50}
+@media(max-width:960px){.tb{padding:0 14px}}
+.tb-back{display:none;width:34px;height:34px;border-radius:var(--rs);background:rgba(255,255,255,.05);border:1px solid var(--border2);align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:.95rem;flex-shrink:0;text-decoration:none;transition:all .15s}
+.tb-back:hover{background:rgba(255,255,255,.09);color:var(--text)}
+@media(max-width:960px){.tb-back{display:flex}}
+.tb-info{flex:1;min-width:0}.tb-name{font-family:var(--fd);font-weight:700;font-size:.95rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tb-id{font-family:var(--fm);font-size:.6rem;color:var(--muted)}
+.tb-acts{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.btn{display:inline-flex;align-items:center;gap:.35rem;padding:.44rem .9rem;border-radius:var(--rs);font-family:var(--fb);font-size:.75rem;font-weight:600;border:none;cursor:pointer;transition:all .18s;white-space:nowrap}
+.btn-gh{background:rgba(255,255,255,.05);border:1px solid var(--border2);color:var(--text2)}.btn-gh:hover{background:rgba(255,255,255,.09);color:var(--text)}
+.btn-go{background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.22);color:var(--gold)}.btn-go:hover{background:var(--gold);color:#000}
+.btn-pr{background:var(--a);color:#041a1a}.btn-pr:hover{opacity:.9;transform:translateY(-1px)}
+@media(max-width:600px){.btn span{display:none}.btn{padding:.44rem .55rem}}
+.loader{position:fixed;inset:0;background:var(--bg);z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;transition:opacity .4s}
+.loader.fade{opacity:0;pointer-events:none}.loader.gone{display:none}
+.ld-ring{width:42px;height:42px;border:3px solid rgba(67,97,238,.15);border-top-color:var(--a);border-radius:50%;animation:spin .9s linear infinite}
+.ld-txt{font-family:var(--fm);font-size:.75rem;color:var(--text2);text-align:center}.ld-sub{font-size:.68rem;color:var(--muted)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.body{padding:22px 26px;flex:1;display:flex;flex-direction:column;gap:18px}
+@media(max-width:960px){.body{padding:14px}}
+.sec-hd{display:flex;align-items:center;gap:8px;margin-bottom:14px}.sec-hd-line{flex:1;height:1px;background:var(--border2)}
+.sec-label{font-size:.62rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.err-banner{background:rgba(248,113,113,.07);border:1px solid rgba(248,113,113,.18);border-radius:var(--rs);padding:12px 16px;display:flex;align-items:center;gap:10px}
+.err-banner i{color:var(--danger);font-size:1rem;flex-shrink:0}.err-banner p{font-size:.82rem;color:var(--danger);font-weight:500;flex:1}
+.err-banner button{padding:.33rem .8rem;border-radius:var(--rs);background:var(--danger);color:#fff;border:none;font-size:.72rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--fb);flex-shrink:0}
+.stats-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+@media(max-width:1280px){.stats-grid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:760px){.stats-grid{grid-template-columns:repeat(2,1fr)}}
+.sc{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;display:flex;flex-direction:column;gap:10px;transition:all .22s;position:relative;overflow:hidden;box-shadow:var(--shadow)}
+.sc::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:var(--sc-color,var(--a));opacity:.45}
+.sc:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg);border-color:var(--border2)}
+.sc-top{display:flex;align-items:center;justify-content:space-between}
+.sc-label{font-size:.6rem;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.sc-icon{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.875rem;flex-shrink:0;background:var(--sc-bg,rgba(56,189,248,.1));color:var(--sc-color,var(--a))}
+.sc-val{font-family:var(--fm);font-size:1.6rem;font-weight:700;color:var(--text);line-height:1}
+.sc-sub{font-size:.63rem;color:var(--muted)}
+.insight-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:1100px){.insight-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:540px){.insight-grid{grid-template-columns:1fr 1fr}}
+.ic{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px;transition:all .2s;box-shadow:var(--shadow)}
+.ic:hover{border-color:var(--border2);transform:translateY(-1px)}
+.ic-label{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.ic-val{font-family:var(--fm);font-size:1.2rem;font-weight:700;color:var(--text);margin-bottom:4px}
+.ic-desc{font-size:.7rem;color:var(--text2)}
+.health-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;box-shadow:var(--shadow)}
+.health-ring-wrap{position:relative;flex-shrink:0}
+.health-ring-wrap canvas{display:block}
+.health-num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.health-pct{font-family:var(--fm);font-size:1.15rem;font-weight:700;color:var(--text);line-height:1}
+.health-grade{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-top:2px}
+.health-info{flex:1;min-width:240px}
+.health-title{font-family:var(--fd);font-size:.95rem;font-weight:700;color:var(--text);margin-bottom:4px}
+.health-desc{font-size:.75rem;color:var(--text2);line-height:1.55;margin-bottom:12px}
+.health-bars{display:flex;flex-direction:column;gap:7px}
+.hb-row{display:flex;align-items:center;gap:8px}
+.hb-label{font-size:.68rem;color:var(--text2);width:100px;flex-shrink:0}
+.hb-track{flex:1;height:5px;background:rgba(11,15,26,.08);border-radius:3px;overflow:hidden}
+.hb-fill{height:100%;border-radius:3px;transition:width .8s ease}
+.hb-val{font-family:var(--fm);font-size:.62rem;color:var(--muted);width:36px;text-align:right;flex-shrink:0}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px;box-shadow:var(--shadow)}
+.card-hd{font-family:var(--fd);font-size:.8rem;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.08em;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card-hd i{font-size:.85rem;color:var(--a)}
+.card-hd-l{display:flex;align-items:center;gap:.5rem}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.gm{display:grid;grid-template-columns:1fr 300px;gap:14px}
+@media(max-width:1180px){.gm{grid-template-columns:1fr}}
+@media(max-width:720px){.g2,.g3{grid-template-columns:1fr}}
+.cw{position:relative;height:230px}.cw-sm{position:relative;height:180px}.cw-xs{position:relative;height:140px}
+.dt{width:100%;border-collapse:collapse;font-size:.8rem}
+.dt th{text-align:left;padding:7px 10px;font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border2)}
+.dt td{padding:8px 10px;border-bottom:1px solid var(--border);color:var(--text2);vertical-align:middle}
+.dt tbody tr:last-child td{border-bottom:none}.dt tbody tr:hover td{background:rgba(67,97,238,.04);color:var(--text)}
+.ts{max-height:250px;overflow-y:auto}
+.bdg{display:inline-flex;align-items:center;gap:.28rem;padding:.18rem .55rem;border-radius:50px;font-size:.6rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.bdg-on{background:rgba(52,211,153,.13);color:var(--success)}.bdg-id{background:rgba(251,191,36,.13);color:var(--gold)}
+.bdg-dn{background:rgba(248,113,113,.13);color:var(--danger)}.bdg-of{background:rgba(74,96,128,.13);color:var(--muted)}
+.bdg-bt{background:rgba(129,140,248,.13);color:var(--a3)}.bdg-pe{background:rgba(251,146,60,.13);color:var(--warn)}
+.bdg-mu{background:rgba(248,113,113,.13);color:var(--danger)}.bdg-dot{width:4px;height:4px;border-radius:50%;background:currentColor}
+.prog-row{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--border)}
+.prog-row:last-child{border-bottom:none}
+.prog-label{font-size:.76rem;color:var(--text2);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prog-track{width:90px;height:4px;background:rgba(11,15,26,.08);border-radius:2px;flex-shrink:0}
+.prog-fill{height:100%;border-radius:2px;transition:width .7s ease}
+.prog-val{font-family:var(--fm);font-size:.62rem;color:var(--muted);width:28px;text-align:right;flex-shrink:0}
+.m-item{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border)}
+.m-item:last-child{border-bottom:none}
+.m-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--a),var(--a3));display:flex;align-items:center;justify-content:center;color:#fff;font-family:var(--fd);font-size:.75rem;font-weight:700;flex-shrink:0}
+.m-av.bot-av{background:linear-gradient(135deg,var(--a3),#5b21b6)}
+.m-info{flex:1;min-width:0}
+.m-name{font-weight:600;font-size:.82rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.m-id{font-family:var(--fm);font-size:.58rem;color:var(--muted)}.m-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+.rtag{font-size:.58rem;font-weight:600;padding:.12rem .4rem;border-radius:3px;background:rgba(67,97,238,.08);color:var(--a)}
+.hm-days{display:flex;flex-direction:column;gap:3px;margin-top:8px}
+.hm-row{display:flex;align-items:center;gap:5px}
+.hm-dlbl{font-size:.58rem;color:var(--muted);width:24px;text-align:right;flex-shrink:0;font-family:var(--fm)}
+.hm-cells{display:grid;grid-template-columns:repeat(24,1fr);gap:2px;flex:1}
+.hm-cell{height:15px;border-radius:2px;cursor:default;border:none}
+.hm-tlbls{display:flex;justify-content:space-between;padding-left:29px;margin-top:3px}
+.hm-tlbl{font-size:.56rem;color:var(--muted);font-family:var(--fm)}
+.srch{display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--border2);border-radius:var(--rs);padding:.45rem .8rem;margin-bottom:12px}
+.srch i{color:var(--muted);font-size:.85rem;flex-shrink:0}
+.srch input{flex:1;background:none;border:none;outline:none;font-family:var(--fb);font-size:.82rem;color:var(--text)}
+.srch input::placeholder{color:var(--muted)}
+.tl-item{display:flex;align-items:flex-start;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)}
+.tl-item:last-child{border-bottom:none}
+.tl-dot{width:8px;height:8px;border-radius:50%;background:var(--a);flex-shrink:0;margin-top:4px;box-shadow:0 0 8px rgba(67,97,238,.3)}
+.tl-body{flex:1;min-width:0}
+.tl-name{font-size:.8rem;font-weight:600;color:var(--text)}.tl-time{font-size:.65rem;color:var(--muted)}
+.tl-roles{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+.pg-ft{border-top:1px solid var(--border2);padding:10px 26px;font-size:.68rem;color:var(--muted);text-align:center;background:#fff}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="brand">
-      <div class="logo">DA</div>
-      <div>
-        <h1>Discord Member Analytics — Live Example</h1>
-        <div class="sub">Dataset from members</div>
-      </div>
-    </div>
-    <div class="controls">
-      <button id="download" class="download">Download Spreadsheet</button>
-      <button id="downloadBots" class="btn btn-warning">Download Bots Only</button>
-    </div>
-  </header>
-
-  <section class="left-col">
-    <div class="card metrics">
-      <div class="metric"><h3>Total members</h3><p id="totalMembers">—</p></div>
-      <div class="metric"><h3>Active</h3><p id="activeCount">—</p></div>
-      <div class="metric"><h3>Bot %</h3><p id="botPct">—</p></div>
-      <div class="metric"><h3>Boosters</h3><p id="boosters">—</p></div>
-    </div>
-
-    <div class="card"><h3 class="small">Membership Growth</h3><div class="chart-wrap"><canvas id="growthChart"></canvas></div></div>
-    <div class="grid-2">
-      <div class="card"><h3 class="small">Role Distribution</h3><div class="chart-wrap"><canvas id="roleChart"></canvas></div></div>
-      <div class="card"><h3 class="small">Presence Distribution</h3><div class="chart-wrap"><canvas id="presenceChart"></canvas></div></div>
-    </div>
-    <div class="grid-2">
-      <div class="card"><h3 class="small">Boost Loyalty</h3><div class="table-scroll"><table class="table" id="boostTable"><thead><tr><th>username</th><th>since</th><th>days</th></tr></thead><tbody></tbody></table></div></div>
-      <div class="card"><h3 class="small">Account Age</h3><div class="chart-wrap"><canvas id="ageChart"></canvas></div></div>
-    </div>
-    <div class="card"><h3 class="small">Funnel</h3><div style="margin-top:8px"><canvas id="funnelChart" height="120"></canvas></div></div>
-    <div class="card"><h3 class="small">Activity Heatmap</h3><div class="heat-labels"><span>00:00</span><span>12:00</span><span>23:00</span></div><div id="heatmap" class="heatmap"></div></div>
-  </section>
-
-  <aside class="right-col">
-    <div class="card"><h3 class="small">Top summary</h3>
-      <div class="row"><div class="small">New members:</div><div style="margin-left:auto;font-weight:700" id="newMembers">—</div></div>
-      <div class="row"><div class="small">Churned:</div><div style="margin-left:auto;font-weight:700" id="churned">—</div></div>
-    </div>
-
-    <div class="card"><h3 class="small">Recent joins</h3><div class="table-scroll"><table class="table" id="recentTable"><thead><tr><th>username</th><th>joined_at</th><th>roles</th></tr></thead><tbody></tbody></table></div></div>
-  </aside>
+<div class="loader" id="loader">
+  <div class="ld-ring"></div>
+  <div><div class="ld-txt" id="ldTxt">Connecting...</div><div class="ld-sub" id="ldSub">Fetching member data</div></div>
 </div>
-</body>
-</html>
+<div class="layout">
+<aside class="sb">
+  <div class="sb-logo"><div class="sb-ico">DA</div><div class="sb-txt">Server<span>Hub</span></div></div>
+  <div class="sb-sec">Analytics</div>
+  <a href="#sec-overview" class="sb-a on"><i class="bi bi-speedometer2"></i> Overview</a>
+  <a href="#sec-health" class="sb-a"><i class="bi bi-heart-pulse-fill"></i> Health Score</a>
+  <a href="#sec-retention" class="sb-a"><i class="bi bi-graph-up-arrow"></i> Retention</a>
+  <a href="#sec-growth" class="sb-a"><i class="bi bi-bar-chart-fill"></i> Growth</a>
+  <a href="#sec-roles" class="sb-a"><i class="bi bi-person-badge-fill"></i> Roles</a>
+  <a href="#sec-boost" class="sb-a"><i class="bi bi-lightning-charge-fill"></i> Boosts</a>
+  <a href="#sec-heatmap" class="sb-a"><i class="bi bi-grid-3x3"></i> Heatmap</a>
+  <a href="#sec-members" class="sb-a"><i class="bi bi-people-fill"></i> Members</a>
+  <div class="sb-sec">Account</div>
+  <a href="list.html" class="sb-a"><i class="bi bi-arrow-left-circle"></i> Back to Servers</a>
+  <div class="sb-foot">
+    <div class="sb-user">
+      <div class="u-av" id="sbAv">U</div>
+      <div><div class="u-name" id="sbUser">--</div><div class="u-role">Bot Manager</div></div>
+    </div>
+  </div>
+</aside>
+<div class="main">
+<header class="tb">
+  <a href="list.html" class="tb-back"><i class="bi bi-arrow-left"></i></a>
+  <div class="tb-info">
+    <div class="tb-name" id="srvName">Loading...</div>
+    <div class="tb-id" id="srvId">--</div>
+  </div>
+  <div class="tb-acts">
+    <button class="btn btn-gh" id="refBtn" onclick="doRefresh()"><i class="bi bi-arrow-clockwise"></i><span> Refresh</span></button>
+    <button class="btn btn-go" onclick="dlBots()"><i class="bi bi-robot"></i><span> Bots</span></button>
+    <button class="btn btn-pr" onclick="dlAll()"><i class="bi bi-download"></i><span> Export</span></button>
+  </div>
+</header>
+<div class="body">
+<div class="err-banner" id="errBanner" style="display:none">
+  <i class="bi bi-exclamation-circle-fill"></i><p id="errMsg">Failed to load.</p>
+  <button onclick="doRefresh()">Retry</button>
+</div>
 
+<!-- SECTION 1: KPI OVERVIEW -->
+<div id="sec-overview">
+  <div class="sec-hd"><span class="sec-label">01 / Overview</span><div class="sec-hd-line"></div></div>
+  <div class="stats-grid" style="margin-bottom:12px">
+    <div class="sc" style="--sc-color:var(--a);--sc-bg:rgba(56,189,248,.1)">
+      <div class="sc-top"><span class="sc-label">Total Members</span><div class="sc-icon"><i class="bi bi-people-fill"></i></div></div>
+      <div class="sc-val" id="stTotal">0</div><div class="sc-sub">All users in server</div>
+    </div>
+    <div class="sc" style="--sc-color:var(--success);--sc-bg:rgba(52,211,153,.1)">
+      <div class="sc-top"><span class="sc-label">Online Now</span><div class="sc-icon"><i class="bi bi-circle-fill"></i></div></div>
+      <div class="sc-val" id="stOnline">0</div><div class="sc-sub" id="stOnlineSub">0% of total</div>
+    </div>
+    <div class="sc" style="--sc-color:var(--gold);--sc-bg:rgba(251,191,36,.1)">
+      <div class="sc-top"><span class="sc-label">Boosters</span><div class="sc-icon"><i class="bi bi-lightning-charge-fill"></i></div></div>
+      <div class="sc-val" id="stBoost">0</div><div class="sc-sub" id="stBoostSub">0% boost rate</div>
+    </div>
+    <div class="sc" style="--sc-color:var(--a3);--sc-bg:rgba(129,140,248,.1)">
+      <div class="sc-top"><span class="sc-label">Bots</span><div class="sc-icon"><i class="bi bi-robot"></i></div></div>
+      <div class="sc-val" id="stBots">0</div><div class="sc-sub" id="stBotSub">0% of members</div>
+    </div>
+    <div class="sc" style="--sc-color:var(--danger);--sc-bg:rgba(248,113,113,.1)">
+      <div class="sc-top"><span class="sc-label">Churned</span><div class="sc-icon"><i class="bi bi-person-dash-fill"></i></div></div>
+      <div class="sc-val" id="stChurn">0</div><div class="sc-sub">Detected departures</div>
+    </div>
+  </div>
+  <div class="insight-grid">
+    <div class="ic"><div class="ic-label">Engagement Rate</div><div class="ic-val" id="icEng">0%</div><div class="ic-desc">Active humans / total humans</div></div>
+    <div class="ic"><div class="ic-label">Avg. Server Tenure</div><div class="ic-val" id="icTen">0d</div><div class="ic-desc">Mean days since joining</div></div>
+    <div class="ic"><div class="ic-label">Pending Verification</div><div class="ic-val" id="icPend">0</div><div class="ic-desc">Awaiting membership gate</div></div>
+    <div class="ic"><div class="ic-label">Muted / Timed-out</div><div class="ic-val" id="icMute">0</div><div class="ic-desc">Active communication block</div></div>
+  </div>
+</div>
 
-<!-- <script>
-  var username=localStorage.getItem("username")
-  var serverId=localStorage.getItem("serverId")
-  async function fetchServerDetails() {
-      try {
-        const res = await fetch(`${API_BASE}/servers/${username}/${serverId}/members`, {
-          headers: new Headers({
-            "Accept": "application/json",
-            "ngrok-skip-browser-warning": "69420"
-          })
-        });
-        const text = await res.text();
-        const data = JSON.parse(text);
-        
-        
+<!-- SECTION 2: HEALTH -->
+<div id="sec-health">
+  <div class="sec-hd"><span class="sec-label">02 / Community Health Score</span><div class="sec-hd-line"></div></div>
+  <div class="health-card">
+    <div class="health-ring-wrap">
+      <canvas id="healthRing" width="110" height="110"></canvas>
+      <div class="health-num"><div class="health-pct" id="healthPct">0</div><div class="health-grade" id="healthGrade" style="color:var(--muted)">--</div></div>
+    </div>
+    <div class="health-info">
+      <div class="health-title">Community Health Score</div>
+      <div class="health-desc">Computed from engagement rate, boost adoption, human ratio, and churn. All derived from your real member data.</div>
+      <div class="health-bars">
+        <div class="hb-row"><span class="hb-label">Engagement</span><div class="hb-track"><div class="hb-fill" id="hbE" style="background:var(--success);width:0%"></div></div><span class="hb-val" id="hbEV">0%</span></div>
+        <div class="hb-row"><span class="hb-label">Boost Rate</span><div class="hb-track"><div class="hb-fill" id="hbB" style="background:var(--gold);width:0%"></div></div><span class="hb-val" id="hbBV">0%</span></div>
+        <div class="hb-row"><span class="hb-label">Human Ratio</span><div class="hb-track"><div class="hb-fill" id="hbH" style="background:var(--a);width:0%"></div></div><span class="hb-val" id="hbHV">0%</span></div>
+        <div class="hb-row"><span class="hb-label">Low Churn</span><div class="hb-track"><div class="hb-fill" id="hbC" style="background:var(--a3);width:0%"></div></div><span class="hb-val" id="hbCV">0%</span></div>
+      </div>
+    </div>
+  </div>
+</div>
 
-        if (data?.data) {
-          console.log(data.data);
-          
-          serverData = data.data; // Save for later use
-          serverData.members.forEach(user => {
-              if(user.presence=="Online"){
-          console.log(serverData.user);
-          
+<!-- SECTION 3: RETENTION & PRESENCE -->
+<div id="sec-retention">
+  <div class="sec-hd"><span class="sec-label">03 / Retention &amp; Presence</span><div class="sec-hd-line"></div></div>
+  <div class="gm">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-l"><i class="bi bi-wifi"></i> Live Presence Breakdown</div></div>
+        <div class="g2">
+          <div class="cw-sm"><canvas id="presChart"></canvas></div>
+          <div style="display:flex;flex-direction:column;justify-content:center;gap:6px" id="presRows"></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-l"><i class="bi bi-hourglass-split"></i> Member Tenure Distribution</div></div>
+        <div class="cw"><canvas id="tenureChart"></canvas></div>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="card-hd" style="justify-content:space-between"><div class="card-hd-l"><i class="bi bi-award-fill" style="color:var(--gold)"></i> Top Veterans</div><span style="font-size:.6rem;color:var(--muted)">Longest serving</span></div>
+        <div class="ts" id="vetList"></div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-l"><i class="bi bi-clock-history"></i> Recent Joins</div></div>
+        <div class="ts" id="recentTL"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
+<!-- SECTION 4: GROWTH -->
+<div id="sec-growth">
+  <div class="sec-hd"><span class="sec-label">04 / Growth &amp; Account Age</span><div class="sec-hd-line"></div></div>
+  <div class="g2" style="margin-bottom:14px">
+    <div class="card"><div class="card-hd"><div class="card-hd-l"><i class="bi bi-graph-up"></i> Cumulative Growth</div></div><div class="cw"><canvas id="growthChart"></canvas></div></div>
+    <div class="card"><div class="card-hd"><div class="card-hd-l"><i class="bi bi-calendar3"></i> Discord Account Age</div></div><div class="cw"><canvas id="ageChart"></canvas></div></div>
+  </div>
+  <div class="card">
+    <div class="card-hd" style="justify-content:space-between"><div class="card-hd-l"><i class="bi bi-bar-chart-steps"></i> Monthly Join Velocity</div><span style="font-size:.6rem;color:var(--muted)">Joins per calendar month</span></div>
+    <div class="cw"><canvas id="velChart"></canvas></div>
+  </div>
+</div>
 
-         }
-         else{
+<!-- SECTION 5: ROLES -->
+<div id="sec-roles">
+  <div class="sec-hd"><span class="sec-label">05 / Role Intelligence</span><div class="sec-hd-line"></div></div>
+  <div class="gm">
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-l"><i class="bi bi-pie-chart-fill"></i> Role Distribution</div></div>
+        <div class="g2"><div class="cw"><canvas id="roleChart"></canvas></div><div style="display:flex;flex-direction:column;justify-content:center;gap:5px" id="roleRows"></div></div>
+      </div>
+      <div class="card">
+        <div class="card-hd"><div class="card-hd-l"><i class="bi bi-filter-right"></i> Engagement Funnel</div></div>
+        <div class="cw-xs"><canvas id="funnelChart"></canvas></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-hd-l"><i class="bi bi-table"></i> Role Stats Table</div></div>
+      <div class="ts"><table class="dt" id="roleTable"><thead><tr><th>Role</th><th>Members</th><th>Share</th><th>Avg Tenure</th></tr></thead><tbody></tbody></table></div>
+      <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+        <div style="font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">No-Role Members</div>
+        <div id="noRoleVal" style="font-family:var(--fm);font-size:1.2rem;color:var(--warn);margin-bottom:3px">0</div>
+        <div style="font-size:.7rem;color:var(--text2)">Members with no custom roles assigned</div>
+      </div>
+    </div>
+  </div>
+</div>
 
-          console.log("Nothlng llle that");
-          
-         }
-            
-          });
+<!-- SECTION 6: BOOST LOYALTY -->
+<div id="sec-boost">
+  <div class="sec-hd"><span class="sec-label">06 / Boost Loyalty</span><div class="sec-hd-line"></div></div>
+  <div class="g2">
+    <div class="card">
+      <div class="card-hd"><div class="card-hd-l"><i class="bi bi-lightning-charge-fill" style="color:var(--gold)"></i> Boost Duration Tiers</div></div>
+      <div id="boostTiers" style="display:flex;flex-direction:column;gap:5px;margin-bottom:14px"></div>
+      <div class="cw-xs"><canvas id="boostChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd"><div class="card-hd-l"><i class="bi bi-trophy-fill" style="color:var(--gold)"></i> Top Boosters</div></div>
+      <div class="ts"><table class="dt" id="boostTable"><thead><tr><th>Username</th><th>Since</th><th>Days</th></tr></thead><tbody></tbody></table></div>
+    </div>
+  </div>
+</div>
 
-       
-        } else {
-          console.log("no members found");
-          ;
-        }
-      } catch (err) {
-        console.error('❌ Fetch failed:', err);
-        container.innerHTML = '<p style="color:red;">Failed to load members. Check console.</p>';
-      }
-    }
-/* --- utility randomizers --- */
-function rint(a,b){ return Math.floor(Math.random()*(b-a+1))+a }
-function sample(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+<!-- SECTION 7: HEATMAP -->
+<div id="sec-heatmap">
+  <div class="sec-hd"><span class="sec-label">07 / Join Heatmap</span><div class="sec-hd-line"></div></div>
+  <div class="card">
+    <div class="card-hd" style="justify-content:space-between"><div class="card-hd-l"><i class="bi bi-thermometer-half"></i> Join Activity — Day x Hour</div><span style="font-size:.6rem;color:var(--muted)">From joined_at timestamps</span></div>
+    <div id="hmGrid"></div>
+    <div class="hm-tlbls"><span class="hm-tlbl">00:00</span><span class="hm-tlbl">06:00</span><span class="hm-tlbl">12:00</span><span class="hm-tlbl">18:00</span><span class="hm-tlbl">23:00</span></div>
+    <div style="display:flex;align-items:center;gap:6px;margin-top:10px">
+      <span style="font-size:.6rem;color:var(--muted)">Less</span>
+      <div style="display:flex;gap:2px">
+        <div style="width:11px;height:11px;border-radius:2px;background:rgba(67,97,238,.06)"></div>
+        <div style="width:11px;height:11px;border-radius:2px;background:rgba(67,97,238,.2)"></div>
+        <div style="width:11px;height:11px;border-radius:2px;background:rgba(67,97,238,.42)"></div>
+        <div style="width:11px;height:11px;border-radius:2px;background:rgba(67,97,238,.68)"></div>
+        <div style="width:11px;height:11px;border-radius:2px;background:rgba(67,97,238,.9)"></div>
+      </div>
+      <span style="font-size:.6rem;color:var(--muted)">More</span>
+      <span style="font-size:.6rem;color:var(--muted);margin-left:10px" id="hmPeak"></span>
+    </div>
+  </div>
+</div>
 
-/* --- role pool --- */
-const ROLE_POOL = [
-  {id:"r_admin",name:"Admin"},
-  {id:"r_mod",name:"Moderator"},
-  {id:"r_vip",name:"VIP"},
-  {id:"r_booster",name:"Booster"},
-  {id:"r_member",name:"Member"},
-  {id:"r_new",name:"Newbie"},
-  {id:"r_bot",name:"Bot"}
-];
+<!-- SECTION 8: ALL MEMBERS -->
+<div id="sec-members">
+  <div class="sec-hd"><span class="sec-label">08 / All Members</span><div class="sec-hd-line"></div></div>
+  <div class="card">
+    <div class="card-hd" style="justify-content:space-between">
+      <div class="card-hd-l"><i class="bi bi-people-fill"></i> Member Directory</div>
+      <span style="font-family:var(--fm);font-size:.62rem;color:var(--muted)" id="mCount">0 members</span>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <div class="srch" style="flex:1;min-width:160px;margin-bottom:0"><i class="bi bi-search"></i><input id="srchInp" type="text" placeholder="Search name or ID..." oninput="filterM()"/></div>
+      <select id="fStatus" onchange="filterM()" style="background:#fff;border:1px solid var(--border2);border-radius:var(--rs);color:var(--text2);font-family:var(--fb);font-size:.76rem;padding:.44rem .7rem;cursor:pointer">
+        <option value="">All Status</option><option value="online">Online</option><option value="idle">Idle</option><option value="dnd">DND</option><option value="offline">Offline</option>
+      </select>
+      <select id="fType" onchange="filterM()" style="background:#fff;border:1px solid var(--border2);border-radius:var(--rs);color:var(--text2);font-family:var(--fb);font-size:.76rem;padding:.44rem .7rem;cursor:pointer">
+        <option value="">All Types</option><option value="human">Humans</option><option value="bot">Bots</option><option value="booster">Boosters</option><option value="pending">Pending</option><option value="muted">Muted</option>
+      </select>
+    </div>
+    <div style="max-height:400px;overflow-y:auto" id="mList"></div>
+  </div>
+</div>
 
-/* --- your real member object --- */
-const baseMember = {
-  id: "985577632584306779",
-  username: "godawgs09.",
-  displayName: "TScott09",
-  bot: false,
-  dateJoined: "2025-06-02T21:03:05.050Z"
-};
+</div><!-- /body -->
+<div class="pg-ft">ServerHub Analytics &mdash; <span id="ftGen"></span></div>
+</div><!-- /main -->
+</div><!-- /layout -->
+<script>
+const BASE='https://default-bot-25c835e1c978.herokuapp.com/api';
+const HDRS={Accept:'application/json','ngrok-skip-browser-warning':'69420'};
+const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const PCOL={online:'#34d399',idle:'#fbbf24',dnd:'#f87171',offline:'#4a6080'};
+const RPAL=['#38bdf8','#6ee7b7','#818cf8','#fbbf24','#f87171','#fb923c','#a78bfa','#2dd4bf','#e879f9'];
+const CD={t:'#8a95aa',g:'rgba(11,15,26,.06)',f:"'DM Sans',sans-serif"};
 
-/* --- function to enrich with randomized missing fields --- */
-function enrichMember(m){
-  const now = Date.now();
-  const msDay = 86400000;
-  return {
-    user:{
-      id: m.id,
-      username: m.username,
-      global_name: m.displayName,
-      bot: m.bot,
-      created_at: new Date(now - rint(30,3000)*msDay).toISOString()
-    },
-    guild_member:{
-      nick: m.displayName,
-      roles: ["r_member"].concat(Math.random()<0.3?[sample(ROLE_POOL).id]:[]),
-      joined_at: m.dateJoined,
-      premium_since: Math.random()<0.3 ? new Date(now - rint(10,500)*msDay).toISOString() : null,
-      pending: Math.random()<0.1,
-      communication_disabled_until: Math.random()<0.05 ? new Date(now + rint(1,10)*msDay).toISOString() : null
-    },
-    presence:{
-      status: sample(["online","idle","offline"]),
-      activities:[]
-    }
-  }
+let DATA=null,MEMBERS=[],CHARTS={};
+const getU=()=>(localStorage.getItem('username')||'').replace(/%22|"/g,'').trim();
+const getS=()=>(localStorage.getItem('serverId')||'').trim();
+const pct=(n,d)=>d?((n/d)*100).toFixed(1)+'%':'0%';
+const fmtD=ms=>{const d=Math.round(ms/86400000);if(d<1)return'<1d';if(d<31)return d+'d';if(d<365)return Math.round(d/30)+'mo';return(d/365).toFixed(1)+'yr';};
+const fmtDate=iso=>{try{return new Date(iso).toISOString().slice(0,10);}catch{return'--';}};
+const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
+const sts=m=>(m?.presence?.status||'offline').toLowerCase();
+
+function setLoad(t,s){set('ldTxt',t);set('ldSub',s||'');}
+function hideLoader(){const e=document.getElementById('loader');e.classList.add('fade');setTimeout(()=>e.classList.add('gone'),450);}
+function showErr(m){set('errMsg',m);document.getElementById('errBanner').style.display='flex';}
+
+function enrich(m){
+  return{
+    user:{id:m.id||m.user?.id||'--',username:m.username||m.user?.username||m.displayName||'--',globalName:m.global_name||m.user?.global_name||null,bot:!!(m.bot??m.user?.bot),created_at:m.created_at||m.user?.created_at||null},
+    gm:{nick:m.displayName||m.nick||m.guild_member?.nick||null,roles:m.roles?.length?m.roles:m.guild_member?.roles?.length?m.guild_member.roles:[],joined_at:m.dateJoined||m.joined_at||m.guild_member?.joined_at||null,premium_since:m.premiumSince||m.premium_since||m.guild_member?.premium_since||null,pending:!!(m.pending??m.guild_member?.pending),comm:m.communication_disabled_until||m.guild_member?.communication_disabled_until||null},
+    pr:{status:m.presence?.status||'offline',activities:m.presence?.activities||[]}
+  };
 }
 
-/* --- dataset: clone same member N times --- */
-function makeDataset(n){
-  const arr=[];
-  for(let i=0;i<n;i++){
-    arr.push(enrichMember({...baseMember,id:baseMember.id+"_"+i,username:baseMember.username+i}));
-  }
-  return {members:arr,churned:[],generated_at:new Date().toISOString()};
+async function fetchData(){
+  const u=getU(),s=getS();
+  if(!u||!s)return null;
+  const res=await fetch(`${BASE}/servers/${u}/${s}/members`,{headers:HDRS});
+  if(!res.ok)throw new Error('HTTP '+res.status);
+  const txt=await res.text();
+  let p;try{p=JSON.parse(txt);}catch{throw new Error('Invalid JSON');}
+  const raw=p?.data?.members||p?.members||[];
+  const churned=p?.data?.churned||p?.churned||[];
+  return{members:raw.map(enrich).filter(Boolean),churned,generated_at:new Date().toISOString()};
 }
 
-let currentData = makeDataset(50);
-
-/* --- render --- */
-function render(){
-  const members = currentData.members;
-  const total = members.length;
-  const bots = members.filter(m=>m.user.bot).length;
-  const active = members.filter(m=>m.presence.status!=="offline").length;
-  const boosters = members.filter(m=>m.guild_member.premium_since).length;
-  document.getElementById("totalMembers").innerText=total;
-  document.getElementById("botPct").innerText=((bots/total)*100).toFixed(1)+"%";
-  document.getElementById("activeCount").innerText=active;
-  document.getElementById("boosters").innerText=boosters;
-  document.getElementById("newMembers").innerText=rint(0,total);
-  document.getElementById("churned").innerText=currentData.churned.length;
-
-  /* recent joins */
-  const rt=document.querySelector("#recentTable tbody"); rt.innerHTML="";
-  members.slice(0,10).forEach(m=>{
-    const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${m.user.username}</td><td>${m.guild_member.joined_at.slice(0,10)}</td><td>${m.guild_member.roles.join(",")}</td>`;
-    rt.appendChild(tr);
-  });
-
-  /* boost loyalty */
-  const bt=document.querySelector("#boostTable tbody"); bt.innerHTML="";
-  members.filter(m=>m.guild_member.premium_since).slice(0,10).forEach(m=>{
-    const since = new Date(m.guild_member.premium_since);
-    const days = Math.floor((Date.now()-since.getTime())/86400000);
-    const tr=document.createElement("tr");
-    tr.innerHTML=`<td>${m.user.username}</td><td>${since.toISOString().slice(0,10)}</td><td>${days}</td>`;
-    bt.appendChild(tr);
-  });
-
-  /* presence chart */
-  if(window._presence) window._presence.destroy();
-  window._presence = new Chart(document.getElementById("presenceChart"),{
-    type:"pie",
-    data:{labels:["online","idle","offline"],
-          datasets:[{data:["online","idle","offline"].map(s=>members.filter(m=>m.presence.status===s).length)}]},
-    options:{plugins:{legend:{position:"right"}}}
-  });
-
-  /* role distribution */
-  if(window._roles) window._roles.destroy();
+function compute(data){
+  const M=data.members||[],now=Date.now();
+  const humans=M.filter(m=>!m.user.bot),bots=M.filter(m=>m.user.bot);
+  const online=M.filter(m=>sts(m)==='online'),idle=M.filter(m=>sts(m)==='idle');
+  const dnd=M.filter(m=>sts(m)==='dnd'),offline=M.filter(m=>sts(m)==='offline');
+  const active=M.filter(m=>sts(m)!=='offline');
+  const boosters=M.filter(m=>m.gm.premium_since);
+  const pending=M.filter(m=>m.gm.pending);
+  const muted=M.filter(m=>m.gm.comm&&new Date(m.gm.comm)>now);
+  const tenures=M.map(m=>{if(!m.gm.joined_at)return null;const ms=now-new Date(m.gm.joined_at);return isNaN(ms)?null:ms/86400000;}).filter(v=>v!==null);
+  const avgTenure=tenures.length?Math.round(tenures.reduce((a,b)=>a+b,0)/tenures.length):0;
+  const engRate=humans.length?(active.filter(m=>!m.user.bot).length/humans.length*100):0;
   const roleCounts={};
-  members.forEach(m=>m.guild_member.roles.forEach(r=>roleCounts[r]=(roleCounts[r]||0)+1));
-  window._roles=new Chart(document.getElementById("roleChart"),{
-    type:"doughnut",
-    data:{labels:Object.keys(roleCounts),datasets:[{data:Object.values(roleCounts)}]}
-  });
+  M.forEach(m=>m.gm.roles.forEach(r=>roleCounts[r]=(roleCounts[r]||0)+1));
+  const noRole=M.filter(m=>m.gm.roles.length===0).length;
+  const boostTiers={'<7d':0,'7-30d':0,'1-3mo':0,'3-6mo':0,'6mo+':0};
+  boosters.forEach(m=>{const d=(now-new Date(m.gm.premium_since))/86400000;if(d<7)boostTiers['<7d']++;else if(d<30)boostTiers['7-30d']++;else if(d<90)boostTiers['1-3mo']++;else if(d<180)boostTiers['3-6mo']++;else boostTiers['6mo+']++;});
+  const tenureBuckets={'<7d':0,'7-30d':0,'1-3mo':0,'3-12mo':0,'1-2yr':0,'2yr+':0};
+  tenures.forEach(d=>{if(d<7)tenureBuckets['<7d']++;else if(d<30)tenureBuckets['7-30d']++;else if(d<90)tenureBuckets['1-3mo']++;else if(d<365)tenureBuckets['3-12mo']++;else if(d<730)tenureBuckets['1-2yr']++;else tenureBuckets['2yr+']++;});
+  const monthlyJoins={};
+  M.forEach(m=>{if(!m.gm.joined_at)return;const d=new Date(m.gm.joined_at);if(isNaN(d))return;const k=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');monthlyJoins[k]=(monthlyJoins[k]||0)+1;});
+  const joinMap={};
+  M.forEach(m=>{if(!m.gm.joined_at)return;const d=fmtDate(m.gm.joined_at);if(d!=='--')joinMap[d]=(joinMap[d]||0)+1;});
+  const dates=Object.keys(joinMap).sort();let run=0;const cumulative=dates.map(d=>(run+=joinMap[d]));
+  const ageBuckets={'<1yr':0,'1-2yr':0,'2-3yr':0,'3yr+':0};
+  M.forEach(m=>{if(!m.user.created_at)return;const y=(now-new Date(m.user.created_at))/31536000000;if(isNaN(y))return;if(y<1)ageBuckets['<1yr']++;else if(y<2)ageBuckets['1-2yr']++;else if(y<3)ageBuckets['2-3yr']++;else ageBuckets['3yr+']++;});
+  const hmap=Array.from({length:7},()=>new Array(24).fill(0));
+  M.forEach(m=>{if(!m.gm.joined_at)return;const d=new Date(m.gm.joined_at);if(isNaN(d))return;hmap[d.getDay()][d.getHours()]++;});
+  const hmapFlat=hmap.flat(),hmapMax=Math.max(...hmapFlat,1);
+  const peakIdx=hmapFlat.indexOf(Math.max(...hmapFlat));
+  const peakDay=DAYS[Math.floor(peakIdx/24)],peakH=peakIdx%24;
+  const roleTenure={};
+  M.forEach(m=>{if(!m.gm.joined_at)return;const d=(now-new Date(m.gm.joined_at))/86400000;if(isNaN(d))return;m.gm.roles.forEach(r=>{if(!roleTenure[r])roleTenure[r]={sum:0,count:0};roleTenure[r].sum+=d;roleTenure[r].count+=1;});});
+  const veterans=[...M].filter(m=>m.gm.joined_at&&!isNaN(new Date(m.gm.joined_at))).sort((a,b)=>new Date(a.gm.joined_at)-new Date(b.gm.joined_at)).slice(0,6);
+  const recent=[...M].filter(m=>m.gm.joined_at&&!isNaN(new Date(m.gm.joined_at))).sort((a,b)=>new Date(b.gm.joined_at)-new Date(a.gm.joined_at)).slice(0,8);
+  const total=M.length||1;
+  const hE=Math.min(100,engRate),hB=Math.min(100,(boosters.length/total)*100*10),hH=Math.min(100,(humans.length/total)*100),hCh=data.churned?.length?(1-Math.min(1,data.churned.length/total))*100:100;
+  const health=Math.round(hE*.4+hB*.15+hH*.25+hCh*.2);
+  const healthGrade=health>=80?'Excellent':health>=60?'Good':health>=40?'Fair':'Needs work';
+  const healthColor=health>=80?'#34d399':health>=60?'#fbbf24':health>=40?'#fb923c':'#f87171';
+  return{total:M.length,humans:humans.length,bots:bots.length,online:online.length,idle:idle.length,dnd:dnd.length,offline:offline.length,active:active.length,boosters:boosters.length,pending:pending.length,muted:muted.length,churn:data.churned?.length||0,avgTenure,engRate,roleCounts,noRole,boostTiers,tenureBuckets,monthlyJoins,dates,cumulative,ageBuckets,hmap,hmapMax,peakDay,peakH,roleTenure,veterans,recent,boosterList:boosters,health,healthGrade,healthColor,hE,hB:Math.min(100,(boosters.length/total)*100*10),hH,hCh,presBreakdown:{online:online.length,idle:idle.length,dnd:dnd.length,offline:offline.length}};
+}
 
-  /* account age */
-  if(window._age) window._age.destroy();
-  const bins={ "<1yr":0,"1-2yr":0,"2-3yr":0,"3yr+":0 };
+function renderKPIs(c){
+  set('stTotal',c.total);set('stOnline',c.online);set('stOnlineSub',pct(c.online,c.total)+' of total');
+  set('stBoost',c.boosters);set('stBoostSub',pct(c.boosters,c.total)+' boost rate');
+  set('stBots',c.bots);set('stBotSub',pct(c.bots,c.total)+' of members');set('stChurn',c.churn);
+  set('icEng',c.engRate.toFixed(1)+'%');set('icTen',fmtD(c.avgTenure*86400000));set('icPend',c.pending);set('icMute',c.muted);
+}
+
+function renderHealth(c){
+  set('healthPct',c.health);set('healthGrade',c.healthGrade);
+  document.getElementById('healthGrade').style.color=c.healthColor;
+  if(CHARTS.health)CHARTS.health.destroy();
+  CHARTS.health=new Chart(document.getElementById('healthRing').getContext('2d'),{type:'doughnut',data:{datasets:[{data:[c.health,100-c.health],backgroundColor:[c.healthColor,'rgba(255,255,255,.04)'],borderWidth:0,hoverBorderWidth:0}]},options:{cutout:'72%',plugins:{legend:{display:false},tooltip:{enabled:false}},animation:{duration:800}}});
+  const setBar=(id,vId,val)=>{const e=document.getElementById(id);if(e)e.style.width=Math.min(100,val).toFixed(1)+'%';set(vId,val.toFixed(1)+'%');};
+  setBar('hbE','hbEV',c.hE);setBar('hbB','hbBV',Math.min(100,(c.boosters/(c.total||1))*100));setBar('hbH','hbHV',c.hH);setBar('hbC','hbCV',c.hCh);
+}
+
+function renderPresence(c){
+  const pres=c.presBreakdown,keys=Object.keys(pres),vals=Object.values(pres),tot=vals.reduce((a,b)=>a+b,0)||1;
+  if(CHARTS.pres)CHARTS.pres.destroy();
+  CHARTS.pres=new Chart(document.getElementById('presChart').getContext('2d'),{type:'doughnut',data:{labels:keys,datasets:[{data:vals,backgroundColor:keys.map(k=>PCOL[k]||'#4a6080'),borderWidth:0,hoverBorderWidth:2}]},options:{cutout:'62%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw} (${pct(ctx.raw,tot)})`}}}}});
+  const bd=document.getElementById('presRows');bd.innerHTML='';
+  const labels={online:'Online',idle:'Idle',dnd:'Do Not Disturb',offline:'Offline'};
+  keys.forEach(k=>{bd.innerHTML+=`<div class="prog-row"><span class="prog-label" style="color:${PCOL[k]}">${labels[k]||k}</span><div class="prog-track"><div class="prog-fill" style="background:${PCOL[k]};width:${(pres[k]/tot*100).toFixed(1)}%"></div></div><span class="prog-val">${pres[k]}</span></div>`;});
+}
+
+function renderTenure(c){
+  if(CHARTS.tenure)CHARTS.tenure.destroy();
+  CHARTS.tenure=new Chart(document.getElementById('tenureChart').getContext('2d'),{type:'bar',data:{labels:Object.keys(c.tenureBuckets),datasets:[{data:Object.values(c.tenureBuckets),backgroundColor:'#38bdf8',borderRadius:6,borderWidth:0}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:CD.t,font:{family:CD.f,size:10}},grid:{color:CD.g}},y:{ticks:{color:CD.t,font:{family:CD.f,size:10}},grid:{color:CD.g}}}}});
+}
+
+function renderVeterans(c){
+  const el=document.getElementById('vetList');
+  if(!c.veterans.length){el.innerHTML='<div style="color:var(--muted);font-size:.78rem;padding:10px 0">No data</div>';return;}
+  const now=Date.now();
+  const gradients=['linear-gradient(135deg,#fbbf24,#fb923c)','linear-gradient(135deg,#94a3b8,#cbd5e1)','linear-gradient(135deg,#b45309,#92400e)'];
+  el.innerHTML=c.veterans.map((m,i)=>{const days=m.gm.joined_at?Math.round((now-new Date(m.gm.joined_at))/86400000):0;return`<div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid rgba(11,15,26,.07)"><span style="font-family:var(--fm);font-size:.6rem;color:var(--muted);width:18px">#${i+1}</span><div class="m-av" style="width:28px;height:28px;font-size:.65rem;background:${gradients[i]||'linear-gradient(135deg,var(--a),var(--a3))'}">${(m.user.username||'?')[0].toUpperCase()}</div><div style="flex:1;min-width:0"><div style="font-size:.78rem;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.user.username)}</div><div style="font-size:.6rem;color:var(--muted)">${fmtDate(m.gm.joined_at)}</div></div><span style="font-family:var(--fm);font-size:.62rem;color:var(--gold);flex-shrink:0">${days}d</span></div>`;}).join('');
+}
+
+function renderRecent(c){
+  const el=document.getElementById('recentTL');
+  if(!c.recent.length){el.innerHTML='<div style="color:var(--muted);font-size:.78rem;padding:10px 0">No data</div>';return;}
+  const now=Date.now();
+  el.innerHTML=c.recent.map(m=>{const ago=m.gm.joined_at?fmtD(now-new Date(m.gm.joined_at)):'?';return`<div class="tl-item"><div class="tl-dot" style="background:${m.user.bot?'var(--a3)':'var(--a)'}"></div><div class="tl-body"><div class="tl-name">${esc(m.user.username)}${m.user.bot?' <span class="bdg bdg-bt">BOT</span>':''}</div><div class="tl-time">${ago} ago &middot; ${fmtDate(m.gm.joined_at)}</div><div class="tl-roles">${m.gm.roles.map(r=>`<span class="rtag">${esc(r)}</span>`).join('')}</div></div></div>`;}).join('');
+}
+
+function renderGrowth(c){
+  if(CHARTS.growth)CHARTS.growth.destroy();
+  CHARTS.growth=new Chart(document.getElementById('growthChart').getContext('2d'),{type:'line',data:{labels:c.dates.length?c.dates:['No data'],datasets:[{label:'Total Members',data:c.cumulative.length?c.cumulative:[0],borderColor:'#38bdf8',backgroundColor:'rgba(56,189,248,.07)',fill:true,tension:.4,pointRadius:2,borderWidth:2}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:CD.t,font:{family:CD.f,size:9},maxRotation:45},grid:{color:CD.g}},y:{ticks:{color:CD.t,font:{family:CD.f,size:10}},grid:{color:CD.g}}}}});
+  if(CHARTS.age)CHARTS.age.destroy();
+  CHARTS.age=new Chart(document.getElementById('ageChart').getContext('2d'),{type:'bar',data:{labels:Object.keys(c.ageBuckets),datasets:[{data:Object.values(c.ageBuckets),backgroundColor:['#38bdf8','#6ee7b7','#818cf8','#fbbf24'],borderRadius:6,borderWidth:0}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:CD.t,font:{family:CD.f,size:10}},grid:{color:CD.g}},y:{ticks:{color:CD.t,font:{family:CD.f,size:10}},grid:{color:CD.g}}}}});
+  if(CHARTS.vel)CHARTS.vel.destroy();
+  const months=Object.keys(c.monthlyJoins).sort().slice(-18);const vvals=months.map(m=>c.monthlyJoins[m]);
+  CHARTS.vel=new Chart(document.getElementById('velChart').getContext('2d'),{type:'bar',data:{labels:months.length?months:['No data'],datasets:[{label:'Joins',data:vvals.length?vvals:[0],backgroundColor:months.map((_,i)=>`rgba(56,189,248,${0.4+i/Math.max(months.length,1)*0.55})`),borderRadius:5,borderWidth:0}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:CD.t,font:{family:CD.f,size:9},maxRotation:45},grid:{color:CD.g}},y:{ticks:{color:CD.t,font:{family:CD.f,size:10}},grid:{color:CD.g}}}}});
+}
+
+function renderRoles(c){
+  const rc=c.roleCounts,rl=Object.keys(rc),rv=Object.values(rc),tot=rv.reduce((a,b)=>a+b,0)||1;
+  if(CHARTS.roles)CHARTS.roles.destroy();
+  CHARTS.roles=new Chart(document.getElementById('roleChart').getContext('2d'),{type:'pie',data:{labels:rl,datasets:[{data:rv,backgroundColor:rl.map((_,i)=>RPAL[i%RPAL.length]),borderWidth:0}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${ctx.raw}`}}}}});
+  const rr=document.getElementById('roleRows');rr.innerHTML='';
+  rl.slice(0,7).forEach((r,i)=>{rr.innerHTML+=`<div class="prog-row"><span class="prog-label" style="font-size:.7rem">${esc(r)}</span><div class="prog-track"><div class="prog-fill" style="background:${RPAL[i%RPAL.length]};width:${(rc[r]/tot*100).toFixed(1)}%"></div></div><span class="prog-val">${rc[r]}</span></div>`;});
+  const tbody=document.querySelector('#roleTable tbody');tbody.innerHTML='';
+  rl.sort((a,b)=>rc[b]-rc[a]).forEach((r,i)=>{const at=c.roleTenure[r]?Math.round(c.roleTenure[r].sum/c.roleTenure[r].count):0;const tr=document.createElement('tr');tr.innerHTML=`<td><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${RPAL[i%RPAL.length]};margin-right:6px"></span>${esc(r)}</td><td style="font-family:var(--fm)">${rc[r]}</td><td>${pct(rc[r],tot)}</td><td style="font-family:var(--fm)">${at}d</td>`;tbody.appendChild(tr);});
+  if(!rl.length)tbody.innerHTML='<tr><td colspan="4" style="color:var(--muted);text-align:center;padding:14px">No roles found</td></tr>';
+  set('noRoleVal',c.noRole);
+  if(CHARTS.funnel)CHARTS.funnel.destroy();
+  CHARTS.funnel=new Chart(document.getElementById('funnelChart').getContext('2d'),{type:'bar',data:{labels:['Total Members','Active','Boosters'],datasets:[{data:[c.total,c.active,c.boosters],backgroundColor:['#38bdf8','#6ee7b7','#fbbf24'],borderRadius:5,borderWidth:0}]},options:{indexAxis:'y',plugins:{legend:{display:false}},scales:{x:{ticks:{color:CD.t,font:{family:CD.f,size:10}},grid:{color:CD.g}},y:{ticks:{color:CD.t,font:{family:CD.f,size:10}},grid:{color:CD.g}}}}});
+}
+
+function renderBoost(c){
+  const te=document.getElementById('boostTiers');te.innerHTML='';
+  const mv=Math.max(...Object.values(c.boostTiers),1);
+  let any=false;
+  Object.entries(c.boostTiers).forEach(([tier,count])=>{if(!count)return;any=true;te.innerHTML+=`<div class="prog-row"><span class="prog-label">${tier}</span><div class="prog-track"><div class="prog-fill" style="background:var(--gold);width:${(count/mv*100).toFixed(1)}%"></div></div><span class="prog-val">${count}</span></div>`;});
+  if(!any)te.innerHTML='<div style="color:var(--muted);font-size:.78rem">No boosters yet</div>';
+  if(CHARTS.boost)CHARTS.boost.destroy();
+  CHARTS.boost=new Chart(document.getElementById('boostChart').getContext('2d'),{type:'bar',data:{labels:Object.keys(c.boostTiers),datasets:[{data:Object.values(c.boostTiers),backgroundColor:'rgba(251,191,36,.6)',borderRadius:5,borderWidth:0}]},options:{plugins:{legend:{display:false}},scales:{x:{ticks:{color:CD.t,font:{family:CD.f,size:10}},grid:{color:CD.g}},y:{ticks:{color:CD.t,font:{family:CD.f,size:10}},grid:{color:CD.g}}}}});
+  const tbody=document.querySelector('#boostTable tbody');tbody.innerHTML='';
+  const now=Date.now();
+  [...c.boosterList].sort((a,b)=>new Date(a.gm.premium_since)-new Date(b.gm.premium_since)).slice(0,15).forEach(m=>{const since=new Date(m.gm.premium_since);const days=isNaN(since)?0:Math.floor((now-since)/86400000);const tr=document.createElement('tr');tr.innerHTML=`<td style="font-weight:500;color:var(--text)">${esc(m.user.username)}</td><td>${fmtDate(m.gm.premium_since)}</td><td style="font-family:var(--fm);color:var(--gold)">${days}d</td>`;tbody.appendChild(tr);});
+  if(!c.boosterList.length)tbody.innerHTML='<tr><td colspan="3" style="color:var(--muted);text-align:center;padding:14px">No boosters</td></tr>';
+}
+
+function renderHeatmap(c){
+  const grid=document.getElementById('hmGrid');grid.innerHTML='';
+  const wrap=document.createElement('div');wrap.className='hm-days';
+  DAYS.forEach((day,di)=>{const row=document.createElement('div');row.className='hm-row';const label=document.createElement('div');label.className='hm-dlbl';label.textContent=day;row.appendChild(label);const cells=document.createElement('div');cells.className='hm-cells';c.hmap[di].forEach((val,hr)=>{const cell=document.createElement('div');cell.className='hm-cell';cell.style.background=`rgba(67,97,238,${val?Math.max(.12,val/c.hmapMax):.04})`;cell.title=`${day} ${String(hr).padStart(2,'0')}:00 -- ${val} join${val!==1?'s':''}`;cells.appendChild(cell);});row.appendChild(cells);wrap.appendChild(row);});
+  grid.appendChild(wrap);
+  const hasPeak=c.hmap.flat().some(v=>v>0);
+  set('hmPeak',hasPeak?`Peak: ${c.peakDay} ${String(c.peakH).padStart(2,'0')}:00 (${c.hmap[DAYS.indexOf(c.peakDay)]?.[c.peakH]||0} joins)`:'No join data yet');
+}
+
+function renderMemberList(members){
+  const el=document.getElementById('mList');
+  set('mCount',`${members.length} member${members.length!==1?'s':''}`);
+  if(!members.length){el.innerHTML='<div style="padding:18px;text-align:center;color:var(--muted);font-size:.8rem">No members match filters</div>';return;}
+  const frag=document.createDocumentFragment();
   members.forEach(m=>{
-    const yrs=(Date.now()-new Date(m.user.created_at))/31536000000;
-    if(yrs<1) bins["<1yr"]++; else if(yrs<2) bins["1-2yr"]++;
-    else if(yrs<3) bins["2-3yr"]++; else bins["3yr+"]++;
+    const status=sts(m);const now=Date.now();
+    const isMuted=m.gm.comm&&new Date(m.gm.comm)>now;
+    const div=document.createElement('div');div.className='m-item';
+    div.innerHTML=`<div class="m-av ${m.user.bot?'bot-av':''}">${(m.user.username||'?')[0].toUpperCase()}</div><div class="m-info"><div class="m-name">${esc(m.user.username)}${m.user.bot?' <span class="bdg bdg-bt">BOT</span>':''}${m.gm.pending?' <span class="bdg bdg-pe">PENDING</span>':''}${isMuted?' <span class="bdg bdg-mu">MUTED</span>':''}</div><div class="m-id">ID: ${esc(m.user.id)}</div><div class="m-tags">${m.gm.roles.map(r=>`<span class="rtag">${esc(r)}</span>`).join('')}</div></div><span class="bdg bdg-${status}"><span class="bdg-dot"></span>${status}</span>`;
+    frag.appendChild(div);
   });
-  window._age=new Chart(document.getElementById("ageChart"),{
-    type:"bar",
-    data:{labels:Object.keys(bins),datasets:[{data:Object.values(bins)}]}
-  });
-
-  /* funnel */
-  if(window._funnel) window._funnel.destroy();
-  window._funnel=new Chart(document.getElementById("funnelChart"),{
-    type:"bar",
-    data:{labels:["Total","Active","Boosters"],datasets:[{data:[total,active,boosters]}]},
-    options:{indexAxis:"y"}
-  });
-
-  /* membership growth */
-  if(window._growth) window._growth.destroy();
-  const joinCounts={};
-  members.forEach(m=>{
-    const d=m.guild_member.joined_at.slice(0,10);
-    joinCounts[d]=(joinCounts[d]||0)+1;
-  });
-  const dates=Object.keys(joinCounts).sort();
-  const cumulative=[];let sum=0;
-  dates.forEach(d=>{sum+=joinCounts[d];cumulative.push(sum)});
-  window._growth=new Chart(document.getElementById("growthChart"),{
-    type:"line",
-    data:{labels:dates,datasets:[{label:"Members",data:cumulative}]}
-  });
-
-  /* heatmap */
-  const hm=document.getElementById("heatmap"); hm.innerHTML="";
-  for(let h=0;h<24;h++){
-    const div=document.createElement("div");div.className="heatcell";
-    div.style.background=`rgba(50,200,255,${Math.random()})`;
-    hm.appendChild(div);
-  }
+  el.innerHTML='';el.appendChild(frag);
 }
 
-render();
-function exportXLSX(members) {
-  const data = members.map(m => ({
-    ID: m.user.id,
-    Username: m.user.username,
-    GlobalName: m.user.global_name,
-    Bot: m.user.bot,
-    CreatedAt: m.user.created_at,
-    Nick: m.guild_member.nick,
-    Roles: m.guild_member.roles.join("; "),
-    JoinedAt: m.guild_member.joined_at,
-    PremiumSince: m.guild_member.premium_since,
-    Pending: m.guild_member.pending,
-    CommunicationDisabledUntil: m.guild_member.communication_disabled_until,
-    Presence: m.presence.status
-  }));
-
-  // Convert JSON → Sheet
-  const worksheet = XLSX.utils.json_to_sheet(data);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Members");
-
-  // Export file
-  XLSX.writeFile(workbook, "discord_members.xlsx");
-}
-document.getElementById("download").onclick = () => {
-  exportXLSX(currentData.members);
-};
-
-// function exportCSV(members) {
-//   const headers = [
-//     "id","username","global_name","bot","created_at",
-//     "nick","roles","joined_at","premium_since",
-//     "pending","communication_disabled_until","presence"
-//   ];
-
-//   const rows = members.map(m => [
-//     m.user.id,
-//     m.user.username,
-//     m.user.global_name,
-//     m.user.bot,
-//     m.user.created_at,
-//     m.guild_member.nick,
-//     m.guild_member.roles.join(";"),
-//     m.guild_member.joined_at,
-//     m.guild_member.premium_since,
-//     m.guild_member.pending,
-//     m.guild_member.communication_disabled_until,
-//     m.presence.status
-//   ]);
-
-//   const csv = [headers.join(","), ...rows.map(r => r.join(","))].join("\n");
-
-//   const blob = new Blob([csv], { type: "text/csv" });
-//   const url = URL.createObjectURL(blob);
-//   const a = document.createElement("a");
-//   a.href = url;
-//   a.download = "discord_members.csv";
-//   document.body.appendChild(a);
-//   a.click();
-//   document.body.removeChild(a);
-// }
-
-document.getElementById("regen").onclick=()=>{currentData=makeDataset(50);render()};
-</script> -->
-<!-- <script>
-var username = localStorage.getItem("username");
-var serverId = localStorage.getItem("serverId");
-var API_BASE = "https://default-bot-25c835e1c978.herokuapp.com/api";
-
-/* --- utility randomizers --- */
-function rint(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
-function sample(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-/* --- role pool --- */
-const ROLE_POOL = [
-  {id:"r_admin",name:"Admin"},
-  {id:"r_mod",name:"Moderator"},
-  {id:"r_vip",name:"VIP"},
-  {id:"r_booster",name:"Booster"},
-  {id:"r_member",name:"Member"},
-  {id:"r_new",name:"Newbie"},
-  {id:"r_bot",name:"Bot"}
-];
-
-/* --- enrich real or partial member --- */
-function enrichMember(m) {
-  const now = Date.now();
-  const msDay = 86400000;
-  return {
-    user: {
-      id: m.id || ("dummy_" + Math.random().toString(36).slice(2)),
-      username: m.username || ("user" + rint(1000,9999)),
-      global_name: m.displayName || m.global_name || null,
-      bot: m.bot ?? false,
-      created_at: m.created_at || new Date(now - rint(30,3000)*msDay).toISOString()
-    },
-    guild_member: {
-      nick: m.displayName || m.nick || m.username,
-      roles: (m.roles && m.roles.length) ? m.roles : ["r_member"].concat(Math.random()<0.3 ? [sample(ROLE_POOL).id] : []),
-      joined_at: m.dateJoined || m.joined_at || new Date(now - rint(10,2000)*msDay).toISOString(),
-      premium_since: m.premiumSince || m.premium_since || (Math.random()<0.3 ? new Date(now - rint(10,500)*msDay).toISOString() : null),
-      pending: m.pending ?? (Math.random() < 0.1),
-      communication_disabled_until: m.communication_disabled_until ?? (Math.random()<0.05 ? new Date(now + rint(1,10)*msDay).toISOString() : null)
-    },
-    presence: {
-      status: m.presence?.status || sample(["online","idle","offline"]),
-      activities: m.presence?.activities || []
-    }
-  };
+function filterM(){
+  const q=(document.getElementById('srchInp').value||'').toLowerCase();
+  const status=document.getElementById('fStatus').value;
+  const type=document.getElementById('fType').value;
+  const now=Date.now();
+  let f=[...MEMBERS];
+  if(q)f=f.filter(m=>(m.user.username||'').toLowerCase().includes(q)||(m.user.id||'').toLowerCase().includes(q));
+  if(status)f=f.filter(m=>sts(m)===status);
+  if(type==='human')f=f.filter(m=>!m.user.bot);
+  if(type==='bot')f=f.filter(m=>m.user.bot);
+  if(type==='booster')f=f.filter(m=>m.gm.premium_since);
+  if(type==='pending')f=f.filter(m=>m.gm.pending);
+  if(type==='muted')f=f.filter(m=>m.gm.comm&&new Date(m.gm.comm)>now);
+  renderMemberList(f);
 }
 
-/* --- render into DOM --- */
-function render() {
-  const container = document.getElementById("memberList");
-  if (!container) {
-    console.warn("⚠️ No #memberList container found in DOM");
-    return;
-  }
+function toXLSX(members,fname){
+  if(!members?.length){Swal.fire({title:'No data',text:'Nothing to export.',icon:'info',confirmButtonColor:'#38bdf8'});return;}
+  const rows=members.map(m=>({ID:m.user.id,Username:m.user.username,GlobalName:m.user.globalName||'',Bot:m.user.bot,CreatedAt:m.user.created_at||'',Nick:m.gm.nick||'',Roles:m.gm.roles.join('; '),JoinedAt:m.gm.joined_at||'',PremiumSince:m.gm.premium_since||'',Pending:m.gm.pending,MutedUntil:m.gm.comm||'',Presence:sts(m)}));
+  const ws=XLSX.utils.json_to_sheet(rows);const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Members');XLSX.writeFile(wb,fname);
+}
+function dlAll(){if(DATA)toXLSX(DATA.members,`members_${getS()||'server'}_${fmtDate(new Date().toISOString())}.xlsx`);}
+function dlBots(){if(!DATA)return;const bots=DATA.members.filter(m=>m.user.bot);if(!bots.length){Swal.fire({title:'No Bots',text:'No bot accounts found.',icon:'info',confirmButtonColor:'#38bdf8'});return;}toXLSX(bots,`bots_${getS()||'server'}_${fmtDate(new Date().toISOString())}.xlsx`);}
 
-  container.innerHTML = ""; // clear before re-render
-
-  currentData.members.forEach(m => {
-    const li = document.createElement("li");
-    li.className = "list-group-item d-flex justify-content-between align-items-center";
-    li.innerHTML = `
-      <div>
-        <strong>${m.user.username}</strong>
-        <small class="text-muted">(${m.user.id})</small><br>
-        Roles: ${m.guild_member.roles.join(", ")}
-      </div>
-      <span class="badge bg-${m.presence.status === "online" ? "success" : "secondary"}">
-        ${m.presence.status}
-      </span>
-    `;
-    container.appendChild(li);
-  });
-
-  console.log(`👥 Rendered ${currentData.members.length} members`);
+async function doRefresh(){
+  const btn=document.getElementById('refBtn');btn.disabled=true;
+  btn.innerHTML='<div style="width:12px;height:12px;border:2px solid rgba(255,255,255,.2);border-top-color:var(--text2);border-radius:50%;animation:spin .7s linear infinite"></div><span> Loading...</span>';
+  document.getElementById('errBanner').style.display='none';
+  await init();btn.disabled=false;
+  btn.innerHTML='<i class="bi bi-arrow-clockwise"></i><span> Refresh</span>';
 }
 
-/* --- build dataset from API response --- */
-async function fetchServerDetails() {
-  try {
-    if (!username || !serverId) {
-      console.warn("⚠️ Missing username/serverId in localStorage, using dummy data");
-      currentData = makeDataset(50);
-      render();
-      return;
-    }
-
-    const res = await fetch(`${API_BASE}/servers/${username}/${serverId}/members`, {
-      headers: {
-        "Accept": "application/json",
-        "ngrok-skip-browser-warning": "69420"
-      }
-    });
-
-    const text = await res.text();
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      console.error("❌ Response was not JSON:", text.slice(0, 200));
-      currentData = makeDataset(50);
-      render();
-      return;
-    }
-
-    if (data?.data?.members) {
-      console.log("✅ Loaded API members:", data.data.members.length);
-
-      currentData = {
-        members: data.data.members.map(m => enrichMember(m)),
-        churned: data.data.churned || [],
-        generated_at: new Date().toISOString()
-      };
-
-      render();
-    } else {
-      console.log("⚠️ No members in API, using dummy dataset");
-      currentData = makeDataset(50);
-      render();
-    }
-  } catch (err) {
-    console.error("❌ Fetch failed:", err);
-    currentData = makeDataset(50);
-    render();
-  }
+function toast(msg,type){
+  const c={success:'#34d399',error:'#f87171',warning:'#fb923c',info:'#38bdf8'};
+  const t=document.createElement('div');
+  t.style.cssText=`position:fixed;bottom:22px;right:22px;z-index:9999;background:var(--card);color:var(--text);padding:11px 16px;border-radius:10px;font-size:.78rem;font-weight:500;font-family:'DM Sans',sans-serif;box-shadow:0 8px 28px rgba(0,0,0,.5);border-left:3px solid ${c[type||'info']};max-width:300px;transition:opacity .3s`;
+  t.textContent=msg;document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';setTimeout(()=>t.remove(),300);},3200);
 }
 
-/* --- fallback dummy dataset --- */
-function makeDataset(n) {
-  const baseMember = {
-    id: "985577632584306779",
-    username: "godawgs09.",
-    displayName: "TScott09",
-    bot: false,
-    dateJoined: "2025-06-02T21:03:05.050Z"
-  };
-  const arr = [];
-  for (let i=0; i<n; i++) {
-    arr.push(enrichMember({
-      ...baseMember,
-      id: baseMember.id + "_" + i,
-      username: baseMember.username + i
-    }));
-  }
-  return {members: arr, churned: [], generated_at: new Date().toISOString()};
+async function init(){
+  const user=getU(),srv=getS();
+  if(user){set('sbAv',user.slice(0,2).toUpperCase());set('sbUser',user);}
+  set('srvId',srv||'--');set('srvName',localStorage.getItem('serverName')||srv||'Unknown Server');
+  setLoad('Connecting to server...','Fetching member data');
+  let failed=false;
+  try{DATA=await fetchData();if(!DATA){failed=true;DATA={members:[],churned:[],generated_at:new Date().toISOString()};}}
+  catch(e){console.error(e);failed=true;DATA={members:[],churned:[],generated_at:new Date().toISOString()};}
+  if(failed)showErr('Could not reach the server. All stats show 0 until connection is restored.');
+  MEMBERS=DATA.members;
+  setLoad('Computing analytics...',`${MEMBERS.length} members loaded`);
+  const C=compute(DATA);
+  renderKPIs(C);renderHealth(C);renderPresence(C);renderTenure(C);
+  renderVeterans(C);renderRecent(C);renderGrowth(C);renderRoles(C);
+  renderBoost(C);renderHeatmap(C);renderMemberList(MEMBERS);
+  set('ftGen','Data generated '+fmtDate(DATA.generated_at));
+  hideLoader();
+  if(!failed)toast(`Loaded ${MEMBERS.length} member${MEMBERS.length!==1?'s':''} - ${C.active} active`,'success');
 }
-
-/* --- init --- */
-let currentData = makeDataset(50);
-fetchServerDetails();  // try API, fallback to dummy
-render();
-
-/* --- regen button keeps dummy dataset --- */
-const regenBtn = document.getElementById("regen");
-if (regenBtn) {
-  regenBtn.onclick = () => { currentData = makeDataset(50); render(); };
-}
-</script> -->
-<!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-/* --- helpers --- */
-function rint(a, b) { return Math.floor(Math.random() * (b - a + 1)) + a; }
-function sample(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
-
-/* --- role & presence pool --- */
-const ROLE_POOL = ["Admin", "Moderator", "VIP", "Booster", "Member", "Newbie", "Bot"];
-const PRESENCE_POOL = ["online","idle","offline"];
-
-/* --- dummy dataset --- */
-function makeDataset(n) {
-  const now = Date.now();
-  const msDay = 86400000;
-  let members = [];
-  let churned = [];
-
-  for (let i=0;i<n;i++) {
-    const joined_at = new Date(now - rint(10,1500)*msDay).toISOString();
-    const created_at = new Date(now - rint(30,3000)*msDay).toISOString();
-    const roles = ["Member"];
-    if (Math.random()<0.3) roles.push(sample(ROLE_POOL));
-    const premium = Math.random()<0.2 ? new Date(now - rint(1,500)*msDay).toISOString() : null;
-
-    members.push({
-      user: {
-        id: "u" + i,
-        username: "user" + rint(1000,9999),
-        bot: Math.random()<0.1,
-        created_at
-      },
-      guild_member: {
-        nick: "Nick" + i,
-        roles,
-        joined_at,
-        premium_since: premium
-      },
-      presence: {
-        status: sample(PRESENCE_POOL),
-        activities: []
-      }
-    });
-  }
-
-  // churned (simulate 0–5 churned users)
-  for (let j=0;j<rint(0,5);j++) {
-    churned.push({id:"c"+j,username:"exUser"+j});
-  }
-
-  return {members,churned,generated_at:new Date().toISOString()};
-}
-
-/* --- charts --- */
-let charts = {};
-function renderCharts(data) {
-  const members = data.members;
-
-  // Membership Growth (fake trend)
-  const growthLabels = Array.from({length:12},(_,i)=>`M${i+1}`);
-  const growthData = growthLabels.map(()=>rint(20,80));
-  charts.growth?.destroy();
-  charts.growth = new Chart(document.getElementById("growthChart"),{
-    type:"line",
-    data:{labels:growthLabels,datasets:[{label:"Joins",data:growthData,fill:true,borderColor:"#36a2eb",backgroundColor:"rgba(54,162,235,0.2)"}]}
-  });
-
-  // Role Distribution
-  let roleCounts = {};
-  ROLE_POOL.forEach(r=>roleCounts[r]=0);
-  members.forEach(m=>m.guild_member.roles.forEach(r=>{
-    if (roleCounts[r]!=null) roleCounts[r]++
-  }));
-  charts.roles?.destroy();
-  charts.roles = new Chart(document.getElementById("roleChart"),{
-    type:"pie",
-    data:{labels:Object.keys(roleCounts),datasets:[{data:Object.values(roleCounts),backgroundColor:["#ff6384","#36a2eb","#ffce56","#4bc0c0","#9966ff","#c9cbcf","#2ecc71"]}]}
-  });
-
-  // Presence Distribution
-  let presCounts={online:0,idle:0,dnd:0,offline:0};
-  members.forEach(m=>presCounts[m.presence.status]++);
-  charts.pres?.destroy();
-  charts.pres = new Chart(document.getElementById("presenceChart"),{
-    type:"doughnut",
-    data:{labels:Object.keys(presCounts),datasets:[{data:Object.values(presCounts),backgroundColor:["#2ecc71","#f1c40f","#e67e22","#95a5a6"]}]}
-  });
-
-  // Account Age (histogram)
-  const ages = members.map(m=>Math.floor((Date.now()-new Date(m.user.created_at))/86400000/365));
-  let ageBuckets={"<1y":0,"1-2y":0,"2-3y":0,">3y":0};
-  ages.forEach(y=>{
-    if (y<1) ageBuckets["<1y"]++;
-    else if (y<2) ageBuckets["1-2y"]++;
-    else if (y<3) ageBuckets["2-3y"]++;
-    else ageBuckets[">3y"]++;
-  });
-  charts.age?.destroy();
-  charts.age = new Chart(document.getElementById("ageChart"),{
-    type:"bar",
-    data:{labels:Object.keys(ageBuckets),datasets:[{label:"Users",data:Object.values(ageBuckets),backgroundColor:"#3498db"}]}
-  });
-
-  // Funnel (mock: visited -> joined -> active -> booster)
-  const funnelSteps=["Visited","Joined","Active","Booster"];
-  const funnelNums=[1000, members.length, members.filter(m=>m.presence.status!=="offline").length, members.filter(m=>m.guild_member.premium_since).length];
-  charts.funnel?.destroy();
-  charts.funnel = new Chart(document.getElementById("funnelChart"),{
-    type:"bar",
-    data:{labels:funnelSteps,datasets:[{label:"Count",data:funnelNums,backgroundColor:"#9b59b6"}]},
-    options:{indexAxis:"y"}
-  });
-
-  // Heatmap (simple grid by hour, 7 days)
-  const heatmap=document.getElementById("heatmap");
-  heatmap.innerHTML="";
-  for(let d=0;d<7;d++){
-    const row=document.createElement("div");
-    row.className="heat-row";
-    for(let h=0;h<24;h++){
-      const val=rint(0,5);
-      const cell=document.createElement("span");
-      cell.className="heat-cell";
-      cell.style.backgroundColor=`rgba(52,152,219,${val/5})`;
-      row.appendChild(cell);
-    }
-    heatmap.appendChild(row);
-  }
-}
-
-/* --- render tables & metrics --- */
-function renderAll(data) {
-  const members = data.members;
-  const churned = data.churned;
-
-  // metrics
-  document.getElementById("totalMembers").textContent = members.length;
-  document.getElementById("activeCount").textContent = members.filter(m=>m.presence.status!=="offline").length;
-  const botCount = members.filter(m=>m.user.bot).length;
-  document.getElementById("botPct").textContent = ((botCount/members.length)*100).toFixed(1)+"%";
-  const boosters = members.filter(m=>m.guild_member.premium_since).length;
-  document.getElementById("boosters").textContent = boosters;
-
-  // summary
-  document.getElementById("newMembers").textContent = rint(1,10);
-  document.getElementById("churned").textContent = churned.length;
-
-  // recent joins
-  const recentTable = document.querySelector("#recentTable tbody");
-  recentTable.innerHTML = "";
-  members.slice(0,10).forEach(m=>{
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${m.user.username}</td><td>${m.guild_member.joined_at}</td><td>${m.guild_member.roles.join(", ")}</td>`;
-    recentTable.appendChild(tr);
-  });
-
-  // boost table
-  const boostTable = document.querySelector("#boostTable tbody");
-  boostTable.innerHTML = "";
-  members.filter(m=>m.guild_member.premium_since).slice(0,10).forEach(m=>{
-    const days = Math.floor((Date.now() - new Date(m.guild_member.premium_since))/86400000);
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>${m.user.username}</td><td>${m.guild_member.premium_since}</td><td>${days}</td>`;
-    boostTable.appendChild(tr);
-  });
-
-  // member list
-  const memberList = document.getElementById("memberList");
-  memberList.innerHTML = "";
-  members.forEach(m=>{
-    const li = document.createElement("li");
-    li.className = "list-group-item d-flex justify-content-between align-items-center";
-    li.innerHTML = `
-      <div>
-        <strong>${m.user.username}</strong>
-        <small class="text-muted">(${m.user.id})</small><br>
-        Roles: ${m.guild_member.roles.join(", ")}
-      </div>
-      <span class="badge bg-${m.presence.status==="online"?"success":"secondary"}">
-        ${m.presence.status}
-      </span>`;
-    memberList.appendChild(li);
-  });
-
-  renderCharts(data);
-}
-
-/* --- init --- */
-let currentData = makeDataset(50);
-renderAll(currentData);
-
-// regenerate button
-document.getElementById("regen").onclick = () => {
-  currentData = makeDataset(50);
-  renderAll(currentData);
-};
-</script> -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-/* --- util randoms --- */
-function rint(a, b) {
-  return Math.floor(Math.random() * (b - a + 1)) + a;
-}
-function sample(arr) {
-  return Math.floor(Math.random() * arr.length) >= 0
-    ? arr[Math.floor(Math.random() * arr.length)]
-    : null;
-}
-
-/* --- pools --- */
-const ROLE_POOL = ["Admin", "Moderator", "VIP", "Booster", "Member", "Newbie", "Bot"];
-const PRESENCE_POOL = ["online", "idle", "offline"];
-
-console.log("📦 ROLE_POOL initialized:", ROLE_POOL);
-console.log("📦 PRESENCE_POOL initialized:", PRESENCE_POOL);
-
-/* --- enrich API member (preserve API data, only fake if dummy) --- */
-function enrichMember(m, isDummy = false) {
-  console.log("🔧 enrichMember called for:", m.username || m.id, "Dummy:", isDummy);
-  try {
-    const now = Date.now();
-    const msDay = 86400000;
-
-    const enriched = {
-      user: {
-        id: m.id || (isDummy ? "u_" + Math.random().toString(36).slice(2) : ""),
-        username: m.username || m.displayName || (isDummy ? "Guest" + rint(100, 999) : ""),
-        bot: m.bot ?? false,
-        created_at: m.created_at || new Date(now - rint(365, 3000) * msDay).toISOString(),
-      },
-      guild_member: {
-        nick:
-          m.displayName ||
-          m.nick ||
-          m.username ||
-          (isDummy ? "Guest" + rint(100, 999) : ""),
-        roles:
-          m.roles && m.roles.length
-            ? m.roles
-            : isDummy
-            ? ["Member"].concat(Math.random() < 0.2 ? [sample(ROLE_POOL)] : [])
-            : ["Member"],
-        joined_at:
-          m.dateJoined ||
-          m.joined_at ||
-          new Date(now - rint(30, 1500) * msDay).toISOString(),
-        premium_since: m.premiumSince || null,
-        pending: m.pending ?? false,
-      },
-      presence: {
-        status: m.presence?.status || (isDummy ? sample(PRESENCE_POOL) : "offline"),
-        activities: m.presence?.activities || [],
-      },
-    };
-
-    console.log("✅ enriched member:", enriched);
-    return enriched;
-  } catch (err) {
-    console.warn("⚠️ enrichMember failed:", err.message, "Input:", m);
-    return null;
-  }
-}
-
-/* --- dummy fallback dataset --- */
-function makeDataset(n) {
-  console.log("🧩 Creating dummy dataset of size", n);
-  const arr = [];
-  for (let i = 0; i < n; i++) {
-    arr.push(enrichMember({ id: "dummy" + i, username: "user" + i }, true));
-  }
-  const dataset = {
-    members: arr.filter(Boolean),
-    churned: [],
-    generated_at: new Date().toISOString(),
-  };
-  console.log("✅ Dummy dataset generated:", dataset);
-  return dataset;
-}
-
-/* --- API fetch --- */
-async function fetchServerDetails() {
-  const username = localStorage.getItem("username");
-  const serverId = localStorage.getItem("serverId");
-  const API_BASE = "https://default-bot-25c835e1c978.herokuapp.com/api";
-
-  console.log("🌍 Fetching server details for:", { username, serverId });
-
-  try {
-    if (!username || !serverId) {
-      console.warn("⚠️ Missing username/serverId — using dummy data.");
-      return makeDataset(50);
-    }
-
-    const url = `${API_BASE}/servers/${username}/${serverId}/members`;
-    console.log("📡 API Request URL:", url);
-
-    const res = await fetch(url, {
-      headers: { Accept: "application/json", "ngrok-skip-browser-warning": "69420" },
-    });
-
-    console.log("🔄 API Response Status:", res.status);
-    const text = await res.text();
-    console.log("📜 Raw API Response (truncated):", text.slice(0, 500));
-
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (e) {
-      console.error("❌ Invalid JSON from API:", e.message);
-      return makeDataset(50);
-    }
-
-    if (data?.data?.members?.length) {
-      console.log("✅ Loaded API members:", data.data.members.length);
-      return {
-        members: data.data.members.map((m) => enrichMember(m, false)).filter(Boolean),
-        churned: data.data.churned || [],
-        generated_at: new Date().toISOString(),
-      };
-    } else {
-      console.warn("⚠️ API returned no members — fallback to dummy.");
-      return makeDataset(50);
-    }
-  } catch (err) {
-    console.error("❌ Fetch failed:", err.message);
-    return makeDataset(50);
-  }
-}
-
-/* --- renderAll with logs --- */
-function renderAll(data) {
-  console.log("🖼 Rendering all data:", data);
-
-  try {
-    const members = data.members || [];
-
-    const setText = (id, text) => {
-      const el = document.getElementById(id);
-      if (el) {
-        el.textContent = text;
-        console.log("📝 Set text for", id, "=>", text);
-      } else {
-        console.warn("⚠️ Element not found for ID:", id);
-      }
-    };
-
-    // metrics
-    setText("totalMembers", members.length);
-    const activeCount = members.filter((m) => m.presence.status !== "offline").length;
-    setText("activeCount", activeCount);
-
-    const botCount = members.filter((m) => m.user.bot).length;
-    setText("botPct", ((botCount / members.length) * 100).toFixed(1) + "%" + " (" + botCount + ")");
-
-    const boosters = members.filter((m) => m.guild_member.premium_since).length;
-    setText("boosters", boosters);
-
-    const churnedCount = data.churned.length;
-    setText("newMembers", rint(1, 10));
-    setText("churned", churnedCount);
-
-    // tables
-    const recentTable = document.querySelector("#recentTable tbody");
-    if (recentTable) {
-      console.log("📋 Populating recentTable...");
-      recentTable.innerHTML = "";
-      members.slice(0, 10).forEach((m) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${m.user.username}</td><td>${m.guild_member.joined_at}</td><td>${m.guild_member.roles.join(", ")}</td>`;
-        recentTable.appendChild(tr);
-      });
-      console.log("✅ recentTable updated with", Math.min(10, members.length), "rows");
-    }
-
-    const boostTable = document.querySelector("#boostTable tbody");
-    if (boostTable) {
-      console.log("📋 Populating boostTable...");
-      boostTable.innerHTML = "";
-      members
-        .filter((m) => m.guild_member.premium_since)
-        .slice(0, 10)
-        .forEach((m) => {
-          const days = Math.floor((Date.now() - new Date(m.guild_member.premium_since)) / 86400000);
-          const tr = document.createElement("tr");
-          tr.innerHTML = `<td>${m.user.username}</td><td>${m.guild_member.premium_since}</td><td>${days}</td>`;
-          boostTable.appendChild(tr);
-        });
-      console.log("✅ boostTable updated");
-    }
-
-    // charts
-    renderCharts(data);
-  } catch (err) {
-    console.error("❌ renderAll failed:", err.message);
-  }
-}
-
-/* --- renderCharts with logs --- */
-let charts = {};
-function renderCharts(data) {
-  console.log("📊 renderCharts called with dataset:", data);
-
-  try {
-    const members = data.members || [];
-    const getCtx = (id) => {
-      const el = document.getElementById(id);
-      if (!el) console.warn("⚠️ Chart canvas missing:", id);
-      return el ? el.getContext("2d") : null;
-    };
-
-    const destroyIfExists = (key) => {
-      if (charts[key]) {
-        console.log("🧹 Destroying previous chart:", key);
-        charts[key].destroy();
-      }
-    };
-
-    // Role Chart
-    const ctxRole = getCtx("roleChart");
-    if (ctxRole) {
-      destroyIfExists("roles");
-      const roleCounts = Object.fromEntries(ROLE_POOL.map((r) => [r, 0]));
-      members.forEach((m) =>
-        m.guild_member.roles.forEach((r) => (roleCounts[r] = (roleCounts[r] || 0) + 1))
-      );
-      console.log("📈 Role distribution:", roleCounts);
-      charts.roles = new Chart(ctxRole, {
-        type: "pie",
-        data: { labels: Object.keys(roleCounts), datasets: [{ data: Object.values(roleCounts) }] },
-      });
-    }
-
-    // Presence Chart
-    const ctxPres = getCtx("presenceChart");
-    if (ctxPres) {
-      destroyIfExists("pres");
-      const presCounts = { online: 0, idle: 0, dnd: 0, offline: 0 };
-      members.forEach((m) => presCounts[m.presence.status]++);
-      console.log("📈 Presence counts:", presCounts);
-      charts.pres = new Chart(ctxPres, {
-        type: "doughnut",
-        data: { labels: Object.keys(presCounts), datasets: [{ data: Object.values(presCounts) }] },
-      });
-    }
-
-    // Growth Chart
-    const ctxGrowth = getCtx("growthChart");
-    if (ctxGrowth) {
-      destroyIfExists("growth");
-      const growthMap = {};
-      members.forEach((m) => {
-        const d = new Date(m.guild_member.joined_at).toISOString().slice(0, 10);
-        growthMap[d] = (growthMap[d] || 0) + 1;
-      });
-      const dates = Object.keys(growthMap).sort();
-      let running = 0;
-      const counts = dates.map((d) => (running += growthMap[d]));
-      console.log("📈 Growth chart data:", { dates, counts });
-      charts.growth = new Chart(ctxGrowth, {
-        type: "line",
-        data: { labels: dates, datasets: [{ label: "Total Members", data: counts, fill: true }] },
-      });
-    }
-
-    // Age Chart
-    const ctxAge = getCtx("ageChart");
-    if (ctxAge) {
-      destroyIfExists("age");
-      const ageBuckets = { "<1yr": 0, "1-2yr": 0, "2-3yr": 0, "3yr+": 0 };
-      members.forEach((m) => {
-        const ageYears = (Date.now() - new Date(m.user.created_at)) / 31536000000;
-        if (ageYears < 1) ageBuckets["<1yr"]++;
-        else if (ageYears < 2) ageBuckets["1-2yr"]++;
-        else if (ageYears < 3) ageBuckets["2-3yr"]++;
-        else ageBuckets["3yr+"]++;
-      });
-      console.log("📈 Age buckets:", ageBuckets);
-      charts.age = new Chart(ctxAge, {
-        type: "bar",
-        data: { labels: Object.keys(ageBuckets), datasets: [{ data: Object.values(ageBuckets) }] },
-      });
-    }
-
-    // Funnel Chart
-    const ctxFunnel = getCtx("funnelChart");
-    if (ctxFunnel) {
-      destroyIfExists("funnel");
-      const total = members.length;
-      const active = members.filter((m) => m.presence.status !== "offline").length;
-      const retained = Math.floor(active * 0.7);
-      console.log("📈 Funnel data:", { total, active, retained });
-      charts.funnel = new Chart(ctxFunnel, {
-        type: "bar",
-        data: {
-          labels: ["Total", "Active", "Retained"],
-          datasets: [{ data: [total, active, retained] }],
-        },
-        options: { indexAxis: "y" },
-      });
-    }
-
-    // Heatmap
-    const heatmap = document.getElementById("heatmap");
-    if (heatmap) {
-      heatmap.innerHTML = "";
-      const hours = new Array(24).fill(0);
-      members.forEach(() => {
-        hours[rint(0, 23)]++;
-      });
-      const max = Math.max(...hours);
-      console.log("🔥 Heatmap hours data:", hours);
-      hours.forEach((val) => {
-        const cell = document.createElement("div");
-        cell.className = "heat-cell";
-        cell.style.backgroundColor = `rgba(0,150,255,${val / max})`;
-        heatmap.appendChild(cell);
-      });
-    }
-
-    console.log("✅ All charts rendered successfully");
-  } catch (err) {
-    console.error("❌ renderCharts failed:", err.message);
-  }
-}
-
-/* --- init --- */
-(async () => {
-  console.log("🚀 Initialization started...");
-  try {
-    const data = await fetchServerDetails();
-    console.log("📦 Data received:", data);
-    renderAll(data);
-
-    const regen = document.getElementById("regen");
-    if (regen) {
-      regen.onclick = async () => {
-        console.log("🔁 Regeneration button clicked");
-        const refreshed = await fetchServerDetails();
-        renderAll(refreshed);
-      };
-    }
-    console.log("✅ Initialization complete");
-  } catch (err) {
-    console.error("❌ Initialization failed:", err.message);
-  }
-})();
+document.addEventListener('DOMContentLoaded',init);
 </script>
-
-
-
 </body>
 </html>
