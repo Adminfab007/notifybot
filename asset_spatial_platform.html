@@ -8,24 +8,28 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg: #0a0c0f;
-  --surface: #111318;
-  --surface2: #181c24;
-  --border: #1f2535;
-  --border2: #2a3245;
-  --accent: #00e5a0;
-  --accent2: #0099ff;
-  --accent3: #ff6b35;
-  --text: #e8ecf4;
-  --text2: #8a95b0;
-  --text3: #4a5570;
-  --danger: #ff4757;
-  --warn: #ffa502;
-  --success: #00e5a0;
+  --bg: #ffffff;
+  --surface: #f5f7f6;
+  --surface2: #e9f5ef;
+
+  --border: #d6e5dc;
+  --border2: #bcd4c7;
+
+  --accent: #008753;   /* Nigeria green */
+  --accent2: #00a86b;
+  --accent3: #e6f4ec;
+
+  --text: #0f2e1c;
+  --text2: #4a6b5a;
+  --text3: #7a9b89;
+
+  --danger: #d64545;
+  --warn: #e6a700;
+  --success: #008753;
+
   --sidebar-w: 240px;
   --header-h: 60px;
 }
-
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -690,12 +694,98 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   font-family: 'Space Mono', monospace;
   font-size: 10px; color: var(--text3);
 }
+
+/* ───────── MOBILE SYSTEM ───────── */
+
+.menu-btn {
+  display: none;
+  font-size: 22px;
+  margin-right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+}
+
+/* Sidebar mobile behavior */
+@media (max-width: 768px) {
+
+  body {
+    overflow: auto;
+  }
+
+  #sidebar {
+    position: fixed;
+    left: -100%;
+    top: 0;
+    height: 100%;
+    z-index: 2000;
+    transition: left 0.3s ease;
+  }
+
+  #sidebar.open {
+    left: 0;
+  }
+
+  #main {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .menu-btn {
+    display: block;
+  }
+
+  /* Fix layout grids */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .two-col,
+  .three-col,
+  .analytics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  #content {
+    padding: 16px;
+  }
+}
+
+/* Slight UI polish for light mode */
+body {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.nav-item.active {
+  background: rgba(0,135,83,0.08);
+}
+
+.menu-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  font-size: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+}
+
+/* Hide on desktop */
+@media (min-width: 769px) {
+  .menu-close-btn {
+    display: none;
+  }
+}
 </style>
 </head>
 <body>
 
 <!-- SIDEBAR -->
 <div id="sidebar">
+   <button id="menu-close" class="menu-close-btn">✕</button>
   <div class="logo">
     <div class="logo-mark">AssetSpatial</div>
     <div class="logo-sub">v1.0 · Enterprise</div>
@@ -732,6 +822,15 @@ textarea.form-control { resize: vertical; min-height: 80px; }
       <span class="nav-icon">⚙</span> Settings
     </div>
   </nav>
+
+  <script>
+    const closeBtn = document.getElementById("menu-close");
+const sidebar2 = document.getElementById("sidebar");
+
+closeBtn.addEventListener("click", function () {
+  sidebar2.classList.remove("open");
+});
+  </script>
   <div class="sidebar-bottom">
     <div class="user-card">
       <div class="avatar">AD</div>
@@ -746,6 +845,8 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 <!-- MAIN -->
 <div id="main">
   <div id="header">
+     <button id="menu-toggle" class="menu-btn">☰</button>
+
     <div>
       <div class="page-title" id="hdr-title">DASHBOARD</div>
       <div class="breadcrumb" id="hdr-bc">AssetSpatial / Overview</div>
@@ -856,6 +957,23 @@ textarea.form-control { resize: vertical; min-height: 80px; }
         </table>
       </div>
     </div>
+
+    <script>
+      // ── MOBILE SIDEBAR TOGGLE ──
+const toggleBtn = document.getElementById("menu-toggle");
+const sidebar = document.getElementById("sidebar");
+
+toggleBtn.addEventListener("click", function () {
+  sidebar.classList.toggle("open");
+});
+
+// Close sidebar on outside click
+document.addEventListener("click", function (e) {
+  if (!sidebar.contains(e.target) && !toggleBtn.contains(e.target)) {
+    sidebar.classList.remove("open");
+  }
+});
+    </script>
 
     <!-- ════════════ ASSET REGISTRY ════════════ -->
     <div id="page-assets" class="page">
