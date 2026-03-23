@@ -1092,7 +1092,60 @@ document.addEventListener("click", function (e) {
                 <label class="form-label">Notes / Description</label>
                 <textarea class="form-control" id="cap-notes" placeholder="Additional observations, condition details…"></textarea>
               </div>
+              <div class="form-group full">
+  <label class="form-label">Attach Media (Image/Video)</label>
+
+  <!-- File upload -->
+  <input 
+    type="file" 
+    id="cap-media" 
+    accept="image/*,video/*" 
+    multiple
+    style="display:block; margin-top:8px;"
+  >
+
+  <!-- Mobile camera capture -->
+  <input 
+    type="file" 
+    id="cap-camera" 
+    accept="image/*,video/*" 
+    capture="environment"
+    style="display:block; margin-top:8px;"
+  >
+
+  <!-- Preview -->
+  <div id="cap-preview" style="margin-top:10px; display:flex; gap:10px; flex-wrap:wrap;"></div>
+</div>
             </div>
+
+            <script>
+              const mediaInput = document.getElementById('cap-media');
+const cameraInput = document.getElementById('cap-camera');
+const preview = document.getElementById('cap-preview');
+
+function previewFiles(files) {
+  Array.from(files).forEach(file => {
+    const url = URL.createObjectURL(file);
+    let el;
+    if (file.type.startsWith('image')) {
+      el = document.createElement('img');
+      el.src = url;
+      el.style.width = '100px';
+      el.style.borderRadius = '6px';
+    } else if (file.type.startsWith('video')) {
+      el = document.createElement('video');
+      el.src = url;
+      el.controls = true;
+      el.style.width = '140px';
+      el.style.borderRadius = '6px';
+    }
+    preview.appendChild(el);
+  });
+}
+
+mediaInput.addEventListener('change', (e) => previewFiles(e.target.files));
+cameraInput.addEventListener('change', (e) => previewFiles(e.target.files));
+            </script>
             <div style="margin-top:18px;display:flex;gap:10px">
               <button class="btn btn-primary" style="flex:1" onclick="captureAsset()">✦ Submit Capture</button>
               <button class="btn btn-secondary" onclick="clearCaptureForm()">✕ Clear</button>
