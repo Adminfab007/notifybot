@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AssetSpatial — Data Management Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0c0f;
+  --surface: #111318;
+  --surface2: #181c24;
+  --border: #1f2535;
+  --border2: #2a3245;
+  --accent: #00e5a0;
+  --accent2: #0099ff;
+  --accent3: #ff6b35;
+  --text: #e8ecf4;
+  --text2: #8a95b0;
+  --text3: #4a5570;
+  --danger: #ff4757;
+  --warn: #ffa502;
+  --success: #00e5a0;
+  --sidebar-w: 240px;
+  --header-h: 60px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ── SIDEBAR ── */
+#sidebar {
+  width: var(--sidebar-w);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  z-index: 10;
+}
+
+.logo {
+  padding: 20px 18px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.logo-mark {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 22px;
+  letter-spacing: 2px;
+  color: var(--accent);
+  line-height: 1;
+}
+.logo-sub {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+
+nav { padding: 12px 0; flex: 1; }
+.nav-section-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 8px 18px 4px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 18px;
+  cursor: pointer;
+  color: var(--text2);
+  font-size: 13.5px;
+  font-weight: 400;
+  border-left: 2px solid transparent;
+  transition: all 0.15s;
+  text-decoration: none;
+}
+.nav-item:hover { color: var(--text); background: var(--surface2); }
+.nav-item.active { color: var(--accent); border-left-color: var(--accent); background: rgba(0,229,160,0.05); }
+.nav-icon { width: 16px; opacity: 0.7; font-size: 14px; }
+.nav-item.active .nav-icon { opacity: 1; }
+.nav-badge {
+  margin-left: auto;
+  background: var(--accent);
+  color: var(--bg);
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  padding: 1px 6px;
+  border-radius: 20px;
+  font-weight: 700;
+}
+
+.sidebar-bottom {
+  padding: 14px;
+  border-top: 1px solid var(--border);
+}
+.user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  background: var(--surface2);
+}
+.avatar {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; color: var(--bg);
+  flex-shrink: 0;
+}
+.user-name { font-size: 12px; font-weight: 600; }
+.user-role { font-size: 10px; color: var(--text3); font-family: 'Space Mono', monospace; }
+
+/* ── MAIN ── */
+#main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+#header {
+  height: var(--header-h);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  gap: 16px;
+  flex-shrink: 0;
+  background: var(--surface);
+}
+
+.page-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 20px;
+  letter-spacing: 1.5px;
+  color: var(--text);
+}
+.breadcrumb {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  color: var(--text3);
+  margin-top: 1px;
+}
+
+.header-actions { margin-left: auto; display: flex; gap: 10px; }
+
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+.btn-primary { background: var(--accent); color: var(--bg); }
+.btn-primary:hover { background: #00ffb3; }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border2); }
+.btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+.btn-danger { background: rgba(255,71,87,0.15); color: var(--danger); border: 1px solid rgba(255,71,87,0.3); }
+.btn-danger:hover { background: rgba(255,71,87,0.25); }
+.btn-sm { padding: 4px 10px; font-size: 11px; }
+
+#content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px;
+}
+
+/* ── PAGES ── */
+.page { display: none; }
+.page.active { display: block; }
+
+/* ── STAT CARDS ── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.stat-card:hover { border-color: var(--border2); }
+.stat-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 2px;
+}
+.stat-card.green::before { background: var(--accent); }
+.stat-card.blue::before { background: var(--accent2); }
+.stat-card.orange::before { background: var(--accent3); }
+.stat-card.red::before { background: var(--danger); }
+
+.stat-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  color: var(--text3);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.stat-value {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 34px;
+  letter-spacing: 1px;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-card.green .stat-value { color: var(--accent); }
+.stat-card.blue .stat-value { color: var(--accent2); }
+.stat-card.orange .stat-value { color: var(--accent3); }
+.stat-card.red .stat-value { color: var(--danger); }
+.stat-sub { font-size: 11px; color: var(--text3); }
+
+/* ── TABLE ── */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 17px;
+  letter-spacing: 1.5px;
+}
+
+.data-table-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th {
+  background: var(--surface2);
+  padding: 10px 14px;
+  text-align: left;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text3);
+  border-bottom: 1px solid var(--border);
+  font-weight: 400;
+}
+.data-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+}
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover { background: var(--surface2); }
+.data-table td:first-child { color: var(--text); font-weight: 500; }
+
+.tag {
+  display: inline-flex; align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-family: 'Space Mono', monospace;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+.tag-green { background: rgba(0,229,160,0.12); color: var(--accent); }
+.tag-blue { background: rgba(0,153,255,0.12); color: var(--accent2); }
+.tag-orange { background: rgba(255,107,53,0.12); color: var(--accent3); }
+.tag-red { background: rgba(255,71,87,0.12); color: var(--danger); }
+.tag-gray { background: rgba(138,149,176,0.12); color: var(--text2); }
+.tag-warn { background: rgba(255,165,2,0.12); color: var(--warn); }
+
+/* ── MAP MOCK ── */
+.map-container {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  height: 340px;
+  position: relative;
+  margin-bottom: 24px;
+}
+.map-bg {
+  width: 100%; height: 100%;
+  background:
+    linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px),
+    radial-gradient(ellipse at 30% 40%, rgba(0,153,255,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 70% 60%, rgba(0,229,160,0.06) 0%, transparent 50%),
+    var(--bg);
+  background-size: 32px 32px, 32px 32px, 100% 100%, 100% 100%;
+  position: relative;
+}
+.map-asset-dot {
+  position: absolute;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+.map-asset-dot::after {
+  content: '';
+  position: absolute;
+  top: -3px; left: -3px; right: -3px; bottom: -3px;
+  border-radius: 50%;
+  animation: ping 2s infinite;
+}
+.map-asset-dot:hover { transform: scale(1.5); }
+.dot-green { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.dot-green::after { border: 1px solid var(--accent); }
+.dot-blue { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+.dot-blue::after { border: 1px solid var(--accent2); }
+.dot-orange { background: var(--accent3); box-shadow: 0 0 8px var(--accent3); }
+.dot-orange::after { border: 1px solid var(--accent3); }
+
+@keyframes ping {
+  0% { transform: scale(1); opacity: 0.8; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+.map-overlay {
+  position: absolute; top: 12px; right: 12px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.map-overlay-btn {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 14px;
+  transition: all 0.15s;
+}
+.map-overlay-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.map-legend {
+  position: absolute; bottom: 12px; left: 12px;
+  background: rgba(17,19,24,0.9);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex; gap: 16px;
+  font-size: 11px; color: var(--text2);
+}
+.legend-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; }
+
+.map-coords {
+  position: absolute; bottom: 12px; right: 12px;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px; color: var(--text3);
+  background: rgba(17,19,24,0.85);
+  padding: 5px 10px; border-radius: 5px;
+  border: 1px solid var(--border);
+}
+
+/* ── FILTER BAR ── */
+.filter-bar {
+  display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;
+}
+.filter-input {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 12px;
+  color: var(--text);
+  font-size: 12.5px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  min-width: 200px;
+  transition: border-color 0.15s;
+}
+.filter-input:focus { border-color: var(--accent); }
+.filter-input::placeholder { color: var(--text3); }
+select.filter-input option { background: var(--surface2); }
+
+/* ── MODAL ── */
+#modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+#modal-overlay.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  width: 560px;
+  max-width: 95vw;
+  max-height: 90vh;
+  display: flex; flex-direction: column;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+}
+.modal-header {
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.modal-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 18px; letter-spacing: 1.5px;
+}
+.modal-close {
+  background: none; border: none; color: var(--text3);
+  font-size: 18px; cursor: pointer; padding: 2px 6px; border-radius: 4px;
+  transition: color 0.15s;
+}
+.modal-close:hover { color: var(--text); }
+.modal-body { padding: 22px; overflow-y: auto; flex: 1; }
+.modal-footer {
+  padding: 14px 22px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: 10px;
+}
+
+/* ── FORM ── */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-group.full { grid-column: 1 / -1; }
+.form-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text3);
+}
+.form-control {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: var(--text);
+  font-size: 13px;
+  font-family: 'DM Sans', sans-serif;
+  outline: none;
+  transition: border-color 0.15s;
+  width: 100%;
+}
+.form-control:focus { border-color: var(--accent); }
+.form-control::placeholder { color: var(--text3); }
+select.form-control option { background: var(--surface2); }
+textarea.form-control { resize: vertical; min-height: 80px; }
+
+.form-hint { font-size: 11px; color: var(--text3); }
+
+/* ── GPS MOCK ── */
+.gps-field {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: flex; align-items: center; gap: 8px;
+}
+.gps-value { font-family: 'Space Mono', monospace; font-size: 11px; color: var(--accent); flex: 1; }
+.gps-lock { font-size: 10px; color: var(--text3); }
+.btn-gps {
+  background: rgba(0,229,160,0.1);
+  border: 1px solid rgba(0,229,160,0.3);
+  color: var(--accent);
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-size: 11px;
+  cursor: pointer; font-family: 'DM Sans', sans-serif;
+  transition: all 0.15s;
+}
+.btn-gps:hover { background: rgba(0,229,160,0.2); }
+
+/* ── ANALYTICS PAGE ── */
+.analytics-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+}
+.chart-title {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 14px;
+}
+.bar-chart { display: flex; align-items: flex-end; gap: 8px; height: 120px; }
+.bar-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.bar {
+  width: 100%;
+  border-radius: 4px 4px 0 0;
+  transition: opacity 0.2s;
+  min-height: 4px;
+}
+.bar:hover { opacity: 0.7; }
+.bar-label { font-size: 9px; color: var(--text3); font-family: 'Space Mono', monospace; }
+.bar-val { font-size: 10px; color: var(--text2); font-family: 'Space Mono', monospace; }
+
+.donut-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 150px; }
+.donut-legend { width: 100%; margin-top: 12px; }
+.donut-legend-item { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--text2); padding: 3px 0; }
+.donut-dot { width: 8px; height: 8px; border-radius: 2px; margin-right: 8px; flex-shrink: 0; }
+
+/* ── AUDIT LOG ── */
+.audit-entry {
+  display: flex; gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+.audit-entry:last-child { border-bottom: none; }
+.audit-icon {
+  width: 28px; height: 28px; flex-shrink: 0;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px;
+}
+.audit-content { flex: 1; }
+.audit-action { font-size: 12.5px; color: var(--text); }
+.audit-meta { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text3); margin-top: 2px; }
+
+/* ── EMPTY STATE ── */
+.empty-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text3);
+}
+.empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+.empty-title { font-size: 14px; color: var(--text2); margin-bottom: 6px; }
+.empty-sub { font-size: 12px; }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 8px;
+  padding: 12px 18px;
+  font-size: 13px;
+  z-index: 200;
+  display: none;
+  align-items: center; gap: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  animation: slideUp 0.25s ease;
+  max-width: 320px;
+}
+#toast.open { display: flex; }
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+.toast-icon { font-size: 16px; }
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+/* ── DETAILS PANEL ── */
+.detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.detail-item { }
+.detail-key {
+  font-family: 'Space Mono', monospace; font-size: 9px;
+  color: var(--text3); letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px;
+}
+.detail-val { font-size: 13px; color: var(--text); }
+.detail-coords {
+  font-family: 'Space Mono', monospace;
+  font-size: 11px; color: var(--accent);
+  background: rgba(0,229,160,0.06);
+  border: 1px solid rgba(0,229,160,0.15);
+  border-radius: 6px; padding: 8px 12px; margin-top: 4px;
+}
+
+/* ── USERS PAGE ── */
+.users-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.user-tile {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  transition: border-color 0.2s;
+}
+.user-tile:hover { border-color: var(--border2); }
+.user-tile-top { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.user-avatar-lg {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; font-weight: 700; color: var(--bg); flex-shrink: 0;
+}
+.user-tile-name { font-size: 14px; font-weight: 600; }
+.user-tile-role { font-size: 10px; color: var(--text3); font-family: 'Space Mono', monospace; }
+.user-stats { display: flex; gap: 16px; }
+.user-stat { text-align: center; }
+.user-stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); }
+.user-stat-lbl { font-size: 9px; color: var(--text3); font-family: 'Space Mono', monospace; text-transform: uppercase; }
+
+/* ── RESPONSIVE TWEAKS ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+
+.inline-edit { display: flex; align-items: center; gap: 8px; }
+
+/* SETTINGS */
+.settings-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 18px;
+  overflow: hidden;
+}
+.settings-section-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 15px; letter-spacing: 1.5px; color: var(--text2);
+}
+.settings-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.settings-row:last-child { border-bottom: none; }
+.settings-row-label { color: var(--text); }
+.settings-row-sub { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.toggle {
+  position: relative; width: 40px; height: 22px;
+  background: var(--surface2); border-radius: 11px; cursor: pointer;
+  border: 1px solid var(--border2); transition: background 0.2s;
+}
+.toggle.on { background: var(--accent); border-color: var(--accent); }
+.toggle::after {
+  content: ''; position: absolute; top: 2px; left: 2px;
+  width: 16px; height: 16px; border-radius: 50%; background: var(--text);
+  transition: left 0.2s;
+}
+.toggle.on::after { left: 20px; background: var(--bg); }
+
+/* ── ACTIVITY FEED ── */
+.activity-timeline { padding-left: 16px; border-left: 1px solid var(--border); }
+.activity-item { position: relative; padding: 0 0 16px 18px; }
+.activity-item::before {
+  content: '';
+  position: absolute; left: -5px; top: 4px;
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--border2);
+}
+.activity-item.new::before { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+.activity-text { font-size: 12.5px; color: var(--text2); }
+.activity-time { font-family: 'Space Mono', monospace; font-size: 9px; color: var(--text3); margin-top: 3px; }
+
+/* status dot */
+.status-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 5px; }
+.status-dot.online { background: var(--accent); }
+.status-dot.offline { background: var(--text3); }
+
+.coord-display {
+  font-family: 'Space Mono', monospace;
+  font-size: 10px; color: var(--text3);
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div id="sidebar">
+  <div class="logo">
+    <div class="logo-mark">AssetSpatial</div>
+    <div class="logo-sub">v1.0 · Enterprise</div>
+  </div>
+  <nav>
+    <div class="nav-section-label">Platform</div>
+    <div class="nav-item active" data-page="dashboard" onclick="nav(this)">
+      <span class="nav-icon">⬡</span> Dashboard
+      <span class="nav-badge" id="nb-assets">0</span>
+    </div>
+    <div class="nav-item" data-page="map" onclick="nav(this)">
+      <span class="nav-icon">◎</span> Live Map
+    </div>
+    <div class="nav-item" data-page="assets" onclick="nav(this)">
+      <span class="nav-icon">◈</span> Asset Registry
+      <span class="nav-badge" id="nb-assets2">0</span>
+    </div>
+    <div class="nav-section-label">Management</div>
+    <div class="nav-item" data-page="capture" onclick="nav(this)">
+      <span class="nav-icon">✦</span> Field Capture
+    </div>
+    <div class="nav-item" data-page="analytics" onclick="nav(this)">
+      <span class="nav-icon">◰</span> Analytics
+    </div>
+    <div class="nav-item" data-page="users" onclick="nav(this)">
+      <span class="nav-icon">◑</span> Users
+      <span class="nav-badge" id="nb-users">0</span>
+    </div>
+    <div class="nav-section-label">System</div>
+    <div class="nav-item" data-page="audit" onclick="nav(this)">
+      <span class="nav-icon">◫</span> Audit Log
+    </div>
+    <div class="nav-item" data-page="settings" onclick="nav(this)">
+      <span class="nav-icon">⚙</span> Settings
+    </div>
+  </nav>
+  <div class="sidebar-bottom">
+    <div class="user-card">
+      <div class="avatar">AD</div>
+      <div>
+        <div class="user-name">Admin User</div>
+        <div class="user-role"><span class="status-dot online"></span>SYSTEM ADMIN</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+  <div id="header">
+    <div>
+      <div class="page-title" id="hdr-title">DASHBOARD</div>
+      <div class="breadcrumb" id="hdr-bc">AssetSpatial / Overview</div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn btn-primary" onclick="openCaptureModal()">+ New Asset</button>
+    </div>
+  </div>
+  <div id="content">
+
+    <!-- ════════════ DASHBOARD ════════════ -->
+    <div id="page-dashboard" class="page active">
+      <div class="stats-grid">
+        <div class="stat-card green">
+          <div class="stat-label">Total Assets</div>
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-sub">Across all types</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-label">GPS Points</div>
+          <div class="stat-value" id="stat-points">0</div>
+          <div class="stat-sub">Point captures</div>
+        </div>
+        <div class="stat-card orange">
+          <div class="stat-label">Polygons</div>
+          <div class="stat-value" id="stat-polygons">0</div>
+          <div class="stat-sub">Area boundaries</div>
+        </div>
+        <div class="stat-card red">
+          <div class="stat-label">Field Agents</div>
+          <div class="stat-value" id="stat-agents">0</div>
+          <div class="stat-sub">Active users</div>
+        </div>
+      </div>
+
+      <div class="two-col" style="margin-bottom:20px">
+        <div>
+          <div class="section-header">
+            <div class="section-title">RECENT CAPTURES</div>
+          </div>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Asset Name</th>
+                  <th>Type</th>
+                  <th>Geometry</th>
+                  <th>Status</th>
+                  <th>Captured</th>
+                </tr>
+              </thead>
+              <tbody id="recent-tbody">
+                <tr><td colspan="5"><div class="empty-state"><div class="empty-icon">◎</div><div class="empty-title">No assets yet</div><div class="empty-sub">Capture your first asset to see it here</div></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div>
+          <div class="section-header">
+            <div class="section-title">ACTIVITY FEED</div>
+          </div>
+          <div class="data-table-wrap" style="padding:16px 18px">
+            <div class="activity-timeline" id="activity-feed">
+              <div class="activity-item"><div class="activity-text" style="color:var(--text3);font-size:12px">No activity recorded yet.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ MAP ════════════ -->
+    <div id="page-map" class="page">
+      <div class="section-header">
+        <div class="section-title">LIVE ASSET MAP</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span class="tag tag-green">● LIVE</span>
+          <span id="map-asset-count" style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text3)">0 assets</span>
+        </div>
+      </div>
+      <div class="map-container">
+        <div class="map-bg" id="map-canvas">
+          <!-- dots injected here -->
+          <div class="map-overlay">
+            <div class="map-overlay-btn" title="Zoom In">+</div>
+            <div class="map-overlay-btn" title="Zoom Out">−</div>
+            <div class="map-overlay-btn" title="Layers">⊞</div>
+            <div class="map-overlay-btn" title="Measure">⊕</div>
+          </div>
+          <div class="map-legend">
+            <span><span class="legend-dot" style="background:var(--accent)"></span>Infrastructure</span>
+            <span><span class="legend-dot" style="background:var(--accent2)"></span>Land / Property</span>
+            <span><span class="legend-dot" style="background:var(--accent3)"></span>Utility</span>
+            <span><span class="legend-dot" style="background:var(--danger)"></span>Environmental</span>
+          </div>
+          <div class="map-coords" id="map-coords">6.4550°N, 3.3841°E | WGS84</div>
+        </div>
+      </div>
+
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>ID</th><th>Name</th><th>Type</th><th>Latitude</th><th>Longitude</th><th>Geometry</th><th>Condition</th><th>Action</th></tr>
+          </thead>
+          <tbody id="map-table-body">
+            <tr><td colspan="8"><div class="empty-state" style="padding:28px"><div class="empty-icon" style="font-size:28px">◎</div><div class="empty-title">No spatial records</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════════ ASSET REGISTRY ════════════ -->
+    <div id="page-assets" class="page">
+      <div class="filter-bar">
+        <input class="filter-input" type="text" id="search-input" placeholder="🔍  Search assets…" oninput="filterAssets()">
+        <select class="filter-input" id="filter-type" onchange="filterAssets()">
+          <option value="">All Types</option>
+          <option>Infrastructure</option>
+          <option>Land / Property</option>
+          <option>Utility</option>
+          <option>Environmental</option>
+          <option>Equipment</option>
+        </select>
+        <select class="filter-input" id="filter-cond" onchange="filterAssets()">
+          <option value="">All Conditions</option>
+          <option>Good</option>
+          <option>Fair</option>
+          <option>Poor</option>
+          <option>Critical</option>
+        </select>
+        <select class="filter-input" id="filter-geom" onchange="filterAssets()">
+          <option value="">All Geometry</option>
+          <option>Point</option>
+          <option>Polygon</option>
+          <option>Linear</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" onclick="clearFilters()">✕ Clear</button>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>Asset ID</th><th>Name</th><th>Type</th><th>Geometry</th><th>Condition</th><th>Coordinates</th><th>Agent</th><th>Date</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="assets-tbody">
+            <tr><td colspan="9"><div class="empty-state"><div class="empty-icon">◈</div><div class="empty-title">No assets found</div><div class="empty-sub">Add assets via Field Capture or use the + New Asset button</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════════ FIELD CAPTURE ════════════ -->
+    <div id="page-capture" class="page">
+      <div class="two-col">
+        <div>
+          <div class="section-title" style="margin-bottom:16px">CAPTURE NEW ASSET</div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px">
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="form-label">Asset Name *</label>
+                <input class="form-control" id="cap-name" placeholder="e.g. Water Tower A1">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Asset ID</label>
+                <input class="form-control" id="cap-id" placeholder="Auto-generated" readonly style="color:var(--text3)">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Asset Type *</label>
+                <select class="form-control" id="cap-type">
+                  <option value="">Select type…</option>
+                  <option>Infrastructure</option>
+                  <option>Land / Property</option>
+                  <option>Utility</option>
+                  <option>Environmental</option>
+                  <option>Equipment</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Geometry Type *</label>
+                <select class="form-control" id="cap-geom">
+                  <option>Point</option>
+                  <option>Polygon</option>
+                  <option>Linear</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Condition</label>
+                <select class="form-control" id="cap-cond">
+                  <option>Good</option>
+                  <option>Fair</option>
+                  <option>Poor</option>
+                  <option>Critical</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Material</label>
+                <input class="form-control" id="cap-material" placeholder="e.g. Concrete, Steel">
+              </div>
+              <div class="form-group full">
+                <label class="form-label">GPS Coordinates</label>
+                <div class="gps-field">
+                  <span class="gps-value" id="cap-coords-display">—</span>
+                  <span class="gps-lock" id="gps-accuracy"></span>
+                  <button class="btn-gps" onclick="simulateGPS()">📡 Get GPS</button>
+                </div>
+                <input type="hidden" id="cap-lat">
+                <input type="hidden" id="cap-lng">
+                <div class="form-hint" style="margin-top:4px">Click "Get GPS" to simulate coordinate capture</div>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Elevation (m)</label>
+                <input class="form-control" id="cap-elev" type="number" placeholder="e.g. 45">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Area / Dimension</label>
+                <input class="form-control" id="cap-area" placeholder="e.g. 250 m²">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Field Agent</label>
+                <input class="form-control" id="cap-agent" placeholder="Agent name">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Installation Date</label>
+                <input class="form-control" type="date" id="cap-date">
+              </div>
+              <div class="form-group full">
+                <label class="form-label">Notes / Description</label>
+                <textarea class="form-control" id="cap-notes" placeholder="Additional observations, condition details…"></textarea>
+              </div>
+            </div>
+            <div style="margin-top:18px;display:flex;gap:10px">
+              <button class="btn btn-primary" style="flex:1" onclick="captureAsset()">✦ Submit Capture</button>
+              <button class="btn btn-secondary" onclick="clearCaptureForm()">✕ Clear</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="section-title" style="margin-bottom:16px">CAPTURE PREVIEW</div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
+            <div class="map-container" style="height:200px;margin-bottom:0">
+              <div class="map-bg" id="preview-map">
+                <div class="map-coords" id="preview-coords" style="font-size:9px">No coordinates</div>
+              </div>
+            </div>
+          </div>
+          <div class="section-title" style="margin-bottom:14px">RECENT CAPTURES</div>
+          <div class="data-table-wrap">
+            <table class="data-table">
+              <thead><tr><th>Name</th><th>Type</th><th>Time</th></tr></thead>
+              <tbody id="capture-recent">
+                <tr><td colspan="3" style="color:var(--text3);font-size:12px;padding:16px">No recent captures</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ ANALYTICS ════════════ -->
+    <div id="page-analytics" class="page">
+      <div class="analytics-grid">
+        <div class="chart-card">
+          <div class="chart-title">Asset Captures by Type</div>
+          <div class="bar-chart" id="bar-chart"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Condition Distribution</div>
+          <div class="donut-wrap">
+            <svg width="100" height="100" id="donut-svg" viewBox="0 0 36 36"></svg>
+          </div>
+          <div class="donut-legend" id="donut-legend"></div>
+        </div>
+      </div>
+      <div class="analytics-grid">
+        <div class="chart-card">
+          <div class="chart-title">Geometry Type Breakdown</div>
+          <div class="bar-chart" id="geom-bar-chart"></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Summary Stats</div>
+          <div id="summary-stats" style="font-size:13px;color:var(--text2);line-height:2"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ USERS ════════════ -->
+    <div id="page-users" class="page">
+      <div class="section-header" style="margin-bottom:18px">
+        <div class="section-title">USER MANAGEMENT</div>
+        <button class="btn btn-primary" onclick="openAddUserModal()">+ Add User</button>
+      </div>
+      <div class="users-grid" id="users-grid">
+        <!-- injected -->
+      </div>
+    </div>
+
+    <!-- ════════════ AUDIT LOG ════════════ -->
+    <div id="page-audit" class="page">
+      <div class="section-header">
+        <div class="section-title">AUDIT LOG</div>
+        <button class="btn btn-danger btn-sm" onclick="clearAuditLog()">✕ Clear Log</button>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr><th>#</th><th>Action</th><th>Entity</th><th>User</th><th>Timestamp</th><th>Details</th></tr>
+          </thead>
+          <tbody id="audit-tbody">
+            <tr><td colspan="6"><div class="empty-state" style="padding:28px"><div class="empty-icon" style="font-size:28px">◫</div><div class="empty-title">No audit entries</div></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════════ SETTINGS ════════════ -->
+    <div id="page-settings" class="page">
+      <div class="section-title" style="margin-bottom:18px">PLATFORM SETTINGS</div>
+      <div class="settings-section">
+        <div class="settings-section-header">GENERAL</div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Platform Name</div><div class="settings-row-sub">Displayed in header and exports</div></div>
+          <input class="form-control" style="width:200px" id="s-name" value="AssetSpatial Platform">
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Organisation</div><div class="settings-row-sub">Your organisation name</div></div>
+          <input class="form-control" style="width:200px" id="s-org" value="Default Organisation">
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Default Coordinate System</div></div>
+          <select class="form-control" style="width:200px">
+            <option>WGS84</option><option>UTM Zone 32N</option><option>Local Projection</option>
+          </select>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-header">FEATURES</div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Offline Mode</div><div class="settings-row-sub">Allow field capture without internet</div></div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Auto Reverse Geocoding</div><div class="settings-row-sub">Convert coordinates to addresses</div></div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Photo Attachments</div><div class="settings-row-sub">Allow photo uploads per asset</div></div>
+          <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Webhook Notifications</div><div class="settings-row-sub">Send events to external endpoints</div></div>
+          <div class="toggle" onclick="this.classList.toggle('on')"></div>
+        </div>
+      </div>
+      <div class="settings-section">
+        <div class="settings-section-header">DATA MANAGEMENT</div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Export All Data</div><div class="settings-row-sub">Download complete asset database as CSV</div></div>
+          <button class="btn btn-secondary btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+        </div>
+        <div class="settings-row">
+          <div><div class="settings-row-label">Reset All Data</div><div class="settings-row-sub" style="color:var(--danger)">Permanently delete all assets, users, and logs</div></div>
+          <button class="btn btn-danger btn-sm" onclick="resetAllData()">⚠ Reset</button>
+        </div>
+      </div>
+      <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ════ ASSET CAPTURE MODAL ════ -->
+<div id="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">NEW ASSET CAPTURE</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid" id="modal-body-inner">
+        <!-- dynamic content -->
+      </div>
+    </div>
+    <div class="modal-footer" id="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-primary" id="modal-confirm-btn">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast">
+  <span class="toast-icon" id="toast-icon">✓</span>
+  <span id="toast-msg">Done</span>
+</div>
+
+<script>
+// ── STORAGE ──
+const LS = {
+  get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
+  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+};
+let assets = LS.get('asdm_assets') || [];
+let users = LS.get('asdm_users') || [];
+let auditLog = LS.get('asdm_audit') || [];
+let settings = LS.get('asdm_settings') || { name: 'AssetSpatial Platform', org: 'Default Organisation' };
+let assetCounter = LS.get('asdm_counter') || 1000;
+
+function save() {
+  LS.set('asdm_assets', assets);
+  LS.set('asdm_users', users);
+  LS.set('asdm_audit', auditLog);
+  LS.set('asdm_settings', settings);
+  LS.set('asdm_counter', assetCounter);
+}
+
+// ── SEED DATA if empty ──
+if (assets.length === 0) {
+  assets = [
+    { id:'AST-1001', name:'Water Tower A1', type:'Infrastructure', geom:'Point', lat:6.4550, lng:3.3841, condition:'Good', material:'Steel', elev:45, area:'—', agent:'Emeka Obi', date:'2026-03-01', notes:'Main distribution tower', ts: Date.now()-8e7 },
+    { id:'AST-1002', name:'Land Parcel LP-07', type:'Land / Property', geom:'Polygon', lat:6.4610, lng:3.3920, condition:'Good', material:'—', elev:12, area:'1,450 m²', agent:'Aisha Bello', date:'2026-03-05', notes:'Survey complete', ts: Date.now()-6e7 },
+    { id:'AST-1003', name:'HV Transformer T3', type:'Utility', geom:'Point', lat:6.4490, lng:3.3770, condition:'Fair', material:'Copper/Steel', elev:8, area:'—', agent:'Chidi Eze', date:'2026-03-10', notes:'Needs inspection', ts: Date.now()-4e7 },
+    { id:'AST-1004', name:'Drain Channel DC-2', type:'Infrastructure', geom:'Linear', lat:6.4530, lng:3.3860, condition:'Poor', material:'Concrete', elev:5, area:'320 m', agent:'Emeka Obi', date:'2026-03-12', notes:'Blockage reported', ts: Date.now()-2e7 },
+    { id:'AST-1005', name:'Forest Reserve FR-1', type:'Environmental', geom:'Polygon', lat:6.4670, lng:3.4010, condition:'Good', material:'—', elev:22, area:'8.2 ha', agent:'Aisha Bello', date:'2026-03-15', notes:'Protected zone', ts: Date.now()-1e7 },
+  ];
+  assetCounter = 1006;
+}
+
+if (users.length === 0) {
+  users = [
+    { id:'USR-001', name:'Emeka Obi', role:'Field Agent', email:'emeka@example.com', assets:0, color:'#00e5a0' },
+    { id:'USR-002', name:'Aisha Bello', role:'Supervisor', email:'aisha@example.com', assets:0, color:'#0099ff' },
+    { id:'USR-003', name:'Chidi Eze', role:'Field Agent', email:'chidi@example.com', assets:0, color:'#ff6b35' },
+    { id:'USR-004', name:'Admin User', role:'System Admin', email:'admin@example.com', assets:0, color:'#ffa502' },
+  ];
+  // count assets per user
+  assets.forEach(a => {
+    const u = users.find(u => u.name === a.agent);
+    if (u) u.assets++;
+  });
+}
+
+if (auditLog.length === 0) {
+  auditLog = [
+    { action:'ASSET_CREATED', entity:'AST-1001', user:'Emeka Obi', ts:Date.now()-8e7, detail:'Water Tower A1 captured' },
+    { action:'ASSET_CREATED', entity:'AST-1002', user:'Aisha Bello', ts:Date.now()-6e7, detail:'Land Parcel LP-07 captured' },
+    { action:'ASSET_CREATED', entity:'AST-1003', user:'Chidi Eze', ts:Date.now()-4e7, detail:'HV Transformer T3 captured' },
+    { action:'USER_LOGIN', entity:'USR-004', user:'Admin User', ts:Date.now()-3e7, detail:'Admin login' },
+    { action:'EXPORT', entity:'ALL', user:'Admin User', ts:Date.now()-1e6, detail:'CSV export initiated' },
+  ];
+}
+
+save();
+
+// ── NAV ──
+function nav(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  const page = el.dataset.page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  const titles = { dashboard:'DASHBOARD', map:'LIVE MAP', assets:'ASSET REGISTRY', capture:'FIELD CAPTURE', analytics:'ANALYTICS', users:'USERS', audit:'AUDIT LOG', settings:'SETTINGS' };
+  const bcs = { dashboard:'Overview', map:'Spatial / Map View', assets:'Asset Registry', capture:'Field Capture', analytics:'Analytics', users:'User Management', audit:'Audit Log', settings:'Platform Settings' };
+  document.getElementById('hdr-title').textContent = titles[page];
+  document.getElementById('hdr-bc').textContent = 'AssetSpatial / ' + bcs[page];
+  renderPage(page);
+}
+
+function renderPage(page) {
+  if (page === 'dashboard') renderDashboard();
+  if (page === 'map') renderMap();
+  if (page === 'assets') renderAssets();
+  if (page === 'analytics') renderAnalytics();
+  if (page === 'users') renderUsers();
+  if (page === 'audit') renderAudit();
+  if (page === 'capture') initCapturePage();
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  const pts = assets.filter(a => a.geom === 'Point').length;
+  const poly = assets.filter(a => a.geom === 'Polygon' || a.geom === 'Linear').length;
+  document.getElementById('stat-total').textContent = assets.length;
+  document.getElementById('stat-points').textContent = pts;
+  document.getElementById('stat-polygons').textContent = poly;
+  document.getElementById('stat-agents').textContent = users.filter(u => u.role === 'Field Agent').length;
+  document.getElementById('nb-assets').textContent = assets.length;
+  document.getElementById('nb-assets2').textContent = assets.length;
+  document.getElementById('nb-users').textContent = users.length;
+
+  const recent = [...assets].sort((a,b) => b.ts - a.ts).slice(0,5);
+  const tbody = document.getElementById('recent-tbody');
+  if (!recent.length) { tbody.innerHTML = '<tr><td colspan="5"><div class="empty-state"><div class="empty-icon">◎</div><div class="empty-title">No assets yet</div></div></td></tr>'; return; }
+  tbody.innerHTML = recent.map(a => `
+    <tr>
+      <td>${a.name}</td>
+      <td><span class="tag ${typeColor(a.type)}">${a.type}</span></td>
+      <td>${geomIcon(a.geom)} ${a.geom}</td>
+      <td><span class="tag ${condColor(a.condition)}">${a.condition}</span></td>
+      <td class="coord-display">${timeAgo(a.ts)}</td>
+    </tr>`).join('');
+
+  const feed = document.getElementById('activity-feed');
+  feed.innerHTML = [...auditLog].reverse().slice(0,6).map((l,i) =>
+    `<div class="activity-item ${i<2?'new':''}">
+      <div class="activity-text">${l.action.replace(/_/g,' ')}: <strong>${l.entity}</strong> — ${l.detail}</div>
+      <div class="activity-time">${new Date(l.ts).toLocaleString()} · ${l.user}</div>
+    </div>`).join('');
+}
+
+// ── MAP ──
+function renderMap() {
+  document.getElementById('map-asset-count').textContent = assets.length + ' assets';
+  const canvas = document.getElementById('map-canvas');
+  // remove old dots
+  canvas.querySelectorAll('.map-asset-dot').forEach(d => d.remove());
+
+  const colors = { 'Infrastructure':'dot-green', 'Land / Property':'dot-blue', 'Utility':'dot-orange', 'Environmental':'', 'Equipment':'dot-gray' };
+  assets.forEach(a => {
+    const dot = document.createElement('div');
+    dot.className = `map-asset-dot ${colors[a.type] || 'dot-green'}`;
+    // scatter based on lat/lng within display bounds
+    const x = 5 + ((a.lng - 3.36) / 0.06) * 85;
+    const y = 5 + ((6.48 - a.lat) / 0.06) * 75;
+    dot.style.left = Math.max(3, Math.min(95, x)) + '%';
+    dot.style.top = Math.max(3, Math.min(90, y)) + '%';
+    dot.title = a.name;
+    dot.onclick = () => showAssetDetail(a);
+    canvas.appendChild(dot);
+  });
+
+  const tbody = document.getElementById('map-table-body');
+  tbody.innerHTML = assets.map(a => `
+    <tr>
+      <td><span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text3)">${a.id}</span></td>
+      <td>${a.name}</td>
+      <td><span class="tag ${typeColor(a.type)}">${a.type}</span></td>
+      <td class="coord-display">${a.lat.toFixed(4)}°N</td>
+      <td class="coord-display">${a.lng.toFixed(4)}°E</td>
+      <td>${geomIcon(a.geom)} ${a.geom}</td>
+      <td><span class="tag ${condColor(a.condition)}">${a.condition}</span></td>
+      <td><button class="btn btn-secondary btn-sm" onclick="showAssetDetail(assets.find(x=>x.id==='${a.id}'))">View</button></td>
+    </tr>`).join('') || '<tr><td colspan="8"><div class="empty-state" style="padding:28px"><div class="empty-icon" style="font-size:28px">◎</div><div class="empty-title">No records</div></div></td></tr>';
+}
+
+// ── ASSETS ──
+let filteredAssets = null;
+function renderAssets(list) {
+  const data = list || assets;
+  const tbody = document.getElementById('assets-tbody');
+  if (!data.length) {
+    tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">◈</div><div class="empty-title">No assets found</div></div></td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.map(a => `
+    <tr>
+      <td><span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent)">${a.id}</span></td>
+      <td>${a.name}</td>
+      <td><span class="tag ${typeColor(a.type)}">${a.type}</span></td>
+      <td>${geomIcon(a.geom)} ${a.geom}</td>
+      <td><span class="tag ${condColor(a.condition)}">${a.condition}</span></td>
+      <td class="coord-display">${a.lat.toFixed(4)}°N, ${a.lng.toFixed(4)}°E</td>
+      <td>${a.agent}</td>
+      <td>${a.date}</td>
+      <td style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm" onclick="showAssetDetail(assets.find(x=>x.id==='${a.id}'))">View</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteAsset('${a.id}')">✕</button>
+      </td>
+    </tr>`).join('');
+}
+
+function filterAssets() {
+  const q = document.getElementById('search-input').value.toLowerCase();
+  const t = document.getElementById('filter-type').value;
+  const c = document.getElementById('filter-cond').value;
+  const g = document.getElementById('filter-geom').value;
+  const f = assets.filter(a =>
+    (!q || a.name.toLowerCase().includes(q) || a.id.toLowerCase().includes(q) || a.agent.toLowerCase().includes(q)) &&
+    (!t || a.type === t) && (!c || a.condition === c) && (!g || a.geom === g)
+  );
+  renderAssets(f);
+}
+function clearFilters() {
+  ['search-input','filter-type','filter-cond','filter-geom'].forEach(id => document.getElementById(id).value='');
+  renderAssets();
+}
+
+function deleteAsset(id) {
+  if (!confirm('Delete this asset? This cannot be undone.')) return;
+  assets = assets.filter(a => a.id !== id);
+  addAudit('ASSET_DELETED', id, 'Admin User', 'Asset removed');
+  save(); renderAssets(); renderDashboard();
+  toast('Asset deleted', '🗑');
+}
+
+// ── ASSET DETAIL MODAL ──
+function showAssetDetail(a) {
+  if (!a) return;
+  document.getElementById('modal-title').textContent = 'ASSET DETAIL — ' + a.id;
+  document.getElementById('modal-body-inner').className = '';
+  document.getElementById('modal-body-inner').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-item"><div class="detail-key">Asset Name</div><div class="detail-val">${a.name}</div></div>
+      <div class="detail-item"><div class="detail-key">Asset ID</div><div class="detail-val" style="font-family:'Space Mono',monospace;color:var(--accent)">${a.id}</div></div>
+      <div class="detail-item"><div class="detail-key">Type</div><div class="detail-val"><span class="tag ${typeColor(a.type)}">${a.type}</span></div></div>
+      <div class="detail-item"><div class="detail-key">Geometry</div><div class="detail-val">${geomIcon(a.geom)} ${a.geom}</div></div>
+      <div class="detail-item"><div class="detail-key">Condition</div><div class="detail-val"><span class="tag ${condColor(a.condition)}">${a.condition}</span></div></div>
+      <div class="detail-item"><div class="detail-key">Material</div><div class="detail-val">${a.material || '—'}</div></div>
+      <div class="detail-item"><div class="detail-key">Elevation</div><div class="detail-val">${a.elev ? a.elev + ' m' : '—'}</div></div>
+      <div class="detail-item"><div class="detail-key">Area / Dimension</div><div class="detail-val">${a.area || '—'}</div></div>
+      <div class="detail-item"><div class="detail-key">Field Agent</div><div class="detail-val">${a.agent}</div></div>
+      <div class="detail-item"><div class="detail-key">Install Date</div><div class="detail-val">${a.date}</div></div>
+      <div class="detail-item" style="grid-column:1/-1"><div class="detail-key">GPS Coordinates</div>
+        <div class="detail-coords">LAT: ${a.lat.toFixed(6)}°N &nbsp;|&nbsp; LNG: ${a.lng.toFixed(6)}°E &nbsp;|&nbsp; ELEV: ${a.elev || '—'} m &nbsp;|&nbsp; CRS: WGS84</div>
+      </div>
+      <div class="detail-item" style="grid-column:1/-1"><div class="detail-key">Notes</div><div class="detail-val" style="color:var(--text2)">${a.notes || '—'}</div></div>
+      <div class="detail-item" style="grid-column:1/-1"><div class="detail-key">Captured</div><div class="detail-val coord-display">${new Date(a.ts).toLocaleString()}</div></div>
+    </div>`;
+  document.getElementById('modal-footer').innerHTML = `<button class="btn btn-secondary" onclick="closeModal()">Close</button><button class="btn btn-danger btn-sm" onclick="deleteAsset('${a.id}');closeModal()">Delete</button>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+// ── CAPTURE ──
+function initCapturePage() {
+  document.getElementById('cap-id').value = 'AST-' + assetCounter;
+  document.getElementById('cap-date').value = new Date().toISOString().split('T')[0];
+  renderCaptureRecent();
+}
+
+function simulateGPS() {
+  const lat = (6.44 + Math.random() * 0.06).toFixed(6);
+  const lng = (3.37 + Math.random() * 0.06).toFixed(6);
+  document.getElementById('cap-lat').value = lat;
+  document.getElementById('cap-lng').value = lng;
+  document.getElementById('cap-coords-display').textContent = lat + '°N, ' + lng + '°E';
+  document.getElementById('gps-accuracy').textContent = '±' + (2 + Math.random()*4).toFixed(1) + 'm';
+  document.getElementById('preview-coords').textContent = lat + '°N, ' + lng + '°E | WGS84';
+  // add a dot to preview map
+  const pm = document.getElementById('preview-map');
+  pm.querySelectorAll('.map-asset-dot').forEach(d => d.remove());
+  const dot = document.createElement('div');
+  dot.className = 'map-asset-dot dot-green';
+  dot.style.left = '45%'; dot.style.top = '45%';
+  pm.appendChild(dot);
+  toast('GPS coordinates captured', '📡');
+}
+
+function captureAsset() {
+  const name = document.getElementById('cap-name').value.trim();
+  const type = document.getElementById('cap-type').value;
+  const lat = parseFloat(document.getElementById('cap-lat').value);
+  const lng = parseFloat(document.getElementById('cap-lng').value);
+  if (!name) { toast('Asset name is required', '⚠', true); return; }
+  if (!type) { toast('Asset type is required', '⚠', true); return; }
+  if (!lat || !lng) { toast('Capture GPS coordinates first', '📡', true); return; }
+
+  const a = {
+    id: 'AST-' + assetCounter++,
+    name, type,
+    geom: document.getElementById('cap-geom').value,
+    lat, lng,
+    condition: document.getElementById('cap-cond').value,
+    material: document.getElementById('cap-material').value,
+    elev: parseInt(document.getElementById('cap-elev').value) || 0,
+    area: document.getElementById('cap-area').value,
+    agent: document.getElementById('cap-agent').value || 'Field Agent',
+    date: document.getElementById('cap-date').value,
+    notes: document.getElementById('cap-notes').value,
+    ts: Date.now()
+  };
+  assets.unshift(a);
+  addAudit('ASSET_CREATED', a.id, a.agent, a.name + ' captured at ' + lat + ', ' + lng);
+
+  // update user count
+  const u = users.find(u => u.name === a.agent);
+  if (u) u.assets++;
+
+  save();
+  toast('Asset ' + a.id + ' captured successfully', '✦');
+  clearCaptureForm();
+  renderCaptureRecent();
+  renderDashboard();
+}
+
+function clearCaptureForm() {
+  ['cap-name','cap-material','cap-area','cap-agent','cap-notes','cap-elev','cap-lat','cap-lng'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('cap-type').value='';
+  document.getElementById('cap-geom').value='Point';
+  document.getElementById('cap-cond').value='Good';
+  document.getElementById('cap-coords-display').textContent='—';
+  document.getElementById('gps-accuracy').textContent='';
+  document.getElementById('cap-id').value='AST-'+assetCounter;
+  document.getElementById('cap-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('preview-map').querySelectorAll('.map-asset-dot').forEach(d=>d.remove());
+  document.getElementById('preview-coords').textContent='No coordinates';
+}
+
+function renderCaptureRecent() {
+  const rows = [...assets].slice(0,4);
+  const tbody = document.getElementById('capture-recent');
+  tbody.innerHTML = rows.map(a => `<tr><td>${a.name}</td><td><span class="tag ${typeColor(a.type)}">${a.type}</span></td><td class="coord-display">${timeAgo(a.ts)}</td></tr>`).join('')
+    || '<tr><td colspan="3" style="color:var(--text3);font-size:12px;padding:16px">No recent captures</td></tr>';
+}
+
+// ── ANALYTICS ──
+function renderAnalytics() {
+  const types = ['Infrastructure','Land / Property','Utility','Environmental','Equipment'];
+  const typeCounts = types.map(t => assets.filter(a=>a.type===t).length);
+  const maxType = Math.max(...typeCounts, 1);
+  const typeColors = ['var(--accent)','var(--accent2)','var(--accent3)','var(--danger)','var(--warn)'];
+  document.getElementById('bar-chart').innerHTML = types.map((t,i) => `
+    <div class="bar-wrap">
+      <div class="bar-val">${typeCounts[i]}</div>
+      <div class="bar" style="height:${(typeCounts[i]/maxType*100)}px;background:${typeColors[i]}"></div>
+      <div class="bar-label">${t.split(' ')[0]}</div>
+    </div>`).join('');
+
+  // Donut
+  const conds = ['Good','Fair','Poor','Critical'];
+  const condCounts = conds.map(c => assets.filter(a=>a.condition===c).length);
+  const condColors = ['var(--accent)','var(--warn)','var(--accent3)','var(--danger)'];
+  const total = assets.length || 1;
+  let offset = 25;
+  const donut = document.getElementById('donut-svg');
+  donut.innerHTML = condCounts.map((cnt, i) => {
+    const pct = (cnt/total)*100;
+    const dash = pct * 0.6283;
+    const s = `<circle cx="18" cy="18" r="10" fill="none" stroke="${condColors[i]}" stroke-width="5" stroke-dasharray="${dash} 62.83" stroke-dashoffset="${-offset}" transform="rotate(-90 18 18)" opacity="${cnt?1:0.1}"/>`;
+    offset += dash;
+    return s;
+  }).join('') + `<text x="18" y="21" text-anchor="middle" fill="var(--text)" font-size="6" font-family="Bebas Neue,sans-serif" letter-spacing="0.5">${assets.length}</text>`;
+  document.getElementById('donut-legend').innerHTML = conds.map((c,i) =>
+    `<div class="donut-legend-item"><div style="display:flex;align-items:center"><div class="donut-dot" style="background:${condColors[i]}"></div>${c}</div><span style="font-family:'Space Mono',monospace;font-size:10px">${condCounts[i]}</span></div>`).join('');
+
+  // Geometry bar
+  const geoms = ['Point','Polygon','Linear'];
+  const geomCounts = geoms.map(g => assets.filter(a=>a.geom===g).length);
+  const maxGeom = Math.max(...geomCounts, 1);
+  document.getElementById('geom-bar-chart').innerHTML = geoms.map((g,i) => `
+    <div class="bar-wrap">
+      <div class="bar-val">${geomCounts[i]}</div>
+      <div class="bar" style="height:${(geomCounts[i]/maxGeom*100)}px;background:${typeColors[i]}"></div>
+      <div class="bar-label">${g}</div>
+    </div>`).join('');
+
+  // Summary
+  document.getElementById('summary-stats').innerHTML = `
+    <div>Total Assets: <strong style="color:var(--accent)">${assets.length}</strong></div>
+    <div>Field Agents: <strong style="color:var(--accent2)">${users.filter(u=>u.role==='Field Agent').length}</strong></div>
+    <div>Audit Entries: <strong style="color:var(--accent3)">${auditLog.length}</strong></div>
+    <div>Most Active Type: <strong style="color:var(--text)">${types[typeCounts.indexOf(Math.max(...typeCounts))] || '—'}</strong></div>
+    <div>Good Condition: <strong style="color:var(--success)">${condCounts[0]} (${Math.round(condCounts[0]/total*100)}%)</strong></div>
+    <div>Critical Alerts: <strong style="color:var(--danger)">${condCounts[3]}</strong></div>
+  `;
+}
+
+// ── USERS ──
+function renderUsers() {
+  const grid = document.getElementById('users-grid');
+  grid.innerHTML = users.map(u => `
+    <div class="user-tile">
+      <div class="user-tile-top">
+        <div class="user-avatar-lg" style="background:${u.color}">${u.name.split(' ').map(n=>n[0]).join('')}</div>
+        <div>
+          <div class="user-tile-name">${u.name}</div>
+          <div class="user-tile-role">${u.role}</div>
+        </div>
+      </div>
+      <div class="user-stats">
+        <div class="user-stat"><div class="user-stat-val">${u.assets}</div><div class="user-stat-lbl">Assets</div></div>
+        <div class="user-stat"><div class="user-stat-val" style="color:var(--accent2)">${auditLog.filter(l=>l.user===u.name).length}</div><div class="user-stat-lbl">Actions</div></div>
+      </div>
+      <div style="margin-top:12px;font-size:11px;color:var(--text3);font-family:'Space Mono',monospace">${u.email}</div>
+      <div style="margin-top:10px;display:flex;gap:6px">
+        <span class="tag tag-gray" style="font-size:9px">${u.id}</span>
+        <button class="btn btn-danger btn-sm" style="margin-left:auto" onclick="deleteUser('${u.id}')">Remove</button>
+      </div>
+    </div>`).join('') || '<div style="color:var(--text3);padding:20px">No users</div>';
+}
+
+function deleteUser(id) {
+  if (!confirm('Remove this user?')) return;
+  users = users.filter(u => u.id !== id);
+  addAudit('USER_REMOVED', id, 'Admin User', 'User account removed');
+  save(); renderUsers(); toast('User removed', '🗑');
+}
+
+function openAddUserModal() {
+  document.getElementById('modal-title').textContent = 'ADD NEW USER';
+  document.getElementById('modal-body-inner').className = 'form-grid';
+  document.getElementById('modal-body-inner').innerHTML = `
+    <div class="form-group"><label class="form-label">Full Name *</label><input class="form-control" id="nu-name" placeholder="e.g. Ngozi Adamu"></div>
+    <div class="form-group"><label class="form-label">Role *</label><select class="form-control" id="nu-role"><option>Field Agent</option><option>Supervisor</option><option>System Admin</option><option>GIS Analyst</option></select></div>
+    <div class="form-group full"><label class="form-label">Email *</label><input class="form-control" id="nu-email" type="email" placeholder="user@example.com"></div>`;
+  document.getElementById('modal-footer').innerHTML = `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addUser()">Add User</button>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function addUser() {
+  const name = document.getElementById('nu-name').value.trim();
+  const role = document.getElementById('nu-role').value;
+  const email = document.getElementById('nu-email').value.trim();
+  if (!name || !email) { toast('Name and email required', '⚠', true); return; }
+  const colors = ['#00e5a0','#0099ff','#ff6b35','#ffa502','#ff4757','#a55eea'];
+  const u = { id:'USR-'+String(Date.now()).slice(-4), name, role, email, assets:0, color: colors[users.length % colors.length] };
+  users.push(u);
+  addAudit('USER_CREATED', u.id, 'Admin User', name + ' added as ' + role);
+  save(); renderUsers(); closeModal();
+  toast('User ' + name + ' added', '✓');
+}
+
+// ── AUDIT ──
+function renderAudit() {
+  const tbody = document.getElementById('audit-tbody');
+  const actionColors = { ASSET_CREATED:'tag-green', ASSET_DELETED:'tag-red', USER_CREATED:'tag-blue', USER_REMOVED:'tag-red', EXPORT:'tag-gray', USER_LOGIN:'tag-gray' };
+  tbody.innerHTML = [...auditLog].reverse().map((l,i) => `
+    <tr>
+      <td class="coord-display">${auditLog.length - i}</td>
+      <td><span class="tag ${actionColors[l.action]||'tag-gray'}">${l.action.replace(/_/g,' ')}</span></td>
+      <td style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text3)">${l.entity}</td>
+      <td>${l.user}</td>
+      <td class="coord-display">${new Date(l.ts).toLocaleString()}</td>
+      <td style="color:var(--text2)">${l.detail}</td>
+    </tr>`).join('') || '<tr><td colspan="6"><div class="empty-state" style="padding:28px"><div class="empty-title">No entries</div></div></td></tr>';
+}
+
+function clearAuditLog() {
+  if (!confirm('Clear the entire audit log?')) return;
+  auditLog = [];
+  save(); renderAudit(); toast('Audit log cleared', '✓');
+}
+
+// ── SETTINGS ──
+function saveSettings() {
+  settings.name = document.getElementById('s-name').value;
+  settings.org = document.getElementById('s-org').value;
+  save();
+  toast('Settings saved', '✓');
+}
+
+function resetAllData() {
+  if (!confirm('⚠ This will permanently delete ALL data. Are you sure?')) return;
+  if (!confirm('Final confirmation: delete everything?')) return;
+  assets = []; users = []; auditLog = []; assetCounter = 1000;
+  save(); renderDashboard(); toast('All data reset', '🗑');
+}
+
+// ── MODAL (general open/capture) ──
+function openCaptureModal() {
+  nav(document.querySelector('[data-page="capture"]'));
+}
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+
+// ── EXPORT ──
+function exportCSV() {
+  const headers = ['ID','Name','Type','Geometry','Latitude','Longitude','Condition','Material','Elevation','Area','Agent','Date','Notes'];
+  const rows = assets.map(a => [a.id,a.name,a.type,a.geom,a.lat,a.lng,a.condition,a.material||'',a.elev||'',a.area||'',a.agent,a.date,(a.notes||'').replace(/,/g,';')]);
+  const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='asset_spatial_export.csv'; a.click();
+  addAudit('EXPORT','ALL','Admin User','CSV export — '+assets.length+' records');
+  save(); toast('CSV exported — ' + assets.length + ' records', '⬇');
+}
+
+// ── AUDIT HELPER ──
+function addAudit(action, entity, user, detail) {
+  auditLog.push({ action, entity, user, ts:Date.now(), detail });
+  document.getElementById('nb-users').textContent = users.length;
+}
+
+// ── TOAST ──
+let toastTimer;
+function toast(msg, icon='✓', isError=false) {
+  const el = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  document.getElementById('toast-icon').textContent = icon;
+  el.style.borderColor = isError ? 'rgba(255,71,87,0.4)' : 'var(--border2)';
+  el.classList.add('open');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => el.classList.remove('open'), 3000);
+}
+
+// ── HELPERS ──
+function typeColor(t) {
+  return { 'Infrastructure':'tag-green','Land / Property':'tag-blue','Utility':'tag-orange','Environmental':'tag-green','Equipment':'tag-gray' }[t] || 'tag-gray';
+}
+function condColor(c) {
+  return { 'Good':'tag-green','Fair':'tag-warn','Poor':'tag-orange','Critical':'tag-red' }[c] || 'tag-gray';
+}
+function geomIcon(g) {
+  return { 'Point':'◎','Polygon':'⬡','Linear':'⌇' }[g] || '◎';
+}
+function timeAgo(ts) {
+  const d = Date.now() - ts;
+  if (d < 60000) return 'Just now';
+  if (d < 3600000) return Math.floor(d/60000) + 'm ago';
+  if (d < 86400000) return Math.floor(d/3600000) + 'h ago';
+  return Math.floor(d/86400000) + 'd ago';
+}
+
+// ── INIT ──
+renderDashboard();
+</script>
+</body>
+</html>
