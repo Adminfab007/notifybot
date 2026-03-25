@@ -1725,52 +1725,67 @@ function showAssetDetail(a) {
   document.getElementById('modal-title').textContent = 'ASSET DETAIL — ' + a.id;
   document.getElementById('modal-body-inner').className = '';
 
-  // Safe lat/lng formatting — handle both numeric and string values
   const latVal = typeof a.lat === 'number' ? a.lat : parseFloat(a.lat);
   const lngVal = typeof a.lng === 'number' ? a.lng : parseFloat(a.lng);
   const latStr = isNaN(latVal) ? (a.lat || '—') : latVal.toFixed(6) + '°N';
   const lngStr = isNaN(lngVal) ? (a.lng || '—') : lngVal.toFixed(6) + '°E';
 
-  // Image row — only show if asset has an image
   const imageRow = a.image
     ? '<div class="detail-item"><div class="detail-val"><img src="' + a.image + '" alt="Asset Image" width="120" height="80" style="object-fit:cover;border-radius:6px;" /></div></div>'
     : '';
 
-  // Core fields always shown
+  // Core platform fields always shown at top
   let html = '<div class="detail-grid">' + imageRow +
     '<div class="detail-item"><div class="detail-key">Asset Name</div><div class="detail-val">' + (a.name || '—') + '</div></div>' +
     '<div class="detail-item"><div class="detail-key">Asset ID</div><div class="detail-val" style="font-family:\'Space Mono\',monospace;color:var(--accent)">' + a.id + '</div></div>' +
     '<div class="detail-item"><div class="detail-key">Type</div><div class="detail-val"><span class="tag ' + typeColor(a.type) + '">' + (a.type || '—') + '</span></div></div>' +
     '<div class="detail-item"><div class="detail-key">Geometry</div><div class="detail-val">' + geomIcon(a.geom) + ' ' + (a.geom || '—') + '</div></div>' +
     '<div class="detail-item"><div class="detail-key">Condition</div><div class="detail-val"><span class="tag ' + condColor(a.condition) + '">' + (a.condition || '—') + '</span></div></div>' +
-    '<div class="detail-item"><div class="detail-key">Material</div><div class="detail-val">' + (a.material || '—') + '</div></div>' +
-    '<div class="detail-item"><div class="detail-key">Elevation</div><div class="detail-val">' + (a.elev ? a.elev + ' m' : '—') + '</div></div>' +
-    '<div class="detail-item"><div class="detail-key">Area / Dimension</div><div class="detail-val">' + (a.area || '—') + '</div></div>' +
     '<div class="detail-item"><div class="detail-key">Field Agent</div><div class="detail-val">' + (a.agent || '—') + '</div></div>' +
-    '<div class="detail-item"><div class="detail-key">Install Date</div><div class="detail-val">' + (a.date || '—') + '</div></div>' +
+    '<div class="detail-item"><div class="detail-key">Date</div><div class="detail-val">' + (a.date || '—') + '</div></div>' +
     '<div class="detail-item" style="grid-column:1/-1"><div class="detail-key">GPS Coordinates</div>' +
-    '<div class="detail-coords">LAT: ' + latStr + ' &nbsp;|&nbsp; LNG: ' + lngStr + ' &nbsp;|&nbsp; ELEV: ' + (a.elev || '—') + ' m &nbsp;|&nbsp; CRS: WGS84</div></div>' +
-    '<div class="detail-item" style="grid-column:1/-1"><div class="detail-key">Notes</div><div class="detail-val" style="color:var(--text2)">' + (a.notes || '—') + '</div></div>' +
-    '<div class="detail-item" style="grid-column:1/-1"><div class="detail-key">Captured</div><div class="detail-val coord-display">' + new Date(a.ts).toLocaleString() + '</div></div>';
+    '<div class="detail-coords">LAT: ' + latStr + ' &nbsp;|&nbsp; LNG: ' + lngStr + ' &nbsp;|&nbsp; CRS: WGS84</div></div>';
 
-  // Dynamic custom fields — render every extra field from this asset's unique schema
-  if (a._customFields && Object.keys(a._customFields).length > 0) {
-    html += '<div class="detail-item" style="grid-column:1/-1;margin-top:6px">' +
-      '<div style="font-family:\'Space Mono\',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;padding:8px 0 6px;border-top:1px solid var(--border);margin-bottom:4px">ADDITIONAL FIELDS FROM IMPORT</div>' +
+  // Keys that are handled above or are internal — skip in dynamic section
+  const SKIP_KEYS = new Set([
+    'id','name','type','geom','lat','lng','condition','agent','date','ts','image',
+    'material','notes','elev','area','typeFields',
+    '_importSource','_customFields','_name','_lat','_lng','_condition',
+    '_notes','_material','_elevation','_area','_autoType','_confidence','_row','_raw'
+  ]);
+
+  // Collect all remaining keys from this specific asset record
+  const extraEntries = Object.entries(a).filter(([k]) => !SKIP_KEYS.has(k));
+
+  if (extraEntries.length > 0) {
+    html += '<div class="detail-item" style="grid-column:1/-1;margin-top:8px">' +
+      '<div style="font-family:\'Space Mono\',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;padding:8px 0 6px;border-top:1px solid var(--border);margin-bottom:4px">' +
+      'ALL FIELDS (' + extraEntries.length + ')</div>' +
       '<div class="detail-grid" style="gap:8px">';
-    Object.entries(a._customFields).forEach(function(entry) {
-      var key = entry[0]; var val = entry[1];
+    extraEntries.forEach(([key, val]) => {
       html += '<div class="detail-item">' +
         '<div class="detail-key">' + key + '</div>' +
         '<div class="detail-val">' + (val !== '' && val !== null && val !== undefined ? val : '—') + '</div>' +
         '</div>';
     });
     html += '</div></div>';
+  } else {
+    // For non-imported assets show the standard extra fields
+    html +=
+      '<div class="detail-item"><div class="detail-key">Material</div><div class="detail-val">' + (a.material || '—') + '</div></div>' +
+      '<div class="detail-item"><div class="detail-key">Elevation</div><div class="detail-val">' + (a.elev ? a.elev + ' m' : '—') + '</div></div>' +
+      '<div class="detail-item"><div class="detail-key">Area / Dimension</div><div class="detail-val">' + (a.area || '—') + '</div></div>' +
+      '<div class="detail-item" style="grid-column:1/-1"><div class="detail-key">Notes</div><div class="detail-val" style="color:var(--text2)">' + (a.notes || '—') + '</div></div>';
   }
 
+  html += '<div class="detail-item" style="grid-column:1/-1"><div class="detail-key">Captured</div>' +
+    '<div class="detail-val coord-display">' + new Date(a.ts).toLocaleString() + '</div></div>';
   html += '</div>';
+
   document.getElementById('modal-body-inner').innerHTML = html;
-  document.getElementById('modal-footer').innerHTML = '<button class="btn btn-secondary" onclick="closeModal()">Close</button><button class="btn btn-danger btn-sm" onclick="deleteAsset(\'' + a.id + '\');closeModal()">Delete</button>';
+  document.getElementById('modal-footer').innerHTML =
+    '<button class="btn btn-secondary" onclick="closeModal()">Close</button>' +
+    '<button class="btn btn-danger btn-sm" onclick="deleteAsset(\'' + a.id + '\');closeModal()">Delete</button>';
   document.getElementById('modal-overlay').classList.add('open');
 }
 
@@ -2565,64 +2580,61 @@ function categoriseRow(row) {
 }
 
 function xlProcess() {
-  // Identify custom (non-mapped) columns to preserve verbatim
-  const mappedCols = new Set(Object.values(xlMapping).filter(Boolean));
-  const customCols = xlHeaders.filter(h => !mappedCols.has(h));
+  // Build reverse map: coreField -> excelColumnName
+  const coreToCol = {};
+  Object.entries(xlMapping).forEach(([field, col]) => { if (col) coreToCol[field] = col; });
+  const mappedCols = new Set(Object.values(coreToCol));
 
   xlCategorised = xlData.map((row, i) => {
-    const mapped = {};
-    Object.entries(xlMapping).forEach(([field, col]) => { if (col) mapped[field] = row[col] || ''; });
-    const { type, confidence } = categoriseRow(row);
-    const detectedType = mapped.type && ['Infrastructure','Land / Property','Utility','Environmental','Equipment'].includes(mapped.type) ? mapped.type : type;
+    const get = field => (coreToCol[field] ? row[coreToCol[field]] || '' : '');
+
+    const { type: autoType, confidence } = categoriseRow(row);
+    const mappedType = get('type');
+    const detectedType = (['Infrastructure','Land / Property','Utility','Environmental','Equipment'].includes(mappedType))
+      ? mappedType : autoType;
+
+    // Base record with internal meta only
     const record = {
-      _row: i+1,
-      id: 'XL-'+(1000+i),
-      name: mapped.name || 'Row '+(i+1),
-      type: detectedType,
-      confidence,
-      lat: mapped.lat || '',
-      lng: mapped.lng || '',
-      condition: mapped.condition || 'Good',
-      material: mapped.material || '',
-      notes: mapped.notes || '',
-      elevation: mapped.elevation || '',
-      area: mapped.area || '',
+      _row: i + 1,
+      id: 'XL-' + (1000 + i),
+      _confidence: confidence,
+      _autoType: detectedType,
       geom: 'Point',
       agent: 'Excel Import',
-      date: new Date().toISOString().slice(0,10),
+      date: new Date().toISOString().slice(0, 10),
       ts: Date.now(),
-      _raw: row
     };
-    // Preserve ALL extra columns unique to this Excel file
-    if (customCols.length) {
-      record._customFields = {};
-      customCols.forEach(col => {
-        const val = row[col];
-        if (val !== '' && val !== undefined && val !== null) record._customFields[col] = val;
-      });
-    }
+
+    // Store EVERY Excel column as a top-level property using the original header name
+    xlHeaders.forEach(h => { record[h] = row[h] !== undefined ? row[h] : ''; });
+
+    // Also store resolved semantic aliases for internal platform use
+    record._name      = get('name')      || ('Row ' + (i + 1));
+    record._lat       = get('lat');
+    record._lng       = get('lng');
+    record._condition = get('condition') || 'Good';
+    record._notes     = get('notes');
+    record._material  = get('material');
+    record._elevation = get('elevation');
+    record._area      = get('area');
+
     return record;
   });
 
   // Stats
   const typeCounts = {};
-  xlCategorised.forEach(r => { typeCounts[r.type] = (typeCounts[r.type]||0)+1; });
-  const highConf = xlCategorised.filter(r=>r.confidence==='High').length;
-  document.getElementById('xl-stats-inner').innerHTML = `
-    <div style="margin-bottom:6px;font-weight:600;color:var(--accent)">${xlCategorised.length} rows processed</div>
-    ${Object.entries(typeCounts).map(([t,c])=>`<span class="tag tag-green" style="margin-right:4px">${t}: ${c}</span>`).join('')}
-    <div style="margin-top:6px;color:var(--text3)">High confidence: ${highConf}/${xlCategorised.length}</div>`;
+  xlCategorised.forEach(r => { typeCounts[r._autoType] = (typeCounts[r._autoType] || 0) + 1; });
+  const highConf = xlCategorised.filter(r => r._confidence === 'High').length;
+  document.getElementById('xl-stats-inner').innerHTML =
+    '<div style="margin-bottom:6px;font-weight:600;color:var(--accent)">' + xlCategorised.length + ' rows processed</div>' +
+    Object.entries(typeCounts).map(([t,c]) => '<span class="tag tag-green" style="margin-right:4px">' + t + ': ' + c + '</span>').join('') +
+    '<div style="margin-top:6px;color:var(--text3)">High confidence: ' + highConf + '/' + xlCategorised.length + '</div>';
   document.getElementById('xl-stats').style.display = 'block';
 
-  // JSON output — flatten custom fields to top level, remove internal keys
+  // JSON output — original Excel headers only, no internal _ keys
   const jsonOut = JSON.stringify(xlCategorised.map(r => {
-    const o = {...r};
-    delete o._raw; delete o._row;
-    // Flatten _customFields into the root of the JSON object
-    if (o._customFields) {
-      Object.assign(o, o._customFields);
-      delete o._customFields;
-    }
+    const o = {};
+    xlHeaders.forEach(h => { o[h] = r[h] !== undefined ? r[h] : ''; });
     return o;
   }), null, 2);
   document.getElementById('xl-json-output').value = jsonOut;
@@ -2631,35 +2643,24 @@ function xlProcess() {
   document.getElementById('xl-result-wrap').style.display = 'block';
 
   // Category counts
-  const confColors = {High:'tag-green',Medium:'tag-warn',Low:'tag-red'};
+  const confColors = {High:'tag-green', Medium:'tag-warn', Low:'tag-red'};
   document.getElementById('xl-cat-counts').innerHTML = Object.entries(typeCounts)
-    .map(([t,c])=>`<span class="tag tag-blue">${t}: ${c}</span>`).join('');
+    .map(([t, c]) => '<span class="tag tag-blue">' + t + ': ' + c + '</span>').join('');
 
-  // Results table — dynamic columns: always show core fields, then add custom field columns
-  const allCustomKeys = [];
-  xlCategorised.forEach(r => {
-    if (r._customFields) Object.keys(r._customFields).forEach(k => { if (!allCustomKeys.includes(k)) allCustomKeys.push(k); });
-  });
-  // Build dynamic thead
-  document.getElementById('xl-result-thead').innerHTML = '<tr>' +
-    '<th>#</th><th>Name</th><th>Detected Type</th><th>Confidence</th><th>Lat</th><th>Lng</th><th>Condition</th>' +
-    allCustomKeys.map(k => '<th>' + k + '</th>').join('') +
-    '<th>Status</th></tr>';
-  // Build dynamic tbody
-  document.getElementById('xl-result-tbody').innerHTML = xlCategorised.map((r,i) => {
-    const customCells = allCustomKeys.map(k => '<td style="font-size:11px;color:var(--text2)">' + ((r._customFields && r._customFields[k] !== undefined) ? r._customFields[k] : '—') + '</td>').join('');
-    return '<tr>' +
-      '<td class="coord-display">' + (i+1) + '</td>' +
-      '<td style="font-weight:500">' + r.name + '</td>' +
-      '<td><span class="tag tag-green">' + r.type + '</span></td>' +
-      '<td><span class="tag ' + confColors[r.confidence] + '">' + r.confidence + '</span></td>' +
-      '<td class="coord-display">' + (r.lat||'—') + '</td>' +
-      '<td class="coord-display">' + (r.lng||'—') + '</td>' +
-      '<td><span class="tag ' + condColors(r.condition) + '">' + r.condition + '</span></td>' +
-      customCells +
-      '<td><span class="tag tag-gray">Pending</span></td>' +
-      '</tr>';
-  }).join('');
+  // Results table — ALL original Excel headers as columns (fully dynamic, no preset columns)
+  document.getElementById('xl-result-thead').innerHTML = '<tr><th>#</th>' +
+    xlHeaders.map(h => '<th>' + h + '</th>').join('') +
+    '<th>Auto Type</th><th>Confidence</th><th>Status</th></tr>';
+
+  document.getElementById('xl-result-tbody').innerHTML = xlCategorised.map((r, i) =>
+    '<tr>' +
+    '<td class="coord-display">' + (i + 1) + '</td>' +
+    xlHeaders.map(h => '<td style="font-size:11px;color:var(--text2)">' + (r[h] !== '' && r[h] !== undefined ? r[h] : '—') + '</td>').join('') +
+    '<td><span class="tag tag-green">' + r._autoType + '</span></td>' +
+    '<td><span class="tag ' + confColors[r._confidence] + '">' + r._confidence + '</span></td>' +
+    '<td><span class="tag tag-gray" data-status-row="' + i + '">Pending</span></td>' +
+    '</tr>'
+  ).join('');
 
   toast(xlCategorised.length + ' records categorised successfully', '✓');
 }
@@ -2672,25 +2673,46 @@ function xlImportAll() {
   if (!xlCategorised.length) return;
   let added = 0;
   xlCategorised.forEach(r => {
-    const lat = parseFloat(r.lat) || (6.2 + Math.random()*0.6);
-    const lng = parseFloat(r.lng) || (3.0 + Math.random()*0.7);
+    const lat = parseFloat(r._lat) || (6.2 + Math.random() * 0.6);
+    const lng = parseFloat(r._lng) || (3.0 + Math.random() * 0.7);
     assetCounter++;
-    assets.push(Object.assign({
-      id:'AST-'+assetCounter, name:r.name, type:r.type, geom:r.geom,
-      lat:lat.toFixed(6), lng:lng.toFixed(6), condition:r.condition,
-      material:r.material, notes:r.notes, agent:r.agent, date:r.date,
-      ts:Date.now(), elev:r.elevation, area:r.area
-    }, r._customFields ? { _customFields: r._customFields } : {}));
+
+    // Build asset: start with platform meta fields
+    const asset = {
+      id: 'AST-' + assetCounter,
+      name: r._name || ('Row ' + r._row),
+      type: r._autoType,
+      geom: r.geom || 'Point',
+      lat: lat.toFixed(6),
+      lng: lng.toFixed(6),
+      condition: r._condition || 'Good',
+      material: r._material || '',
+      notes: r._notes || '',
+      agent: r.agent || 'Excel Import',
+      date: r.date,
+      ts: Date.now(),
+      elev: r._elevation || '',
+      area: r._area || '',
+      _importSource: 'excel',
+    };
+
+    // Attach ALL original Excel columns as flat top-level properties
+    xlHeaders.forEach(h => {
+      const val = r[h];
+      if (val !== '' && val !== undefined && val !== null) asset[h] = val;
+    });
+
+    assets.push(asset);
     added++;
   });
-  addAudit('EXCEL_IMPORT','BULK','Admin User','Excel import — '+added+' records');
+
+  addAudit('EXCEL_IMPORT', 'BULK', 'Admin User', 'Excel import — ' + added + ' records');
   save(); renderDashboard(); renderAssets();
   toast(added + ' records imported to database', '✓');
 
-  // Update result table — mark last cell of each row as Imported
-  document.querySelectorAll('#xl-result-tbody tr').forEach(row => {
-    const lastCell = row.querySelector('td:last-child span');
-    if (lastCell) { lastCell.className = 'tag tag-green'; lastCell.textContent = 'Imported'; }
+  // Mark rows as Imported in the results table
+  document.querySelectorAll('[data-status-row]').forEach(span => {
+    span.className = 'tag tag-green'; span.textContent = 'Imported';
   });
 }
 
