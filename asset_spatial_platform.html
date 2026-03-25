@@ -1574,8 +1574,8 @@ function nav(el) {
   const page = el.dataset.page;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
-  const titles = { dashboard:'DASHBOARD', map:'LIVE MAP', assets:'ASSET REGISTRY', capture:'FIELD CAPTURE', analytics:'ANALYTICS', users:'USERS', audit:'AUDIT LOG', settings:'SETTINGS' };
-  const bcs = { dashboard:'Overview', map:'Spatial / Map View', assets:'Asset Registry', capture:'Field Capture', analytics:'Analytics', users:'User Management', audit:'Audit Log', settings:'Platform Settings' };
+  const titles = { dashboard:'DASHBOARD', map:'LIVE MAP', assets:'ASSET REGISTRY', capture:'FIELD CAPTURE', analytics:'ANALYTICS', users:'USERS', audit:'AUDIT LOG', settings:'SETTINGS', viz:'VISUALISATION', ocr:'OCR IMPORT', excel:'EXCEL IMPORT' };
+  const bcs = { dashboard:'Overview', map:'Spatial / Map View', assets:'Asset Registry', capture:'Field Capture', analytics:'Analytics', users:'User Management', audit:'Audit Log', settings:'Platform Settings', viz:'Analytics / Visualisation', ocr:'Import / OCR', excel:'Import / Excel' };
   document.getElementById('hdr-title').textContent = titles[page];
   document.getElementById('hdr-bc').textContent = 'AssetSpatial / ' + bcs[page];
   renderPage(page);
