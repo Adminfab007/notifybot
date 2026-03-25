@@ -814,6 +814,16 @@ body {
       <span class="nav-icon">◑</span> Users
       <span class="nav-badge" id="nb-users">0</span>
     </div>
+    <div class="nav-section-label">Data Tools</div>
+    <div class="nav-item" data-page="viz" onclick="nav(this)">
+      <span class="nav-icon">📊</span> Data Viz
+    </div>
+    <div class="nav-item" data-page="ocr" onclick="nav(this)">
+      <span class="nav-icon">🔍</span> OCR Scanner
+    </div>
+    <div class="nav-item" data-page="excel" onclick="nav(this)">
+      <span class="nav-icon">📄</span> Excel Import
+    </div>
     <div class="nav-section-label">System</div>
     <div class="nav-item" data-page="audit" onclick="nav(this)">
       <span class="nav-icon">◫</span> Audit Log
@@ -1031,7 +1041,7 @@ document.addEventListener("click", function (e) {
               </div>
               <div class="form-group">
                 <label class="form-label">Asset Type *</label>
-                <select class="form-control" id="cap-type">
+                <select class="form-control" id="cap-type" onchange="renderTypeFields()">
                   <option value="">Select type…</option>
                   <option>Infrastructure</option>
                   <option>Land / Property</option>
@@ -1091,6 +1101,13 @@ document.addEventListener("click", function (e) {
               <div class="form-group full">
                 <label class="form-label">Notes / Description</label>
                 <textarea class="form-control" id="cap-notes" placeholder="Additional observations, condition details…"></textarea>
+              </div>
+              <!-- ── DYNAMIC TYPE-SPECIFIC FIELDS ── -->
+              <div id="type-specific-fields" class="full" style="grid-column:1/-1;display:none">
+                <div style="border-top:1px solid var(--border);margin:4px 0 14px;padding-top:14px">
+                  <div style="font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--accent);text-transform:uppercase;margin-bottom:12px" id="type-fields-label">TYPE-SPECIFIC FIELDS</div>
+                  <div class="form-grid" id="type-fields-inner"></div>
+                </div>
               </div>
               <div class="form-group full">
   <label class="form-label">Attach Media (Image/Video)</label>
@@ -1282,6 +1299,186 @@ cameraInput.addEventListener('change', (e) => previewFiles(e.target.files));
         </div>
       </div>
       <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+    </div>
+
+
+    <!-- ════════════ DATA VISUALISATION ════════════ -->
+    <div id="page-viz" class="page">
+      <div class="section-header" style="margin-bottom:18px">
+        <div class="section-title">DATA ANALYSIS &amp; VISUALISATION</div>
+        <div style="display:flex;gap:8px">
+          <select class="filter-input" id="viz-type-filter" onchange="renderViz()" style="min-width:140px">
+            <option value="">All Types</option>
+            <option>Infrastructure</option><option>Land / Property</option>
+            <option>Utility</option><option>Environmental</option><option>Equipment</option>
+          </select>
+          <button class="btn btn-secondary btn-sm" onclick="renderViz()">&#8635; Refresh</button>
+        </div>
+      </div>
+      <div class="stats-grid" style="margin-bottom:20px" id="viz-kpi-row"></div>
+      <div class="two-col" style="margin-bottom:20px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px">
+          <div class="chart-title">ASSET CAPTURES OVER TIME (30 DAYS)</div>
+          <canvas id="viz-line-chart" height="160"></canvas>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px">
+          <div class="chart-title">CONDITION DISTRIBUTION</div>
+          <canvas id="viz-pie-chart" height="160"></canvas>
+        </div>
+      </div>
+      <div class="two-col" style="margin-bottom:20px">
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px">
+          <div class="chart-title">ASSETS BY TYPE</div>
+          <canvas id="viz-bar-chart" height="160"></canvas>
+        </div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px">
+          <div class="chart-title">GEOMETRY BREAKDOWN</div>
+          <canvas id="viz-donut-chart" height="160"></canvas>
+        </div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:20px">
+        <div class="chart-title">TYPE × CONDITION HEATMAP</div>
+        <div id="viz-heatmap" style="overflow-x:auto"></div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px">
+        <div class="chart-title">AI INSIGHTS &amp; RECOMMENDATIONS</div>
+        <div id="viz-insights" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;font-size:13px;color:var(--text2)"></div>
+      </div>
+    </div>
+
+    <!-- ════════════ OCR SCANNER ════════════ -->
+    <div id="page-ocr" class="page">
+      <div class="section-header" style="margin-bottom:4px">
+        <div class="section-title">OCR DOCUMENT SCANNER</div>
+        <span class="tag tag-blue" style="font-size:9px">Tesseract.js</span>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:18px">Scan physical field sheets, survey forms, or printed asset records. Extracted text is automatically parsed and can be added to the database.</div>
+      <div class="two-col">
+        <div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px">
+            <div id="ocr-dropzone" style="border:2px dashed var(--border2);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:border-color 0.2s;margin-bottom:16px" onclick="document.getElementById('ocr-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="ocrDrop(event)">
+              <div style="font-size:32px;margin-bottom:8px">&#128247;</div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:4px">Drop image here or click to browse</div>
+              <div style="font-size:11px;color:var(--text3)">Supports: JPG, PNG, WEBP, BMP</div>
+              <input type="file" id="ocr-file" accept="image/*" style="display:none" onchange="ocrLoad(this.files[0])">
+            </div>
+            <div id="ocr-preview-wrap" style="display:none;margin-bottom:16px;text-align:center">
+              <img id="ocr-img" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border)">
+            </div>
+            <div id="ocr-progress" style="display:none;margin-bottom:14px">
+              <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:6px" id="ocr-status-text">Initialising...</div>
+              <div style="background:var(--surface2);border-radius:20px;height:6px;overflow:hidden">
+                <div id="ocr-bar" style="height:100%;background:var(--accent);border-radius:20px;width:0%;transition:width 0.3s"></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px">
+              <button class="btn btn-primary" style="flex:1" onclick="runOCR()" id="ocr-btn" disabled>&#128269; Run OCR</button>
+              <button class="btn btn-secondary" onclick="clearOCR()">&#10005; Clear</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
+            <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">EXTRACTED TEXT</div>
+            <textarea id="ocr-output" class="form-control" style="min-height:130px;font-family:'Space Mono',monospace;font-size:11px" placeholder="OCR output will appear here..." oninput="parseOCRText()"></textarea>
+          </div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px">
+            <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">PARSED ASSET FIELDS</div>
+            <div class="form-grid">
+              <div class="form-group"><label class="form-label">Asset Name</label><input class="form-control" id="op-name" placeholder="Auto-detected"></div>
+              <div class="form-group"><label class="form-label">Asset Type</label>
+                <select class="form-control" id="op-type">
+                  <option value="">Detected...</option>
+                  <option>Infrastructure</option><option>Land / Property</option>
+                  <option>Utility</option><option>Environmental</option><option>Equipment</option>
+                </select>
+              </div>
+              <div class="form-group"><label class="form-label">Condition</label>
+                <select class="form-control" id="op-cond"><option>Good</option><option>Fair</option><option>Poor</option><option>Critical</option></select>
+              </div>
+              <div class="form-group"><label class="form-label">Material</label><input class="form-control" id="op-material" placeholder="—"></div>
+              <div class="form-group"><label class="form-label">Latitude</label><input class="form-control" id="op-lat" placeholder="e.g. 6.4550"></div>
+              <div class="form-group"><label class="form-label">Longitude</label><input class="form-control" id="op-lng" placeholder="e.g. 3.3841"></div>
+              <div class="form-group full"><label class="form-label">Notes</label><textarea class="form-control" id="op-notes" style="min-height:60px" placeholder="—"></textarea></div>
+            </div>
+            <div style="margin-top:14px;display:flex;gap:10px">
+              <button class="btn btn-primary" style="flex:1" onclick="ocrAddToDatabase()">+ Add to Database</button>
+              <button class="btn btn-secondary" onclick="clearOCRParsed()">Reset</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:20px">
+        <div class="section-title" style="margin-bottom:12px">SCAN HISTORY</div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>File</th><th>Status</th><th>Asset Detected</th><th>Type</th><th>Time</th><th>Action</th></tr></thead>
+            <tbody id="ocr-history"><tr><td colspan="7" style="padding:20px;color:var(--text3);text-align:center">No scans yet</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ════════════ EXCEL IMPORT ════════════ -->
+    <div id="page-excel" class="page">
+      <div class="section-header" style="margin-bottom:4px">
+        <div class="section-title">EXCEL &#8594; JSON IMPORTER</div>
+        <span class="tag tag-green" style="font-size:9px">SheetJS + Smart Categorisation</span>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:18px">Upload an Excel (.xlsx / .xls) or CSV file. Each row is read, auto-categorised by asset type, and represented as structured JSON — ready for database import.</div>
+      <div class="two-col">
+        <div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px">
+            <div id="xl-dropzone" style="border:2px dashed var(--border2);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:border-color 0.2s;margin-bottom:16px" onclick="document.getElementById('xl-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="xlDrop(event)">
+              <div style="font-size:32px;margin-bottom:8px">&#128202;</div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:4px">Drop your Excel / CSV here or click to browse</div>
+              <div style="font-size:11px;color:var(--text3)">Supports: .xlsx &#183; .xls &#183; .csv</div>
+              <input type="file" id="xl-file" accept=".xlsx,.xls,.csv" style="display:none" onchange="xlLoad(this.files[0])">
+            </div>
+            <div id="xl-mapping-wrap" style="display:none">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;margin-bottom:10px;text-transform:uppercase">Column Mapping (auto-detected)</div>
+              <div id="xl-mapping-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px"></div>
+              <button class="btn btn-primary" style="width:100%" onclick="xlProcess()">&#9881; Process &amp; Categorise</button>
+            </div>
+            <div id="xl-stats" style="display:none;margin-top:14px;background:var(--surface2);border-radius:8px;padding:12px;font-size:12px">
+              <div id="xl-stats-inner"></div>
+            </div>
+          </div>
+          <div id="xl-actions" style="display:none;margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px">
+            <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;margin-bottom:12px;text-transform:uppercase">Import Options</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <button class="btn btn-primary" onclick="xlImportAll()">&#8679; Import All to Database</button>
+              <button class="btn btn-secondary" onclick="xlDownloadJSON()">&#8681; Download as JSON</button>
+              <button class="btn btn-secondary" onclick="xlDownloadCSV()">&#8681; Download Categorised CSV</button>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div id="xl-preview-wrap" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
+            <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;margin-bottom:10px;text-transform:uppercase">Raw Preview (first 5 rows)</div>
+            <div id="xl-raw-table" style="overflow-x:auto;font-size:11px"></div>
+          </div>
+          <div id="xl-json-wrap" style="display:none;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase">Categorised JSON Output</div>
+              <button class="btn btn-secondary btn-sm" onclick="xlCopyJSON()">Copy JSON</button>
+            </div>
+            <textarea id="xl-json-output" class="form-control" style="min-height:300px;font-family:'Space Mono',monospace;font-size:10px" readonly></textarea>
+          </div>
+        </div>
+      </div>
+      <div id="xl-result-wrap" style="display:none;margin-top:20px">
+        <div class="section-header">
+          <div class="section-title">CATEGORISED RECORDS</div>
+          <div id="xl-cat-counts" style="display:flex;gap:8px;font-size:11px"></div>
+        </div>
+        <div class="data-table-wrap">
+          <table class="data-table">
+            <thead><tr><th>#</th><th>Name</th><th>Detected Type</th><th>Confidence</th><th>Lat</th><th>Lng</th><th>Condition</th><th>Status</th></tr></thead>
+            <tbody id="xl-result-tbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
   </div><!-- /content -->
@@ -1477,7 +1674,7 @@ function renderAssets(list) {
       <td><span class="tag ${typeColor(a.type)}">${a.type}</span></td>
       <td>${geomIcon(a.geom)} ${a.geom}</td>
       <td><span class="tag ${condColor(a.condition)}">${a.condition}</span></td>
-      <td class="coord-display">${a.lat.toFixed(4)}°N, ${a.lng.toFixed(4)}°E</td>
+      <td class="coord-display">${a.lat}°N, ${a.lng}°E</td>
       <td>${a.agent}</td>
       <td>${a.date}</td>
       <td style="display:flex;gap:6px;flex-wrap:wrap">
@@ -1827,6 +2024,629 @@ function timeAgo(ts) {
 
 // ── INIT ──
 renderDashboard();
+</script>
+
+<!-- ── External libs ── -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// DYNAMIC ASSET-TYPE FORMS
+// ══════════════════════════════════════════════════════════════════
+const TYPE_FIELDS = {
+  'Infrastructure': [
+    { id:'tf-infra-subtype',  label:'Sub-type',         type:'select', opts:['Bridge','Road','Dam','Building','Culvert','Retaining Wall'] },
+    { id:'tf-infra-age',      label:'Age (years)',       type:'number', ph:'e.g. 12' },
+    { id:'tf-infra-span',     label:'Span / Length (m)', type:'text',   ph:'e.g. 42m' },
+    { id:'tf-infra-load',     label:'Load Capacity (t)', type:'number', ph:'e.g. 80' },
+    { id:'tf-infra-insp',     label:'Last Inspection',   type:'date' },
+    { id:'tf-infra-owner',    label:'Owner / Authority', type:'text',   ph:'e.g. FERMA' },
+  ],
+  'Land / Property': [
+    { id:'tf-land-title',     label:'Title Number',      type:'text',   ph:'e.g. LT/123/2021' },
+    { id:'tf-land-size',      label:'Plot Size (sqm)',   type:'number', ph:'e.g. 5000' },
+    { id:'tf-land-use',       label:'Land Use',          type:'select', opts:['Residential','Commercial','Agricultural','Industrial','Government'] },
+    { id:'tf-land-state',     label:'State',             type:'text',   ph:'e.g. Lagos' },
+    { id:'tf-land-lga',       label:'LGA',               type:'text',   ph:'e.g. Eti-Osa' },
+    { id:'tf-land-owner',     label:'Registered Owner',  type:'text',   ph:'Name' },
+  ],
+  'Utility': [
+    { id:'tf-util-subtype',   label:'Utility Sub-type',  type:'select', opts:['Water Supply','Electricity','Gas Pipeline','Telecoms','Sewerage','Street Light'] },
+    { id:'tf-util-capacity',  label:'Capacity / Rating', type:'text',   ph:'e.g. 500kVA' },
+    { id:'tf-util-voltage',   label:'Voltage / Pressure',type:'text',   ph:'e.g. 33kV' },
+    { id:'tf-util-provider',  label:'Service Provider',  type:'text',   ph:'e.g. AEDC' },
+    { id:'tf-util-install',   label:'Install Year',      type:'number', ph:'e.g. 2018' },
+    { id:'tf-util-status',    label:'Operational Status',type:'select', opts:['Active','Inactive','Under Maintenance','Decommissioned'] },
+  ],
+  'Environmental': [
+    { id:'tf-env-category',   label:'Category',          type:'select', opts:['Wetland','Forest Reserve','Erosion Site','Flood Plain','Protected Area','Waste Site'] },
+    { id:'tf-env-protected',  label:'Protected Area?',   type:'select', opts:['Yes','No'] },
+    { id:'tf-env-species',    label:'Key Species',       type:'text',   ph:'e.g. Mangrove' },
+    { id:'tf-env-risk',       label:'Risk Level',        type:'select', opts:['Low','Medium','High','Critical'] },
+    { id:'tf-env-agency',     label:'Responsible Agency',type:'text',   ph:'e.g. NESREA' },
+    { id:'tf-env-survey',     label:'Last Survey Date',  type:'date' },
+  ],
+  'Equipment': [
+    { id:'tf-eq-make',        label:'Make / Brand',      type:'text',   ph:'e.g. Caterpillar' },
+    { id:'tf-eq-model',       label:'Model',             type:'text',   ph:'e.g. 320D' },
+    { id:'tf-eq-serial',      label:'Serial Number',     type:'text',   ph:'SN-XXXX' },
+    { id:'tf-eq-year',        label:'Year of Manufacture',type:'number',ph:'e.g. 2019' },
+    { id:'tf-eq-power',       label:'Power / Output',    type:'text',   ph:'e.g. 120kW' },
+    { id:'tf-eq-maint',       label:'Next Maintenance',  type:'date' },
+  ],
+};
+
+function renderTypeFields() {
+  const type = document.getElementById('cap-type').value;
+  const wrap = document.getElementById('type-specific-fields');
+  const inner = document.getElementById('type-fields-inner');
+  const label = document.getElementById('type-fields-label');
+  if (!type || !TYPE_FIELDS[type]) { wrap.style.display='none'; return; }
+  label.textContent = type.toUpperCase() + ' — SPECIFIC FIELDS';
+  inner.innerHTML = TYPE_FIELDS[type].map(f => {
+    let input;
+    if (f.type === 'select') {
+      input = `<select class="form-control" id="${f.id}">${f.opts.map(o=>`<option>${o}</option>`).join('')}</select>`;
+    } else {
+      input = `<input class="form-control" id="${f.id}" type="${f.type}" placeholder="${f.ph||''}">`;
+    }
+    return `<div class="form-group"><label class="form-label">${f.label}</label>${input}</div>`;
+  }).join('');
+  wrap.style.display = 'block';
+}
+
+function getTypeSpecificValues() {
+  const type = document.getElementById('cap-type').value;
+  if (!type || !TYPE_FIELDS[type]) return {};
+  const out = {};
+  TYPE_FIELDS[type].forEach(f => {
+    const el = document.getElementById(f.id);
+    if (el) out[f.label] = el.value;
+  });
+  return out;
+}
+
+// Patch captureAsset to include type-specific fields
+const _origCaptureAsset = window.captureAsset;
+
+// ══════════════════════════════════════════════════════════════════
+// DATA VISUALISATION
+// ══════════════════════════════════════════════════════════════════
+let vizCharts = {};
+
+function renderViz() {
+  const filterType = document.getElementById('viz-type-filter').value;
+  const data = filterType ? assets.filter(a => a.type === filterType) : assets;
+
+  // KPI row
+  const total = data.length;
+  const goodPct = total ? Math.round(data.filter(a=>a.condition==='Good').length/total*100) : 0;
+  const critical = data.filter(a=>a.condition==='Critical').length;
+  const types = [...new Set(data.map(a=>a.type))].length;
+  document.getElementById('viz-kpi-row').innerHTML = `
+    <div class="stat-card green"><div class="stat-label">Total Assets</div><div class="stat-value" style="color:var(--accent)">${total}</div><div class="stat-sub">${filterType||'All types'}</div></div>
+    <div class="stat-card blue"><div class="stat-label">Good Condition</div><div class="stat-value" style="color:var(--accent2)">${goodPct}%</div><div class="stat-sub">Of filtered set</div></div>
+    <div class="stat-card red"><div class="stat-label">Critical Alerts</div><div class="stat-value" style="color:var(--danger)">${critical}</div><div class="stat-sub">Need attention</div></div>
+    <div class="stat-card orange"><div class="stat-label">Asset Types</div><div class="stat-value" style="color:var(--accent3)">${types}</div><div class="stat-sub">Distinct categories</div></div>`;
+
+  // Destroy old charts
+  Object.values(vizCharts).forEach(c => { try{ c.destroy(); } catch(e){} });
+  vizCharts = {};
+
+  // Line chart — captures per day (last 30d)
+  const now = Date.now();
+  const days = Array.from({length:30}, (_,i) => {
+    const d = new Date(now - (29-i)*86400000);
+    return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+  });
+  const dayCounts = days.map((_,i) => {
+    const dayStart = now - (29-i)*86400000;
+    const dayEnd   = dayStart + 86400000;
+    return data.filter(a => a.ts >= dayStart && a.ts < dayEnd).length;
+  });
+  const lc = document.getElementById('viz-line-chart').getContext('2d');
+  vizCharts.line = new Chart(lc, {
+    type:'line',
+    data:{ labels: days.filter((_,i)=>i%5===0||i===29), datasets:[{
+      label:'Captures', data: dayCounts.filter((_,i)=>i%5===0||i===29),
+      borderColor:'#008753', backgroundColor:'rgba(0,135,83,0.1)',
+      tension:0.4, fill:true, pointRadius:4, pointBackgroundColor:'#008753'
+    }]},
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{
+      x:{ticks:{color:'#7a9b89',font:{size:9}}},
+      y:{ticks:{color:'#7a9b89',font:{size:9}},beginAtZero:true}
+    }}
+  });
+
+  // Pie — condition
+  const conds = ['Good','Fair','Poor','Critical'];
+  const condCounts = conds.map(c => data.filter(a=>a.condition===c).length);
+  const pc = document.getElementById('viz-pie-chart').getContext('2d');
+  vizCharts.pie = new Chart(pc, {
+    type:'doughnut',
+    data:{ labels:conds, datasets:[{ data:condCounts,
+      backgroundColor:['#008753','#e6a700','rgba(255,107,53,0.8)','#d64545'],
+      borderWidth:1, borderColor:'#f5f7f6'
+    }]},
+    options:{ responsive:true, plugins:{ legend:{ position:'bottom', labels:{color:'#4a6b5a',font:{size:10}} } } }
+  });
+
+  // Bar — by type
+  const typeList = ['Infrastructure','Land / Property','Utility','Environmental','Equipment'];
+  const typeCounts = typeList.map(t => data.filter(a=>a.type===t).length);
+  const bc = document.getElementById('viz-bar-chart').getContext('2d');
+  vizCharts.bar = new Chart(bc, {
+    type:'bar',
+    data:{ labels:typeList.map(t=>t.split(' ')[0]), datasets:[{
+      label:'Count', data:typeCounts,
+      backgroundColor:['#008753','#00a86b','rgba(255,107,53,0.7)','#e6a700','#2e86c1'],
+      borderRadius:4
+    }]},
+    options:{ responsive:true, plugins:{legend:{display:false}}, scales:{
+      x:{ticks:{color:'#7a9b89',font:{size:9}}},
+      y:{ticks:{color:'#7a9b89',font:{size:9}},beginAtZero:true}
+    }}
+  });
+
+  // Donut — geometry
+  const geoms = ['Point','Polygon','Linear'];
+  const geomCounts = geoms.map(g => data.filter(a=>a.geom===g).length);
+  const dc = document.getElementById('viz-donut-chart').getContext('2d');
+  vizCharts.donut = new Chart(dc, {
+    type:'doughnut',
+    data:{ labels:geoms, datasets:[{ data:geomCounts,
+      backgroundColor:['#008753','#00a86b','rgba(255,107,53,0.7)'],
+      borderWidth:1, borderColor:'#f5f7f6'
+    }]},
+    options:{ responsive:true, plugins:{ legend:{ position:'bottom', labels:{color:'#4a6b5a',font:{size:10}} } } }
+  });
+
+  // Heatmap
+  const hm = document.getElementById('viz-heatmap');
+  const condColors = {Good:'rgba(0,135,83,0.15)',Fair:'rgba(230,167,0,0.2)',Poor:'rgba(255,107,53,0.2)',Critical:'rgba(214,69,69,0.25)'};
+  let hmHtml = `<table style="width:100%;border-collapse:collapse;font-size:11px">
+    <tr><th style="padding:6px 10px;text-align:left;font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);border-bottom:1px solid var(--border)">Type \ Condition</th>
+    ${conds.map(c=>`<th style="padding:6px 10px;font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);border-bottom:1px solid var(--border)">${c}</th>`).join('')}
+    <th style="padding:6px 10px;font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);border-bottom:1px solid var(--border)">TOTAL</th></tr>`;
+  typeList.forEach((t,i) => {
+    const row = conds.map(c => data.filter(a=>a.type===t&&a.condition===c).length);
+    const rowTotal = row.reduce((s,v)=>s+v,0);
+    hmHtml += `<tr style="background:${i%2?'var(--surface2)':'var(--bg)'}">
+      <td style="padding:7px 10px;font-weight:600;font-size:12px;border-right:1px solid var(--border)">${t}</td>
+      ${row.map((v,j)=>`<td style="padding:7px 10px;text-align:center;background:${v?condColors[conds[j]]:'transparent'};font-family:'Space Mono',monospace;font-size:11px">${v||'—'}</td>`).join('')}
+      <td style="padding:7px 10px;text-align:center;font-weight:700;color:var(--accent);font-family:'Space Mono',monospace">${rowTotal}</td></tr>`;
+  });
+  hmHtml += '</table>';
+  hm.innerHTML = hmHtml;
+
+  // Insights
+  const insights = generateInsights(data, typeCounts, typeList, condCounts, conds);
+  document.getElementById('viz-insights').innerHTML = insights.map(ins => `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px">
+      <div style="font-size:20px;margin-bottom:6px">${ins.icon}</div>
+      <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);margin-bottom:6px;text-transform:uppercase">${ins.title}</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.5">${ins.text}</div>
+    </div>`).join('');
+}
+
+function generateInsights(data, typeCounts, typeList, condCounts, conds) {
+  const total = data.length;
+  if (!total) return [{icon:'📊',title:'No Data',text:'Add assets to see insights and recommendations here.'},'',''].map((t,i)=>({icon:'📊',title:'Waiting',text:'No data yet.'})).slice(0,1);
+  const ins = [];
+  const maxTypeIdx = typeCounts.indexOf(Math.max(...typeCounts));
+  ins.push({ icon:'🏆', title:'Dominant Asset Type', text:`<b>${typeList[maxTypeIdx]}</b> is your most captured type with <b>${typeCounts[maxTypeIdx]}</b> assets (${Math.round(typeCounts[maxTypeIdx]/total*100)}% of total).` });
+  const critPct = Math.round(condCounts[3]/total*100);
+  ins.push({ icon: critPct>20?'🚨':'✅', title:'Health Status', text: critPct>20 ? `⚠ <b>${critPct}%</b> of assets are in Critical condition. Immediate inspection recommended.` : `<b>${Math.round(condCounts[0]/total*100)}%</b> of assets are in Good condition. ${condCounts[3]} critical items flagged.` });
+  const recent7 = data.filter(a=>Date.now()-a.ts<7*86400000).length;
+  ins.push({ icon:'📡', title:'Capture Activity', text:`<b>${recent7}</b> assets captured in the last 7 days. ${total>=10?'Capture rate is on track.':'Consider increasing field activity.'}` });
+  return ins;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// OCR SCANNER
+// ══════════════════════════════════════════════════════════════════
+let ocrFile = null;
+let ocrHistory = [];
+
+function ocrDrop(e) {
+  e.preventDefault();
+  document.getElementById('ocr-dropzone').style.borderColor = 'var(--border2)';
+  const file = e.dataTransfer.files[0];
+  if (file) ocrLoad(file);
+}
+
+function ocrLoad(file) {
+  if (!file) return;
+  ocrFile = file;
+  const url = URL.createObjectURL(file);
+  document.getElementById('ocr-img').src = url;
+  document.getElementById('ocr-preview-wrap').style.display = 'block';
+  document.getElementById('ocr-dropzone').querySelector('div:nth-child(2)').textContent = file.name;
+  document.getElementById('ocr-btn').disabled = false;
+  toast('Image loaded — click Run OCR', '📷');
+}
+
+async function runOCR() {
+  if (!ocrFile) return;
+  const btn = document.getElementById('ocr-btn');
+  const prog = document.getElementById('ocr-progress');
+  const bar = document.getElementById('ocr-bar');
+  const statusTxt = document.getElementById('ocr-status-text');
+  btn.disabled = true;
+  prog.style.display = 'block';
+
+  try {
+    const worker = await Tesseract.createWorker('eng', 1, {
+      logger: m => {
+        statusTxt.textContent = m.status + (m.progress ? ' — ' + Math.round(m.progress*100) + '%' : '');
+        bar.style.width = (m.progress||0)*100 + '%';
+      }
+    });
+    const { data: { text } } = await worker.recognize(ocrFile);
+    await worker.terminate();
+    document.getElementById('ocr-output').value = text;
+    parseOCRText();
+    bar.style.width = '100%';
+    statusTxt.textContent = 'OCR complete ✓';
+    toast('OCR complete — ' + text.split('\n').length + ' lines extracted', '✓');
+    ocrHistory.unshift({ file: ocrFile.name, status:'Success', asset: document.getElementById('op-name').value||'—', type: document.getElementById('op-type').value||'—', ts: Date.now() });
+    renderOCRHistory();
+  } catch(err) {
+    statusTxt.textContent = 'Error: ' + err.message;
+    toast('OCR failed: ' + err.message, '⚠', true);
+    ocrHistory.unshift({ file: ocrFile.name, status:'Failed', asset:'—', type:'—', ts: Date.now() });
+    renderOCRHistory();
+  }
+  btn.disabled = false;
+}
+
+function parseOCRText() {
+  const text = document.getElementById('ocr-output').value;
+  if (!text.trim()) return;
+  const lower = text.toLowerCase();
+
+  // Smart field extraction
+  const nameMatch = text.match(/(?:asset|name|title)[:\s]+([A-Za-z0-9 _-]{3,40})/i);
+  if (nameMatch) document.getElementById('op-name').value = nameMatch[1].trim();
+
+  const latMatch = text.match(/(?:lat(?:itude)?)[:\s]*([+-]?\d{1,3}\.\d{2,8})/i) || text.match(/([+-]?[4-9]\.\d{4,}|[1-9][0-9]\.\d{4,})/);
+  if (latMatch) document.getElementById('op-lat').value = latMatch[1];
+
+  const lngMatch = text.match(/(?:lon(?:gitude)?|lng)[:\s]*([+-]?\d{1,3}\.\d{2,8})/i);
+  if (lngMatch) document.getElementById('op-lng').value = lngMatch[1];
+
+  const matMatch = text.match(/(?:material|materials?)[:\s]+([A-Za-z ]{3,20})/i);
+  if (matMatch) document.getElementById('op-material').value = matMatch[1].trim();
+
+  // Condition detection
+  if (lower.includes('critical') || lower.includes('danger')) document.getElementById('op-cond').value = 'Critical';
+  else if (lower.includes('poor') || lower.includes('damaged') || lower.includes('dilapidated')) document.getElementById('op-cond').value = 'Poor';
+  else if (lower.includes('fair') || lower.includes('moderate')) document.getElementById('op-cond').value = 'Fair';
+  else if (lower.includes('good') || lower.includes('excellent')) document.getElementById('op-cond').value = 'Good';
+
+  // Type detection
+  const typeKeywords = {
+    'Infrastructure': ['bridge','road','dam','culvert','building','retaining','wall','pavement'],
+    'Land / Property': ['land','parcel','plot','property','title','cadastral','boundary'],
+    'Utility': ['pipe','pipeline','cable','power','electricity','water supply','gas','sewage','telecoms'],
+    'Environmental': ['wetland','forest','reserve','erosion','flood','species','wildlife','vegetation'],
+    'Equipment': ['machine','equipment','generator','pump','vehicle','crane','compressor'],
+  };
+  let detected = '', maxScore = 0;
+  Object.entries(typeKeywords).forEach(([type, kws]) => {
+    const score = kws.filter(k => lower.includes(k)).length;
+    if (score > maxScore) { maxScore = score; detected = type; }
+  });
+  if (detected) document.getElementById('op-type').value = detected;
+
+  // Set notes to full text if short enough
+  if (text.length < 500) document.getElementById('op-notes').value = text.trim();
+  else document.getElementById('op-notes').value = text.trim().slice(0,400) + '...';
+}
+
+function ocrAddToDatabase() {
+  const name = document.getElementById('op-name').value.trim();
+  const type = document.getElementById('op-type').value;
+  if (!name || !type) { toast('Asset Name and Type required', '⚠', true); return; }
+  const lat = parseFloat(document.getElementById('op-lat').value) || (6.4 + Math.random()*0.3);
+  const lng = parseFloat(document.getElementById('op-lng').value) || (3.3 + Math.random()*0.3);
+  assetCounter++;
+  const a = {
+    id:'AST-'+assetCounter, name, type, geom:'Point',
+    lat: lat.toFixed(6), lng: lng.toFixed(6),
+    condition: document.getElementById('op-cond').value,
+    material: document.getElementById('op-material').value,
+    notes: document.getElementById('op-notes').value,
+    agent:'OCR Import', date: new Date().toISOString().slice(0,10),
+    ts: Date.now(), elev:'', area:''
+  };
+  assets.push(a);
+  addAudit('ASSET_CREATED', a.id, 'Admin User', 'OCR import — ' + name);
+  save(); renderDashboard(); renderAssets();
+  toast('Asset added from OCR scan: ' + name, '✓');
+  clearOCRParsed();
+}
+
+function clearOCR() {
+  ocrFile = null;
+  document.getElementById('ocr-output').value = '';
+  document.getElementById('ocr-preview-wrap').style.display = 'none';
+  document.getElementById('ocr-btn').disabled = true;
+  document.getElementById('ocr-progress').style.display = 'none';
+  document.getElementById('ocr-bar').style.width = '0%';
+  clearOCRParsed();
+}
+
+function clearOCRParsed() {
+  ['op-name','op-material','op-lat','op-lng','op-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('op-type').value = '';
+  document.getElementById('op-cond').value = 'Good';
+}
+
+function renderOCRHistory() {
+  const tbody = document.getElementById('ocr-history');
+  tbody.innerHTML = ocrHistory.map((h,i) => `
+    <tr>
+      <td class="coord-display">${ocrHistory.length - i}</td>
+      <td>${h.file}</td>
+      <td><span class="tag ${h.status==='Success'?'tag-green':'tag-red'}">${h.status}</span></td>
+      <td>${h.asset}</td>
+      <td><span class="tag tag-blue">${h.type||'—'}</span></td>
+      <td class="coord-display">${new Date(h.ts).toLocaleTimeString()}</td>
+      <td><button class="btn btn-secondary btn-sm">View</button></td>
+    </tr>`).join('') || '<tr><td colspan="7" style="padding:20px;color:var(--text3);text-align:center">No scans yet</td></tr>';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// EXCEL IMPORTER
+// ══════════════════════════════════════════════════════════════════
+let xlData = [];
+let xlHeaders = [];
+let xlMapping = {};
+let xlCategorised = [];
+
+const XL_FIELD_MAP = {
+  name:        ['name','asset name','title','asset','label','description','desc'],
+  lat:         ['lat','latitude','lat.','y','northing','north'],
+  lng:         ['lng','lon','longitude','long','lng.','x','easting','east'],
+  condition:   ['condition','status','state','health'],
+  material:    ['material','materials','composition'],
+  type:        ['type','asset type','category','class','kind'],
+  notes:       ['notes','note','remark','remarks','comment','comments','description'],
+  elevation:   ['elev','elevation','alt','altitude','height'],
+  area:        ['area','size','dimension','plot size'],
+};
+
+function xlDrop(e) {
+  e.preventDefault();
+  document.getElementById('xl-dropzone').style.borderColor = 'var(--border2)';
+  const file = e.dataTransfer.files[0];
+  if (file) xlLoad(file);
+}
+
+function xlLoad(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type:'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, { header:1, defval:'' });
+      if (raw.length < 2) { toast('Sheet appears empty', '⚠', true); return; }
+      xlHeaders = raw[0].map(h => String(h).trim());
+      xlData = raw.slice(1).filter(row => row.some(c=>String(c).trim())).map(row => {
+        const obj = {};
+        xlHeaders.forEach((h,i) => obj[h] = String(row[i]||'').trim());
+        return obj;
+      });
+      autoMapColumns();
+      renderXLPreview(raw);
+      document.getElementById('xl-mapping-wrap').style.display = 'block';
+      document.getElementById('xl-preview-wrap').style.display = 'block';
+      toast(xlData.length + ' rows loaded from ' + file.name, '📊');
+    } catch(err) {
+      toast('Could not parse file: ' + err.message, '⚠', true);
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function autoMapColumns() {
+  xlMapping = {};
+  const grid = document.getElementById('xl-mapping-grid');
+  const fields = Object.keys(XL_FIELD_MAP);
+  grid.innerHTML = fields.map(field => {
+    const match = xlHeaders.find(h => XL_FIELD_MAP[field].some(k => h.toLowerCase().includes(k))) || '';
+    xlMapping[field] = match;
+    return `<div class="form-group">
+      <label class="form-label">${field.toUpperCase()}</label>
+      <select class="form-control" id="xl-map-${field}" onchange="xlMapping['${field}']=this.value" style="font-size:11px">
+        <option value="">— skip —</option>
+        ${xlHeaders.map(h=>`<option value="${h}" ${h===match?'selected':''}>${h}</option>`).join('')}
+      </select>
+    </div>`;
+  }).join('');
+}
+
+function renderXLPreview(raw) {
+  const preview5 = raw.slice(0,6);
+  const table = `<table style="border-collapse:collapse;white-space:nowrap">
+    <thead><tr>${raw[0].map(h=>`<th style="padding:5px 10px;background:var(--surface2);border:1px solid var(--border);font-family:'Space Mono',monospace;font-size:9px;color:var(--text3)">${h}</th>`).join('')}</tr></thead>
+    <tbody>${preview5.slice(1).map(row=>`<tr>${row.map(c=>`<td style="padding:4px 10px;border:1px solid var(--border);font-size:11px;color:var(--text2)">${c||'—'}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table>`;
+  document.getElementById('xl-raw-table').innerHTML = table;
+}
+
+function categoriseRow(row) {
+  const typeKeywords = {
+    'Infrastructure': ['bridge','road','dam','culvert','building','structure','pavement','wall'],
+    'Land / Property': ['land','parcel','plot','property','cadastral','title'],
+    'Utility': ['pipe','cable','power','electricity','water','gas','sewage','telecoms','light'],
+    'Environmental': ['wetland','forest','reserve','erosion','flood','species','wildlife'],
+    'Equipment': ['machine','equipment','generator','pump','vehicle','crane','compressor'],
+  };
+  const combined = Object.values(row).join(' ').toLowerCase();
+  let best = 'Infrastructure', bestScore = 0;
+  Object.entries(typeKeywords).forEach(([type, kws]) => {
+    const score = kws.filter(k => combined.includes(k)).length;
+    if (score > bestScore) { bestScore = score; best = type; }
+  });
+  const confidence = bestScore === 0 ? 'Low' : bestScore === 1 ? 'Medium' : 'High';
+  return { type: best, confidence, score: bestScore };
+}
+
+function xlProcess() {
+  xlCategorised = xlData.map((row, i) => {
+    const mapped = {};
+    Object.entries(xlMapping).forEach(([field, col]) => { if (col) mapped[field] = row[col] || ''; });
+    const { type, confidence } = categoriseRow(row);
+    const detectedType = mapped.type && ['Infrastructure','Land / Property','Utility','Environmental','Equipment'].includes(mapped.type) ? mapped.type : type;
+    return {
+      _row: i+1,
+      id: 'XL-'+(1000+i),
+      name: mapped.name || 'Row '+(i+1),
+      type: detectedType,
+      confidence,
+      lat: mapped.lat || '',
+      lng: mapped.lng || '',
+      condition: mapped.condition || 'Good',
+      material: mapped.material || '',
+      notes: mapped.notes || '',
+      elevation: mapped.elevation || '',
+      area: mapped.area || '',
+      geom: 'Point',
+      agent: 'Excel Import',
+      date: new Date().toISOString().slice(0,10),
+      ts: Date.now(),
+      _raw: row
+    };
+  });
+
+  // Stats
+  const typeCounts = {};
+  xlCategorised.forEach(r => { typeCounts[r.type] = (typeCounts[r.type]||0)+1; });
+  const highConf = xlCategorised.filter(r=>r.confidence==='High').length;
+  document.getElementById('xl-stats-inner').innerHTML = `
+    <div style="margin-bottom:6px;font-weight:600;color:var(--accent)">${xlCategorised.length} rows processed</div>
+    ${Object.entries(typeCounts).map(([t,c])=>`<span class="tag tag-green" style="margin-right:4px">${t}: ${c}</span>`).join('')}
+    <div style="margin-top:6px;color:var(--text3)">High confidence: ${highConf}/${xlCategorised.length}</div>`;
+  document.getElementById('xl-stats').style.display = 'block';
+
+  // JSON output
+  const jsonOut = JSON.stringify(xlCategorised.map(r => {
+    const o = {...r}; delete o._raw; delete o._row; return o;
+  }), null, 2);
+  document.getElementById('xl-json-output').value = jsonOut;
+  document.getElementById('xl-json-wrap').style.display = 'block';
+  document.getElementById('xl-actions').style.display = 'block';
+  document.getElementById('xl-result-wrap').style.display = 'block';
+
+  // Category counts
+  const confColors = {High:'tag-green',Medium:'tag-warn',Low:'tag-red'};
+  document.getElementById('xl-cat-counts').innerHTML = Object.entries(typeCounts)
+    .map(([t,c])=>`<span class="tag tag-blue">${t}: ${c}</span>`).join('');
+
+  // Results table
+  document.getElementById('xl-result-tbody').innerHTML = xlCategorised.map((r,i) => `
+    <tr>
+      <td class="coord-display">${i+1}</td>
+      <td style="font-weight:500">${r.name}</td>
+      <td><span class="tag tag-green">${r.type}</span></td>
+      <td><span class="tag ${confColors[r.confidence]}">${r.confidence}</span></td>
+      <td class="coord-display">${r.lat||'—'}</td>
+      <td class="coord-display">${r.lng||'—'}</td>
+      <td><span class="tag ${condColors(r.condition)}">${r.condition}</span></td>
+      <td><span class="tag tag-gray">Pending</span></td>
+    </tr>`).join('');
+
+  toast(xlCategorised.length + ' records categorised successfully', '✓');
+}
+
+function condColors(c) {
+  return {Good:'tag-green',Fair:'tag-warn',Poor:'tag-orange',Critical:'tag-red'}[c]||'tag-gray';
+}
+
+function xlImportAll() {
+  if (!xlCategorised.length) return;
+  let added = 0;
+  xlCategorised.forEach(r => {
+    const lat = parseFloat(r.lat) || (6.2 + Math.random()*0.6);
+    const lng = parseFloat(r.lng) || (3.0 + Math.random()*0.7);
+    assetCounter++;
+    assets.push({
+      id:'AST-'+assetCounter, name:r.name, type:r.type, geom:r.geom,
+      lat:lat.toFixed(6), lng:lng.toFixed(6), condition:r.condition,
+      material:r.material, notes:r.notes, agent:r.agent, date:r.date,
+      ts:Date.now(), elev:r.elevation, area:r.area
+    });
+    added++;
+  });
+  addAudit('EXCEL_IMPORT','BULK','Admin User','Excel import — '+added+' records');
+  save(); renderDashboard(); renderAssets();
+  toast(added + ' records imported to database', '✓');
+
+  // Update result table status
+  document.querySelectorAll('#xl-result-tbody tr td:last-child span').forEach(s => {
+    s.className = 'tag tag-green'; s.textContent = 'Imported';
+  });
+}
+
+function xlDownloadJSON() {
+  if (!xlCategorised.length) return;
+  const json = document.getElementById('xl-json-output').value;
+  const blob = new Blob([json], {type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='asset_categorised_export.json'; a.click();
+  toast('JSON downloaded', '⬇');
+}
+
+function xlDownloadCSV() {
+  if (!xlCategorised.length) return;
+  const hdrs = ['id','name','type','confidence','lat','lng','condition','material','notes','elevation','area'];
+  const rows = xlCategorised.map(r => hdrs.map(h=>(r[h]||'').toString().replace(/,/g,';')));
+  const csv = [hdrs,...rows].map(r=>r.join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='asset_categorised.csv'; a.click();
+  toast('Categorised CSV downloaded', '⬇');
+}
+
+function xlCopyJSON() {
+  const val = document.getElementById('xl-json-output').value;
+  navigator.clipboard.writeText(val).then(()=>toast('JSON copied to clipboard','✓'));
+}
+
+// ══════════════════════════════════════════════════════════════════
+// PATCH captureAsset to include type-specific fields
+// ══════════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {});
+
+// Override captureAsset after page loads
+setTimeout(() => {
+  const origFn = window.captureAsset;
+  if (typeof origFn === 'function') {
+    window.captureAsset = function() {
+      origFn();
+      // Attach type-specific fields to the last asset added
+      if (assets.length > 0) {
+        const last = assets[assets.length-1];
+        last.typeFields = getTypeSpecificValues();
+      }
+      save();
+    };
+  }
+}, 500);
+
+// Auto-render viz when navigating there
+const _origNav = window.nav;
+if (typeof _origNav === 'function') {
+  window.nav = function(el) {
+    _origNav(el);
+    if (el && el.dataset && el.dataset.page === 'viz') setTimeout(renderViz, 50);
+  };
+}
 </script>
 </body>
 </html>
