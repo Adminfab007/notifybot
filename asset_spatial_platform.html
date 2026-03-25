@@ -1473,8 +1473,8 @@ cameraInput.addEventListener('change', (e) => previewFiles(e.target.files));
           <div id="xl-cat-counts" style="display:flex;gap:8px;font-size:11px"></div>
         </div>
         <div class="data-table-wrap">
-          <table class="data-table">
-            <thead><tr><th>#</th><th>Name</th><th>Detected Type</th><th>Confidence</th><th>Lat</th><th>Lng</th><th>Condition</th><th>Status</th></tr></thead>
+          <table class="data-table" id="xl-result-table">
+            <thead id="xl-result-thead"><tr><th>#</th><th>Name</th><th>Detected Type</th><th>Confidence</th><th>Lat</th><th>Lng</th><th>Condition</th><th>Status</th></tr></thead>
             <tbody id="xl-result-tbody"></tbody>
           </table>
         </div>
@@ -1645,17 +1645,22 @@ function renderMap() {
   });
 
   const tbody = document.getElementById('map-table-body');
-  tbody.innerHTML = assets.map(a => `
-    <tr>
-      <td><span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text3)">${a.id}</span></td>
-      <td>${a.name}</td>
-      <td><span class="tag ${typeColor(a.type)}">${a.type}</span></td>
-      <td class="coord-display">${a.lat.toFixed(4)}°N</td>
-      <td class="coord-display">${a.lng.toFixed(4)}°E</td>
-      <td>${geomIcon(a.geom)} ${a.geom}</td>
-      <td><span class="tag ${condColor(a.condition)}">${a.condition}</span></td>
-      <td><button class="btn btn-secondary btn-sm" onclick="showAssetDetail(assets.find(x=>x.id==='${a.id}'))">View</button></td>
-    </tr>`).join('') || '<tr><td colspan="8"><div class="empty-state" style="padding:28px"><div class="empty-icon" style="font-size:28px">◎</div><div class="empty-title">No records</div></div></td></tr>';
+  tbody.innerHTML = assets.map(a => {
+    const lat = typeof a.lat === 'number' ? a.lat : parseFloat(a.lat);
+    const lng = typeof a.lng === 'number' ? a.lng : parseFloat(a.lng);
+    const latStr = isNaN(lat) ? (a.lat || '—') : lat.toFixed(4) + '°N';
+    const lngStr = isNaN(lng) ? (a.lng || '—') : lng.toFixed(4) + '°E';
+    return '<tr>' +
+      '<td><span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text3)">' + a.id + '</span></td>' +
+      '<td>' + (a.name || '—') + '</td>' +
+      '<td><span class="tag ' + typeColor(a.type) + '">' + (a.type || '—') + '</span></td>' +
+      '<td class="coord-display">' + latStr + '</td>' +
+      '<td class="coord-display">' + lngStr + '</td>' +
+      '<td>' + geomIcon(a.geom) + ' ' + (a.geom || '—') + '</td>' +
+      '<td><span class="tag ' + condColor(a.condition) + '">' + (a.condition || '—') + '</span></td>' +
+      '<td><button class="btn btn-secondary btn-sm" onclick="showAssetDetail(assets.find(x=>x.id==='' + a.id + ''))">View</button></td>' +
+      '</tr>';
+  }).join('') || '<tr><td colspan="8"><div class="empty-state" style="padding:28px"><div class="empty-icon" style="font-size:28px">◎</div><div class="empty-title">No records</div></div></td></tr>';
 }
 
 // ── ASSETS ──
@@ -1667,21 +1672,27 @@ function renderAssets(list) {
     tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="empty-icon">◈</div><div class="empty-title">No assets found</div></div></td></tr>';
     return;
   }
-  tbody.innerHTML = data.map(a => `
-    <tr>
-      <td><span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent)">${a.id}</span></td>
-      <td>${a.name}</td>
-      <td><span class="tag ${typeColor(a.type)}">${a.type}</span></td>
-      <td>${geomIcon(a.geom)} ${a.geom}</td>
-      <td><span class="tag ${condColor(a.condition)}">${a.condition}</span></td>
-      <td class="coord-display">${a.lat}°N, ${a.lng}°E</td>
-      <td>${a.agent}</td>
-      <td>${a.date}</td>
-      <td style="display:flex;gap:6px;flex-wrap:wrap">
-        <button class="btn btn-secondary btn-sm" onclick="showAssetDetail(assets.find(x=>x.id==='${a.id}'))">View</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteAsset('${a.id}')">✕</button>
-      </td>
-    </tr>`).join('');
+  tbody.innerHTML = data.map(a => {
+    const lat = typeof a.lat === 'number' ? a.lat : parseFloat(a.lat);
+    const lng = typeof a.lng === 'number' ? a.lng : parseFloat(a.lng);
+    const coordStr = (!isNaN(lat) && !isNaN(lng)) ? lat.toFixed(4) + '°N, ' + lng.toFixed(4) + '°E' : (a.lat || '—');
+    const customBadge = (a._customFields && Object.keys(a._customFields).length)
+      ? ' <span class="tag tag-blue" style="font-size:9px" title="' + Object.keys(a._customFields).join(', ') + '">+' + Object.keys(a._customFields).length + ' fields</span>'
+      : '';
+    return '<tr>' +
+      '<td><span style="font-family:'Space Mono',monospace;font-size:10px;color:var(--accent)">' + a.id + '</span></td>' +
+      '<td>' + (a.name || '—') + customBadge + '</td>' +
+      '<td><span class="tag ' + typeColor(a.type) + '">' + (a.type || '—') + '</span></td>' +
+      '<td>' + geomIcon(a.geom) + ' ' + (a.geom || '—') + '</td>' +
+      '<td><span class="tag ' + condColor(a.condition) + '">' + (a.condition || '—') + '</span></td>' +
+      '<td class="coord-display">' + coordStr + '</td>' +
+      '<td>' + (a.agent || '—') + '</td>' +
+      '<td>' + (a.date || '—') + '</td>' +
+      '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
+      '<button class="btn btn-secondary btn-sm" onclick="showAssetDetail(assets.find(x=>x.id==='' + a.id + ''))">View</button>' +
+      '<button class="btn btn-danger btn-sm" onclick="deleteAsset('' + a.id + '')">✕</button>' +
+      '</td></tr>';
+  }).join('');
 }
 
 function filterAssets() {
@@ -1713,31 +1724,53 @@ function showAssetDetail(a) {
   if (!a) return;
   document.getElementById('modal-title').textContent = 'ASSET DETAIL — ' + a.id;
   document.getElementById('modal-body-inner').className = '';
-  document.getElementById('modal-body-inner').innerHTML = `
-    <div class="detail-grid">
-     <div class="detail-item">
- 
-  <div class="detail-val">
-    <img src="${a.image}" alt="Asset Image" width="120" height="80" style="object-fit:cover; border-radius:6px;" />
-  </div>
-</div>
-      <div class="detail-item"><div class="detail-key">Asset Name</div><div class="detail-val">${a.name}</div></div>
-      <div class="detail-item"><div class="detail-key">Asset ID</div><div class="detail-val" style="font-family:'Space Mono',monospace;color:var(--accent)">${a.id}</div></div>
-      <div class="detail-item"><div class="detail-key">Type</div><div class="detail-val"><span class="tag ${typeColor(a.type)}">${a.type}</span></div></div>
-      <div class="detail-item"><div class="detail-key">Geometry</div><div class="detail-val">${geomIcon(a.geom)} ${a.geom}</div></div>
-      <div class="detail-item"><div class="detail-key">Condition</div><div class="detail-val"><span class="tag ${condColor(a.condition)}">${a.condition}</span></div></div>
-      <div class="detail-item"><div class="detail-key">Material</div><div class="detail-val">${a.material || '—'}</div></div>
-      <div class="detail-item"><div class="detail-key">Elevation</div><div class="detail-val">${a.elev ? a.elev + ' m' : '—'}</div></div>
-      <div class="detail-item"><div class="detail-key">Area / Dimension</div><div class="detail-val">${a.area || '—'}</div></div>
-      <div class="detail-item"><div class="detail-key">Field Agent</div><div class="detail-val">${a.agent}</div></div>
-      <div class="detail-item"><div class="detail-key">Install Date</div><div class="detail-val">${a.date}</div></div>
-      <div class="detail-item" style="grid-column:1/-1"><div class="detail-key">GPS Coordinates</div>
-        <div class="detail-coords">LAT: ${a.lat.toFixed(6)}°N &nbsp;|&nbsp; LNG: ${a.lng.toFixed(6)}°E &nbsp;|&nbsp; ELEV: ${a.elev || '—'} m &nbsp;|&nbsp; CRS: WGS84</div>
-      </div>
-      <div class="detail-item" style="grid-column:1/-1"><div class="detail-key">Notes</div><div class="detail-val" style="color:var(--text2)">${a.notes || '—'}</div></div>
-      <div class="detail-item" style="grid-column:1/-1"><div class="detail-key">Captured</div><div class="detail-val coord-display">${new Date(a.ts).toLocaleString()}</div></div>
-    </div>`;
-  document.getElementById('modal-footer').innerHTML = `<button class="btn btn-secondary" onclick="closeModal()">Close</button><button class="btn btn-danger btn-sm" onclick="deleteAsset('${a.id}');closeModal()">Delete</button>`;
+
+  // Safe lat/lng formatting — handle both numeric and string values
+  const latVal = typeof a.lat === 'number' ? a.lat : parseFloat(a.lat);
+  const lngVal = typeof a.lng === 'number' ? a.lng : parseFloat(a.lng);
+  const latStr = isNaN(latVal) ? (a.lat || '—') : latVal.toFixed(6) + '°N';
+  const lngStr = isNaN(lngVal) ? (a.lng || '—') : lngVal.toFixed(6) + '°E';
+
+  // Image row — only show if asset has an image
+  const imageRow = a.image
+    ? '<div class="detail-item"><div class="detail-val"><img src="' + a.image + '" alt="Asset Image" width="120" height="80" style="object-fit:cover;border-radius:6px;" /></div></div>'
+    : '';
+
+  // Core fields always shown
+  let html = '<div class="detail-grid">' + imageRow +
+    '<div class="detail-item"><div class="detail-key">Asset Name</div><div class="detail-val">' + (a.name || '—') + '</div></div>' +
+    '<div class="detail-item"><div class="detail-key">Asset ID</div><div class="detail-val" style="font-family:'Space Mono',monospace;color:var(--accent)">' + a.id + '</div></div>' +
+    '<div class="detail-item"><div class="detail-key">Type</div><div class="detail-val"><span class="tag ' + typeColor(a.type) + '">' + (a.type || '—') + '</span></div></div>' +
+    '<div class="detail-item"><div class="detail-key">Geometry</div><div class="detail-val">' + geomIcon(a.geom) + ' ' + (a.geom || '—') + '</div></div>' +
+    '<div class="detail-item"><div class="detail-key">Condition</div><div class="detail-val"><span class="tag ' + condColor(a.condition) + '">' + (a.condition || '—') + '</span></div></div>' +
+    '<div class="detail-item"><div class="detail-key">Material</div><div class="detail-val">' + (a.material || '—') + '</div></div>' +
+    '<div class="detail-item"><div class="detail-key">Elevation</div><div class="detail-val">' + (a.elev ? a.elev + ' m' : '—') + '</div></div>' +
+    '<div class="detail-item"><div class="detail-key">Area / Dimension</div><div class="detail-val">' + (a.area || '—') + '</div></div>' +
+    '<div class="detail-item"><div class="detail-key">Field Agent</div><div class="detail-val">' + (a.agent || '—') + '</div></div>' +
+    '<div class="detail-item"><div class="detail-key">Install Date</div><div class="detail-val">' + (a.date || '—') + '</div></div>' +
+    '<div class="detail-item" style="grid-column:1/-1"><div class="detail-key">GPS Coordinates</div>' +
+    '<div class="detail-coords">LAT: ' + latStr + ' &nbsp;|&nbsp; LNG: ' + lngStr + ' &nbsp;|&nbsp; ELEV: ' + (a.elev || '—') + ' m &nbsp;|&nbsp; CRS: WGS84</div></div>' +
+    '<div class="detail-item" style="grid-column:1/-1"><div class="detail-key">Notes</div><div class="detail-val" style="color:var(--text2)">' + (a.notes || '—') + '</div></div>' +
+    '<div class="detail-item" style="grid-column:1/-1"><div class="detail-key">Captured</div><div class="detail-val coord-display">' + new Date(a.ts).toLocaleString() + '</div></div>';
+
+  // Dynamic custom fields — render every extra field from this asset's unique schema
+  if (a._customFields && Object.keys(a._customFields).length > 0) {
+    html += '<div class="detail-item" style="grid-column:1/-1;margin-top:6px">' +
+      '<div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;padding:8px 0 6px;border-top:1px solid var(--border);margin-bottom:4px">ADDITIONAL FIELDS FROM IMPORT</div>' +
+      '<div class="detail-grid" style="gap:8px">';
+    Object.entries(a._customFields).forEach(function(entry) {
+      var key = entry[0]; var val = entry[1];
+      html += '<div class="detail-item">' +
+        '<div class="detail-key">' + key + '</div>' +
+        '<div class="detail-val">' + (val !== '' && val !== null && val !== undefined ? val : '—') + '</div>' +
+        '</div>';
+    });
+    html += '</div></div>';
+  }
+
+  html += '</div>';
+  document.getElementById('modal-body-inner').innerHTML = html;
+  document.getElementById('modal-footer').innerHTML = '<button class="btn btn-secondary" onclick="closeModal()">Close</button><button class="btn btn-danger btn-sm" onclick="deleteAsset('' + a.id + '');closeModal()">Delete</button>';
   document.getElementById('modal-overlay').classList.add('open');
 }
 
@@ -2407,17 +2440,27 @@ let xlHeaders = [];
 let xlMapping = {};
 let xlCategorised = [];
 
-const XL_FIELD_MAP = {
-  name:        ['name','asset name','title','asset','label','description','desc'],
-  lat:         ['lat','latitude','lat.','y','northing','north'],
-  lng:         ['lng','lon','longitude','long','lng.','x','easting','east'],
-  condition:   ['condition','status','state','health'],
-  material:    ['material','materials','composition'],
-  type:        ['type','asset type','category','class','kind'],
-  notes:       ['notes','note','remark','remarks','comment','comments','description'],
-  elevation:   ['elev','elevation','alt','altitude','height'],
-  area:        ['area','size','dimension','plot size'],
+// ── SEMANTIC CORE FIELD DETECTION (matches any excel schema) ──
+const XL_CORE_HINTS = {
+  name:      ['name','asset name','title','asset','label'],
+  lat:       ['lat','latitude','lat.','y coord','northing','north'],
+  lng:       ['lng','lon','longitude','long','lng.','x coord','easting','east'],
+  condition: ['condition','status','state','health'],
+  type:      ['type','asset type','category','class','kind'],
+  notes:     ['notes','note','remark','remarks','comment','comments'],
+  elevation: ['elev','elevation','alt','altitude','height'],
+  area:      ['area','size','dimension','plot size'],
+  material:  ['material','materials','composition'],
 };
+
+// Detect which excel column best matches a core semantic field (fuzzy)
+function detectCoreField(header) {
+  const h = header.toLowerCase().trim();
+  for (const [field, hints] of Object.entries(XL_CORE_HINTS)) {
+    if (hints.some(k => h === k || h.includes(k))) return field;
+  }
+  return null; // custom field — keep as-is
+}
 
 function xlDrop(e) {
   e.preventDefault();
@@ -2456,18 +2499,42 @@ function xlLoad(file) {
 function autoMapColumns() {
   xlMapping = {};
   const grid = document.getElementById('xl-mapping-grid');
-  const fields = Object.keys(XL_FIELD_MAP);
-  grid.innerHTML = fields.map(field => {
-    const match = xlHeaders.find(h => XL_FIELD_MAP[field].some(k => h.toLowerCase().includes(k))) || '';
-    xlMapping[field] = match;
-    return `<div class="form-group">
-      <label class="form-label">${field.toUpperCase()}</label>
-      <select class="form-control" id="xl-map-${field}" onchange="xlMapping['${field}']=this.value" style="font-size:11px">
-        <option value="">— skip —</option>
-        ${xlHeaders.map(h=>`<option value="${h}" ${h===match?'selected':''}>${h}</option>`).join('')}
-      </select>
-    </div>`;
+
+  // Auto-detect which header maps to which core field
+  const autoDetected = {};
+  xlHeaders.forEach(h => {
+    const field = detectCoreField(h);
+    if (field && !Object.values(autoDetected).includes(field)) autoDetected[h] = field;
+  });
+  const coreToCol = {};
+  Object.entries(autoDetected).forEach(([col, field]) => { coreToCol[field] = col; });
+  Object.keys(XL_CORE_HINTS).forEach(field => { xlMapping[field] = coreToCol[field] || ''; });
+
+  const customCols = xlHeaders.filter(h => !autoDetected[h]);
+
+  const coreRows = Object.keys(XL_CORE_HINTS).map(field => {
+    const match = coreToCol[field] || '';
+    return '<div class="form-group">' +
+      '<label class="form-label">' + field.toUpperCase() + '</label>' +
+      '<select class="form-control" id="xl-map-' + field + '" onchange="xlMapping[\'' + field + '\']=this.value" style="font-size:11px">' +
+      '<option value="">— skip —</option>' +
+      xlHeaders.map(h => '<option value="' + h + '"' + (h === match ? ' selected' : '') + '>' + h + '</option>').join('') +
+      '</select></div>';
   }).join('');
+
+  const customBadges = customCols.length
+    ? '<div style="grid-column:1/-1;margin-top:10px;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">' +
+      '<div style="font-family:\'Space Mono\',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">CUSTOM FIELDS — AUTO-PRESERVED ✓</div>' +
+      '<div style="display:flex;flex-wrap:wrap;gap:6px">' +
+      customCols.map(c => '<span class="tag tag-blue" style="font-size:10px">⊞ ' + c + '</span>').join('') +
+      '</div></div>'
+    : '';
+
+  grid.innerHTML =
+    '<div style="grid-column:1/-1;margin-bottom:8px">' +
+    '<div style="font-family:\'Space Mono\',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:6px">CORE FIELD MAPPING</div>' +
+    '<div style="font-size:11px;color:var(--text2)">Map your columns to platform core fields. All unmapped columns are preserved automatically as custom fields.</div>' +
+    '</div>' + coreRows + customBadges;
 }
 
 function renderXLPreview(raw) {
@@ -2498,12 +2565,16 @@ function categoriseRow(row) {
 }
 
 function xlProcess() {
+  // Identify custom (non-mapped) columns to preserve verbatim
+  const mappedCols = new Set(Object.values(xlMapping).filter(Boolean));
+  const customCols = xlHeaders.filter(h => !mappedCols.has(h));
+
   xlCategorised = xlData.map((row, i) => {
     const mapped = {};
     Object.entries(xlMapping).forEach(([field, col]) => { if (col) mapped[field] = row[col] || ''; });
     const { type, confidence } = categoriseRow(row);
     const detectedType = mapped.type && ['Infrastructure','Land / Property','Utility','Environmental','Equipment'].includes(mapped.type) ? mapped.type : type;
-    return {
+    const record = {
       _row: i+1,
       id: 'XL-'+(1000+i),
       name: mapped.name || 'Row '+(i+1),
@@ -2522,6 +2593,15 @@ function xlProcess() {
       ts: Date.now(),
       _raw: row
     };
+    // Preserve ALL extra columns unique to this Excel file
+    if (customCols.length) {
+      record._customFields = {};
+      customCols.forEach(col => {
+        const val = row[col];
+        if (val !== '' && val !== undefined && val !== null) record._customFields[col] = val;
+      });
+    }
+    return record;
   });
 
   // Stats
@@ -2534,9 +2614,16 @@ function xlProcess() {
     <div style="margin-top:6px;color:var(--text3)">High confidence: ${highConf}/${xlCategorised.length}</div>`;
   document.getElementById('xl-stats').style.display = 'block';
 
-  // JSON output
+  // JSON output — flatten custom fields to top level, remove internal keys
   const jsonOut = JSON.stringify(xlCategorised.map(r => {
-    const o = {...r}; delete o._raw; delete o._row; return o;
+    const o = {...r};
+    delete o._raw; delete o._row;
+    // Flatten _customFields into the root of the JSON object
+    if (o._customFields) {
+      Object.assign(o, o._customFields);
+      delete o._customFields;
+    }
+    return o;
   }), null, 2);
   document.getElementById('xl-json-output').value = jsonOut;
   document.getElementById('xl-json-wrap').style.display = 'block';
@@ -2548,18 +2635,31 @@ function xlProcess() {
   document.getElementById('xl-cat-counts').innerHTML = Object.entries(typeCounts)
     .map(([t,c])=>`<span class="tag tag-blue">${t}: ${c}</span>`).join('');
 
-  // Results table
-  document.getElementById('xl-result-tbody').innerHTML = xlCategorised.map((r,i) => `
-    <tr>
-      <td class="coord-display">${i+1}</td>
-      <td style="font-weight:500">${r.name}</td>
-      <td><span class="tag tag-green">${r.type}</span></td>
-      <td><span class="tag ${confColors[r.confidence]}">${r.confidence}</span></td>
-      <td class="coord-display">${r.lat||'—'}</td>
-      <td class="coord-display">${r.lng||'—'}</td>
-      <td><span class="tag ${condColors(r.condition)}">${r.condition}</span></td>
-      <td><span class="tag tag-gray">Pending</span></td>
-    </tr>`).join('');
+  // Results table — dynamic columns: always show core fields, then add custom field columns
+  const allCustomKeys = [];
+  xlCategorised.forEach(r => {
+    if (r._customFields) Object.keys(r._customFields).forEach(k => { if (!allCustomKeys.includes(k)) allCustomKeys.push(k); });
+  });
+  // Build dynamic thead
+  document.getElementById('xl-result-thead').innerHTML = '<tr>' +
+    '<th>#</th><th>Name</th><th>Detected Type</th><th>Confidence</th><th>Lat</th><th>Lng</th><th>Condition</th>' +
+    allCustomKeys.map(k => '<th>' + k + '</th>').join('') +
+    '<th>Status</th></tr>';
+  // Build dynamic tbody
+  document.getElementById('xl-result-tbody').innerHTML = xlCategorised.map((r,i) => {
+    const customCells = allCustomKeys.map(k => '<td style="font-size:11px;color:var(--text2)">' + ((r._customFields && r._customFields[k] !== undefined) ? r._customFields[k] : '—') + '</td>').join('');
+    return '<tr>' +
+      '<td class="coord-display">' + (i+1) + '</td>' +
+      '<td style="font-weight:500">' + r.name + '</td>' +
+      '<td><span class="tag tag-green">' + r.type + '</span></td>' +
+      '<td><span class="tag ' + confColors[r.confidence] + '">' + r.confidence + '</span></td>' +
+      '<td class="coord-display">' + (r.lat||'—') + '</td>' +
+      '<td class="coord-display">' + (r.lng||'—') + '</td>' +
+      '<td><span class="tag ' + condColors(r.condition) + '">' + r.condition + '</span></td>' +
+      customCells +
+      '<td><span class="tag tag-gray">Pending</span></td>' +
+      '</tr>';
+  }).join('');
 
   toast(xlCategorised.length + ' records categorised successfully', '✓');
 }
@@ -2575,21 +2675,22 @@ function xlImportAll() {
     const lat = parseFloat(r.lat) || (6.2 + Math.random()*0.6);
     const lng = parseFloat(r.lng) || (3.0 + Math.random()*0.7);
     assetCounter++;
-    assets.push({
+    assets.push(Object.assign({
       id:'AST-'+assetCounter, name:r.name, type:r.type, geom:r.geom,
       lat:lat.toFixed(6), lng:lng.toFixed(6), condition:r.condition,
       material:r.material, notes:r.notes, agent:r.agent, date:r.date,
       ts:Date.now(), elev:r.elevation, area:r.area
-    });
+    }, r._customFields ? { _customFields: r._customFields } : {}));
     added++;
   });
   addAudit('EXCEL_IMPORT','BULK','Admin User','Excel import — '+added+' records');
   save(); renderDashboard(); renderAssets();
   toast(added + ' records imported to database', '✓');
 
-  // Update result table status
-  document.querySelectorAll('#xl-result-tbody tr td:last-child span').forEach(s => {
-    s.className = 'tag tag-green'; s.textContent = 'Imported';
+  // Update result table — mark last cell of each row as Imported
+  document.querySelectorAll('#xl-result-tbody tr').forEach(row => {
+    const lastCell = row.querySelector('td:last-child span');
+    if (lastCell) { lastCell.className = 'tag tag-green'; lastCell.textContent = 'Imported'; }
   });
 }
 
