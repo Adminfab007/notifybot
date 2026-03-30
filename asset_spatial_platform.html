@@ -30,6 +30,47 @@
   --sidebar-w: 240px;
   --header-h: 60px;
 }
+
+/* ── DARK MODE ── */
+body.dark-mode {
+  --bg: #0d1b12;
+  --surface: #122118;
+  --surface2: #1a2e22;
+
+  --border: #1f3828;
+  --border2: #2a4a37;
+
+  --accent: #00c471;
+  --accent2: #00e587;
+  --accent3: #1a3d28;
+
+  --text: #e0f0e8;
+  --text2: #9abfac;
+  --text3: #5a8070;
+
+  --danger: #e05555;
+  --warn: #f0b800;
+  --success: #00c471;
+}
+
+/* Dark mode toggle button */
+#dark-mode-toggle {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 5px 12px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text2);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+#dark-mode-toggle:hover { border-color: var(--accent); color: var(--accent); }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
@@ -584,6 +625,81 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 }
 .toast-icon { font-size: 16px; }
 
+/* ── PHOTO GALLERY ── */
+.photo-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 8px;
+  margin-top: 10px;
+}
+.photo-thumb {
+  position: relative;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  background: var(--surface2);
+}
+.photo-thumb img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: transform 0.2s;
+}
+.photo-thumb:hover img { transform: scale(1.06); }
+.photo-thumb .del-photo {
+  position: absolute; top: 4px; right: 4px;
+  background: rgba(0,0,0,0.6); color: #fff;
+  border: none; border-radius: 50%;
+  width: 20px; height: 20px; font-size: 10px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  opacity: 0; transition: opacity 0.15s;
+}
+.photo-thumb:hover .del-photo { opacity: 1; }
+.photo-lightbox {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+  z-index: 999; display: flex; align-items: center; justify-content: center;
+  cursor: zoom-out;
+}
+.photo-lightbox img { max-width: 90vw; max-height: 85vh; border-radius: 8px; }
+
+/* ── BULK ACTIONS ── */
+#bulk-action-bar {
+  position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+  background: var(--text);
+  color: var(--bg);
+  border-radius: 12px;
+  padding: 10px 18px;
+  display: none;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  z-index: 300;
+  font-size: 13px;
+  min-width: 340px;
+  animation: slideUp 0.2s ease;
+}
+#bulk-action-bar.visible { display: flex; }
+#bulk-action-bar .bulk-count { font-weight: 600; font-family: 'Space Mono', monospace; font-size: 11px; }
+#bulk-action-bar .bulk-sep { opacity: 0.3; }
+.bulk-btn {
+  background: rgba(255,255,255,0.15);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11.5px;
+  font-family: 'DM Sans', sans-serif;
+  transition: background 0.15s;
+}
+.bulk-btn:hover { background: rgba(255,255,255,0.25); }
+.bulk-btn.danger { background: rgba(214,69,69,0.35); border-color: rgba(214,69,69,0.5); }
+.bulk-btn.danger:hover { background: rgba(214,69,69,0.55); }
+.select-all-check { width: 14px; height: 14px; cursor: pointer; accent-color: var(--accent); }
+.row-check { width: 13px; height: 13px; cursor: pointer; accent-color: var(--accent); }
+
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar { width: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
@@ -629,6 +745,86 @@ textarea.form-control { resize: vertical; min-height: 80px; }
 .user-stat { text-align: center; }
 .user-stat-val { font-family: 'Bebas Neue', sans-serif; font-size: 20px; color: var(--accent); }
 .user-stat-lbl { font-size: 9px; color: var(--text3); font-family: 'Space Mono', monospace; text-transform: uppercase; }
+
+/* ── GLOBAL SEARCH ── */
+#global-search-wrap {
+  position: relative;
+  flex: 1;
+  max-width: 340px;
+}
+#global-search-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 20px;
+  padding: 6px 14px 6px 34px;
+  font-size: 12.5px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.15s;
+}
+#global-search-input:focus { border-color: var(--accent); background: var(--bg); }
+#global-search-input::placeholder { color: var(--text3); }
+.gsearch-icon {
+  position: absolute; left: 11px; top: 50%; transform: translateY(-50%);
+  font-size: 14px; pointer-events: none; color: var(--text3);
+}
+#global-search-dropdown {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+  background: var(--bg);
+  border: 1px solid var(--border2);
+  border-radius: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+  z-index: 500;
+  max-height: 380px;
+  overflow-y: auto;
+  display: none;
+}
+#global-search-dropdown.open { display: block; }
+.gs-group-label {
+  font-family: 'Space Mono', monospace;
+  font-size: 9px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--text3); padding: 10px 14px 4px; border-top: 1px solid var(--border);
+}
+.gs-group-label:first-child { border-top: none; }
+.gs-result {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 14px; cursor: pointer; transition: background 0.1s;
+  font-size: 13px;
+}
+.gs-result:hover { background: var(--surface2); }
+.gs-result-icon { font-size: 14px; width: 20px; text-align: center; flex-shrink: 0; }
+.gs-result-main { flex: 1; }
+.gs-result-title { font-size: 12.5px; color: var(--text); font-weight: 500; }
+.gs-result-sub { font-size: 10px; color: var(--text3); font-family: 'Space Mono', monospace; }
+.gs-result-badge { font-size: 10px; color: var(--text3); }
+.gs-no-results { padding: 18px 14px; text-align: center; font-size: 12px; color: var(--text3); }
+
+/* ── QR CODE MODAL ── */
+#qr-modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 300;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(4px);
+}
+#qr-modal-overlay.open { display: flex; }
+.qr-modal-box {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: 14px;
+  padding: 28px 32px;
+  text-align: center;
+  max-width: 320px;
+  width: 90vw;
+  box-shadow: 0 24px 80px rgba(0,0,0,0.5);
+}
+.qr-modal-box canvas { border: 4px solid #fff; border-radius: 8px; margin: 14px 0; }
+.qr-asset-label { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 1.5px; margin-bottom: 4px; }
+.qr-asset-id { font-family: 'Space Mono', monospace; font-size: 10px; color: var(--text3); letter-spacing: 1.5px; }
 
 /* ── RESPONSIVE TWEAKS ── */
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -861,8 +1057,19 @@ closeBtn.addEventListener("click", function () {
       <div class="page-title" id="hdr-title">DASHBOARD</div>
       <div class="breadcrumb" id="hdr-bc">AssetSpatial / Overview</div>
     </div>
+    <!-- FEATURE 4: Global Search -->
+    <div id="global-search-wrap">
+      <span class="gsearch-icon">🔍</span>
+      <input id="global-search-input" type="text" placeholder="Search assets, users, logs…"
+        oninput="globalSearch(this.value)" onkeydown="gsKeyNav(event)"
+        onfocus="if(this.value.trim())document.getElementById('global-search-dropdown').classList.add('open')"
+        autocomplete="off">
+      <div id="global-search-dropdown"></div>
+    </div>
     <div class="header-actions">
+      <button id="dark-mode-toggle" onclick="toggleDarkMode()" title="Toggle dark/light mode">🌙 <span id="dm-label">Dark</span></button>
       <button class="btn btn-secondary" onclick="exportCSV()">⬇ Export CSV</button>
+      <button class="btn btn-secondary" onclick="generatePDFReport()">📄 PDF Report</button>
       <button class="btn btn-primary" onclick="openCaptureModal()">+ New Asset</button>
     </div>
   </div>
@@ -890,6 +1097,20 @@ closeBtn.addEventListener("click", function () {
           <div class="stat-label">Field Agents</div>
           <div class="stat-value" id="stat-agents">0</div>
           <div class="stat-sub">Active users</div>
+        </div>
+      </div>
+
+      <!-- FEATURE 2: Inspection Alerts Panel -->
+      <div id="inspection-alerts-panel" style="display:none;margin-bottom:20px">
+        <div class="section-header">
+          <div class="section-title">⚠ INSPECTION ALERTS</div>
+          <span id="inspection-alert-count" class="tag tag-red"></span>
+        </div>
+        <div style="background:var(--surface);border:1px solid rgba(214,69,69,0.35);border-radius:10px;overflow:hidden">
+          <table class="data-table" id="inspection-alerts-table">
+            <thead><tr><th>Asset</th><th>Type</th><th>Next Inspection</th><th>Status</th><th>Action</th></tr></thead>
+            <tbody id="inspection-alerts-tbody"></tbody>
+          </table>
         </div>
       </div>
 
@@ -1033,7 +1254,10 @@ document.addEventListener("click", function (e) {
       <div class="data-table-wrap">
         <table class="data-table">
           <thead>
-            <tr><th>Asset ID</th><th>Name</th><th>Type</th><th>Geometry</th><th>Condition</th><th>Coordinates</th><th>Agent</th><th>Date</th><th>Actions</th></tr>
+            <tr>
+              <th style="width:36px"><input type="checkbox" class="select-all-check" id="select-all-assets" onchange="toggleSelectAllAssets(this.checked)"></th>
+              <th>Asset ID</th><th>Name</th><th>Type</th><th>Geometry</th><th>Condition</th><th>Coordinates</th><th>Agent</th><th>Date</th><th>Actions</th>
+            </tr>
           </thead>
           <tbody id="assets-tbody">
             <tr><td colspan="9"><div class="empty-state"><div class="empty-icon">◈</div><div class="empty-title">No assets found</div><div class="empty-sub">Add assets via Field Capture or use the + New Asset button</div></div></td></tr>
@@ -1161,21 +1385,24 @@ const preview = document.getElementById('cap-preview');
 function previewFiles(files) {
   Array.from(files).forEach(file => {
     const url = URL.createObjectURL(file);
-    localStorage.setItem("camera",url)
     let el;
     if (file.type.startsWith('image')) {
       el = document.createElement('img');
       el.src = url;
-      el.style.width = '100px';
-      el.style.borderRadius = '6px';
+      el.style.cssText = 'width:100px;border-radius:6px;border:1px solid var(--border)';
+      // Convert to base64 for IndexedDB
+      const reader = new FileReader();
+      reader.onload = ev => {
+        window._pendingPhoto = ev.target.result; // store for captureAsset to pick up
+      };
+      reader.readAsDataURL(file);
     } else if (file.type.startsWith('video')) {
       el = document.createElement('video');
       el.src = url;
       el.controls = true;
-      el.style.width = '140px';
-      el.style.borderRadius = '6px';
+      el.style.cssText = 'width:140px;border-radius:6px';
     }
-    preview.appendChild(el);
+    if (el) preview.appendChild(el);
   });
 }
 
@@ -1663,6 +1890,17 @@ cameraInput.addEventListener('change', (e) => previewFiles(e.target.files));
 </div>
 
 <!-- TOAST -->
+<!-- FEATURE 6: BULK ACTION BAR -->
+<div id="bulk-action-bar">
+  <span class="bulk-count" id="bulk-count-label">0 selected</span>
+  <span class="bulk-sep">|</span>
+  <button class="bulk-btn" onclick="bulkExportCSV()">⬇ Export</button>
+  <button class="bulk-btn" onclick="bulkUpdateCondition()">✎ Set Condition</button>
+  <button class="bulk-btn danger" onclick="bulkDelete()">🗑 Delete</button>
+  <span class="bulk-sep">|</span>
+  <button class="bulk-btn" onclick="clearBulkSelection()" style="opacity:0.6">✕ Clear</button>
+</div>
+
 <div id="toast">
   <span class="toast-icon" id="toast-icon">✓</span>
   <span id="toast-msg">Done</span>
@@ -1780,7 +2018,106 @@ function renderDashboard() {
       <div class="activity-text">${l.action.replace(/_/g,' ')}: <strong>${l.entity}</strong> — ${l.detail}</div>
       <div class="activity-time">${new Date(l.ts).toLocaleString()} · ${l.user}</div>
     </div>`).join('');
+  renderInspectionAlerts();
 }
+
+// ── FEATURE 2: INSPECTION SCHEDULING ──
+function renderInspectionAlerts() {
+  const today = new Date(); today.setHours(0,0,0,0);
+  const soon = new Date(today); soon.setDate(soon.getDate() + 7);
+  const alertAssets = assets.filter(a => {
+    if (!a.nextInspection) return false;
+    const d = new Date(a.nextInspection); d.setHours(0,0,0,0);
+    return d <= soon;
+  }).sort((a,b) => new Date(a.nextInspection) - new Date(b.nextInspection));
+
+  const panel = document.getElementById('inspection-alerts-panel');
+  if (!panel) return;
+  if (!alertAssets.length) { panel.style.display = 'none'; return; }
+  panel.style.display = 'block';
+
+  const overdueCount = alertAssets.filter(a => new Date(a.nextInspection) < today).length;
+  document.getElementById('inspection-alert-count').textContent =
+    overdueCount + ' overdue, ' + (alertAssets.length - overdueCount) + ' due soon';
+
+  document.getElementById('inspection-alerts-tbody').innerHTML = alertAssets.map(a => {
+    const d = new Date(a.nextInspection); d.setHours(0,0,0,0);
+    const isOverdue = d < today;
+    const isSoon = d >= today && d <= soon;
+    const daysLeft = Math.round((d - today) / 86400000);
+    const statusLabel = isOverdue ? '🔴 OVERDUE ' + Math.abs(daysLeft) + 'd' : '🟡 Due in ' + daysLeft + 'd';
+    const statusClass = isOverdue ? 'tag-red' : 'tag-warn';
+    return `<tr style="${isOverdue?'background:rgba(214,69,69,0.04)':''}">
+      <td><strong>${a.name||a.id}</strong></td>
+      <td><span class="tag ${typeColor(a.type)}">${a.type||'—'}</span></td>
+      <td style="font-family:'Space Mono',monospace;font-size:11px">${a.nextInspection}</td>
+      <td><span class="tag ${statusClass}">${statusLabel}</span></td>
+      <td><button class="btn btn-primary btn-sm" onclick="openEditModal('${a.id}')">Schedule</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ── FEATURE 4: GLOBAL SEARCH ──
+function globalSearch(q) {
+  const dd = document.getElementById('global-search-dropdown');
+  q = q.trim().toLowerCase();
+  if (!q) { dd.classList.remove('open'); dd.innerHTML = ''; return; }
+  const results = [];
+  // Search assets
+  assets.filter(a =>
+    (a.name||'').toLowerCase().includes(q) ||
+    (a.id||'').toLowerCase().includes(q) ||
+    (a.type||'').toLowerCase().includes(q) ||
+    (a.agent||'').toLowerCase().includes(q)
+  ).slice(0,6).forEach(a => results.push({ group:'Assets', icon:'◈', title: a.name || a.id, sub: a.id + ' · ' + (a.type||'') + ' · ' + (a.condition||''), action: () => { showAssetDetail(a); document.getElementById('global-search-input').value=''; dd.classList.remove('open'); } }));
+  // Search users
+  users.filter(u =>
+    (u.name||'').toLowerCase().includes(q) ||
+    (u.email||'').toLowerCase().includes(q) ||
+    (u.role||'').toLowerCase().includes(q)
+  ).slice(0,3).forEach(u => results.push({ group:'Users', icon:'◑', title: u.name, sub: u.role + ' · ' + u.email, action: () => { nav(document.querySelector('[data-page="users"]')); document.getElementById('global-search-input').value=''; dd.classList.remove('open'); } }));
+  // Search audit log
+  auditLog.filter(l =>
+    (l.detail||'').toLowerCase().includes(q) ||
+    (l.action||'').toLowerCase().includes(q) ||
+    (l.entity||'').toLowerCase().includes(q)
+  ).slice(0,3).forEach(l => results.push({ group:'Audit Log', icon:'◫', title: l.action.replace(/_/g,' ') + ': ' + l.entity, sub: l.detail + ' · ' + new Date(l.ts).toLocaleDateString(), action: () => { nav(document.querySelector('[data-page="audit"]')); document.getElementById('global-search-input').value=''; dd.classList.remove('open'); } }));
+
+  if (!results.length) {
+    dd.innerHTML = '<div class="gs-no-results">No results for "' + q.replace(/</g,'&lt;') + '"</div>';
+    dd.classList.add('open'); return;
+  }
+  let html = ''; let lastGroup = '';
+  results.forEach((r, i) => {
+    if (r.group !== lastGroup) { html += '<div class="gs-group-label">' + r.group + '</div>'; lastGroup = r.group; }
+    html += `<div class="gs-result" data-gs-idx="${i}" onclick="gsActions[${i}]()">
+      <span class="gs-result-icon">${r.icon}</span>
+      <div class="gs-result-main">
+        <div class="gs-result-title">${r.title.replace(/</g,'&lt;')}</div>
+        <div class="gs-result-sub">${r.sub.replace(/</g,'&lt;')}</div>
+      </div></div>`;
+  });
+  window.gsActions = results.map(r => r.action);
+  dd.innerHTML = html;
+  dd.classList.add('open');
+}
+
+function gsKeyNav(e) {
+  const dd = document.getElementById('global-search-dropdown');
+  const items = dd.querySelectorAll('.gs-result');
+  if (!items.length) return;
+  let active = dd.querySelector('.gs-result.gs-active');
+  if (e.key === 'ArrowDown') { e.preventDefault(); const next = active ? active.nextElementSibling : items[0]; if (next && next.classList.contains('gs-result')) { if(active) active.classList.remove('gs-active'); next.classList.add('gs-active'); next.style.background='var(--surface2)'; if(active) active.style.background=''; } }
+  if (e.key === 'ArrowUp') { e.preventDefault(); const prev = active ? active.previousElementSibling : null; if (prev && prev.classList.contains('gs-result')) { if(active) active.classList.remove('gs-active'); prev.classList.add('gs-active'); prev.style.background='var(--surface2)'; if(active) active.style.background=''; } }
+  if (e.key === 'Enter' && active) { active.click(); }
+  if (e.key === 'Escape') { dd.classList.remove('open'); document.getElementById('global-search-input').blur(); }
+}
+
+// Close search on outside click
+document.addEventListener('click', e => {
+  const wrap = document.getElementById('global-search-wrap');
+  if (wrap && !wrap.contains(e.target)) document.getElementById('global-search-dropdown').classList.remove('open');
+});
 
 // ── MAP TYPE ──
 let currentMapType = 'road'; // 'road' | 'satellite' | 'hybrid'
@@ -1977,6 +2314,7 @@ function renderAssets(list) {
       '<td>' + (a.date || '—') + '</td>' +
       '<td style="display:flex;gap:6px;flex-wrap:wrap">' +
       '<button class="btn btn-secondary btn-sm" onclick="showAssetDetail(assets.find(x=>x.id===\'' + a.id + '\'))">View</button>' +
+      '<button class="btn btn-primary btn-sm" onclick="openEditModal(\'' + a.id + '\')">✎ Edit</button>' +
       '<button class="btn btn-danger btn-sm" onclick="deleteAsset(\'' + a.id + '\')">✕</button>' +
       '</td></tr>';
   }).join('');
@@ -2004,6 +2342,77 @@ function deleteAsset(id) {
   addAudit('ASSET_DELETED', id, 'Admin User', 'Asset removed');
   save(); renderAssets(); renderDashboard();
   toast('Asset deleted', '🗑');
+}
+
+// ── FEATURE 1: INLINE ASSET EDITING ──
+function openEditModal(id) {
+  const a = assets.find(x => x.id === id);
+  if (!a) return;
+  document.getElementById('modal-title').textContent = 'EDIT ASSET — ' + a.id;
+  document.getElementById('modal-body-inner').className = 'form-grid';
+  const types = ['Infrastructure','Land / Property','Utility','Environmental','Equipment'];
+  const conds = ['Good','Fair','Poor','Critical'];
+  const geoms = ['Point','Polygon','Linear'];
+  function opt(arr, val) { return arr.map(v => `<option${v===val?' selected':''}>${v}</option>`).join(''); }
+  document.getElementById('modal-body-inner').innerHTML = `
+    <div class="form-group"><label class="form-label">Asset Name *</label>
+      <input class="form-control" id="edit-name" value="${(a.name||'').replace(/"/g,'&quot;')}"></div>
+    <div class="form-group"><label class="form-label">Asset Type</label>
+      <select class="form-control" id="edit-type">${opt(types, a.type)}</select></div>
+    <div class="form-group"><label class="form-label">Condition</label>
+      <select class="form-control" id="edit-cond">${opt(conds, a.condition)}</select></div>
+    <div class="form-group"><label class="form-label">Geometry</label>
+      <select class="form-control" id="edit-geom">${opt(geoms, a.geom)}</select></div>
+    <div class="form-group"><label class="form-label">Latitude</label>
+      <input class="form-control" id="edit-lat" type="number" step="any" value="${a.lat||''}"></div>
+    <div class="form-group"><label class="form-label">Longitude</label>
+      <input class="form-control" id="edit-lng" type="number" step="any" value="${a.lng||''}"></div>
+    <div class="form-group"><label class="form-label">Material</label>
+      <input class="form-control" id="edit-material" value="${(a.material||'').replace(/"/g,'&quot;')}"></div>
+    <div class="form-group"><label class="form-label">Elevation (m)</label>
+      <input class="form-control" id="edit-elev" type="number" value="${a.elev||''}"></div>
+    <div class="form-group"><label class="form-label">Field Agent</label>
+      <input class="form-control" id="edit-agent" value="${(a.agent||'').replace(/"/g,'&quot;')}"></div>
+    <div class="form-group"><label class="form-label">Date</label>
+      <input class="form-control" id="edit-date" type="date" value="${a.date||''}"></div>
+    <div class="form-group"><label class="form-label">Next Inspection</label>
+      <input class="form-control" id="edit-inspect" type="date" value="${a.nextInspection||''}"></div>
+    <div class="form-group full"><label class="form-label">Notes</label>
+      <textarea class="form-control" id="edit-notes">${a.notes||''}</textarea></div>`;
+  document.getElementById('modal-footer').innerHTML =
+    '<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>' +
+    '<button class="btn btn-primary" onclick="saveEditedAsset(\'' + id + '\')">💾 Save Changes</button>';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function saveEditedAsset(id) {
+  const a = assets.find(x => x.id === id);
+  if (!a) return;
+  const newName = document.getElementById('edit-name').value.trim();
+  if (!newName) { toast('Asset name is required', '⚠', true); return; }
+  const oldCond = a.condition;
+  const newCond = document.getElementById('edit-cond').value;
+  // Log condition change in history
+  if (oldCond !== newCond) {
+    if (!a.conditionHistory) a.conditionHistory = [];
+    a.conditionHistory.push({ from: oldCond, to: newCond, ts: Date.now(), user: 'Admin User' });
+  }
+  a.name      = newName;
+  a.type      = document.getElementById('edit-type').value;
+  a.condition = newCond;
+  a.geom      = document.getElementById('edit-geom').value;
+  a.lat       = document.getElementById('edit-lat').value;
+  a.lng       = document.getElementById('edit-lng').value;
+  a.material  = document.getElementById('edit-material').value;
+  a.elev      = document.getElementById('edit-elev').value;
+  a.agent     = document.getElementById('edit-agent').value;
+  a.date      = document.getElementById('edit-date').value;
+  a.nextInspection = document.getElementById('edit-inspect').value;
+  a.notes     = document.getElementById('edit-notes').value;
+  addAudit('ASSET_UPDATED', id, 'Admin User', a.name + ' updated' + (oldCond !== newCond ? ' — condition: ' + oldCond + ' → ' + newCond : ''));
+  save(); renderAssets(); renderDashboard();
+  closeModal();
+  toast('Asset ' + id + ' saved', '✎');
 }
 
 // ── ASSET DETAIL MODAL ──
@@ -2067,16 +2476,130 @@ function showAssetDetail(a) {
     html = '<div style="color:var(--text3);font-size:13px;padding:16px;text-align:center">No properties to display.</div>';
   }
 
-  document.getElementById('modal-body-inner').innerHTML = html;
+  // Build tabs: Details | History | Maintenance
+  const histHtml = buildConditionHistory(a);
+  const maintHtml = buildMaintenanceLog(a);
+  const tabHtml = `
+    <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:16px;gap:0;flex-wrap:wrap">
+      <button id="dtab-details" onclick="switchDetailTab('details','${a.id}')" style="padding:8px 16px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;border-radius:6px 6px 0 0;margin-right:2px">📋 Details</button>
+      <button id="dtab-history" onclick="switchDetailTab('history','${a.id}')" style="padding:8px 16px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;border-radius:6px 6px 0 0;margin-right:2px">📈 History</button>
+      <button id="dtab-maint"   onclick="switchDetailTab('maint','${a.id}')"   style="padding:8px 16px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;border-radius:6px 6px 0 0;margin-right:2px">🔧 Maintenance</button>
+      <button id="dtab-photos"  onclick="switchDetailTab('photos','${a.id}')"  style="padding:8px 16px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;border-radius:6px 6px 0 0">📷 Photos</button>
+    </div>
+    <div id="dtab-content-details">${html}</div>
+    <div id="dtab-content-history" style="display:none">${histHtml}</div>
+    <div id="dtab-content-maint"   style="display:none">${maintHtml}</div>
+    <div id="dtab-content-photos"  style="display:none"><div id="photo-gallery-${a.id}"><div style="color:var(--text3);font-size:12px;padding:8px">Loading photos…</div></div></div>`;
+  document.getElementById('modal-body-inner').innerHTML = tabHtml;
   const lat = parseFloat(a.lat), lng = parseFloat(a.lng);
   const mapsBtn = (!isNaN(lat) && !isNaN(lng))
-    ? `<a class="btn btn-secondary btn-sm" href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank" style="text-decoration:none">📍 View on Google Maps</a>`
+    ? `<a class="btn btn-secondary btn-sm" href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank" style="text-decoration:none">📍 Maps</a>`
     : '';
   document.getElementById('modal-footer').innerHTML =
     '<button class="btn btn-secondary" onclick="closeModal()">Close</button>' +
+    '<button class="btn btn-primary btn-sm" onclick="closeModal();openEditModal(\'' + a.id + '\')">✎ Edit</button>' +
+    '<button class="btn btn-secondary btn-sm" onclick="openQRModal(\'' + a.id + '\')">⬡ QR Code</button>' +
     mapsBtn +
     '<button class="btn btn-danger btn-sm" onclick="deleteAsset(\'' + a.id + '\');closeModal()">Delete</button>';
   document.getElementById('modal-overlay').classList.add('open');
+}
+
+function switchDetailTab(tab, assetId) {
+  ['details','history','maint','photos'].forEach(t => {
+    const el = document.getElementById('dtab-content-' + t);
+    if (el) el.style.display = t === tab ? 'block' : 'none';
+    const btn = document.getElementById('dtab-' + t);
+    if (btn) {
+      btn.style.background = t === tab ? 'var(--accent)' : 'var(--surface2)';
+      btn.style.color = t === tab ? '#fff' : 'var(--text2)';
+    }
+  });
+  if (tab === 'photos') renderPhotoGallery(assetId, 'photo-gallery-' + assetId);
+}
+
+function buildConditionHistory(a) {
+  const history = a.conditionHistory || [];
+  if (!history.length) {
+    return '<div style="text-align:center;padding:32px;color:var(--text3)"><div style="font-size:28px;margin-bottom:8px">📈</div><div>No condition changes recorded yet.</div><div style="font-size:11px;margin-top:6px">Edit this asset and change its condition to start tracking.</div></div>';
+  }
+  const condColors2 = { Good:'var(--accent)', Fair:'var(--warn)', Poor:'var(--accent3)', Critical:'var(--danger)' };
+  const initial = { from: null, to: history[0].from, ts: a.ts || Date.now() - 86400000*30, user: a.agent || 'System' };
+  const all = [initial, ...history];
+  return '<div style="padding-left:16px;border-left:2px solid var(--border)">' +
+    all.map((h, i) => {
+      const isLast = i === all.length - 1;
+      return `<div style="position:relative;padding:0 0 20px 20px">
+        <div style="position:absolute;left:-7px;top:3px;width:12px;height:12px;border-radius:50%;background:${condColors2[h.to]||'var(--border2)'};border:2px solid var(--bg)"></div>
+        <div style="font-size:12px;font-weight:600;color:var(--text)">${h.to ? '→ <span style="color:'+condColors2[h.to]+'">' + h.to + '</span>' : '<span style="color:var(--text3)">Initial state</span>'}</div>
+        ${h.from ? '<div style="font-size:11px;color:var(--text3)">from ' + h.from + '</div>' : ''}
+        <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;margin-top:3px">${new Date(h.ts).toLocaleString()} · ${h.user}</div>
+      </div>`;
+    }).join('') + '</div>';
+}
+
+// ── FEATURE 7 (part): MAINTENANCE LOG ──
+function buildMaintenanceLog(a) {
+  const logs = a.maintenanceLogs || [];
+  const logRows = logs.length ? logs.map((l, i) =>
+    `<tr>
+      <td style="font-family:'Space Mono',monospace;font-size:10px">${l.date}</td>
+      <td>${l.desc}</td>
+      <td>${l.tech||'—'}</td>
+      <td style="font-family:'Space Mono',monospace;font-size:11px;color:var(--accent)">₦${Number(l.cost||0).toLocaleString()}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="deleteMaintLog('${a.id}',${i})">✕</button></td>
+    </tr>`).join('')
+    : '<tr><td colspan="5" style="text-align:center;color:var(--text3);padding:20px;font-size:12px">No maintenance records yet.</td></tr>';
+  const total = logs.reduce((s,l) => s + Number(l.cost||0), 0);
+  return `<div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px">MAINTENANCE LOG</div>
+      <div style="font-size:12px;color:var(--accent);font-weight:600">Total: ₦${total.toLocaleString()}</div>
+    </div>
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px">
+      <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;margin-bottom:10px">ADD MAINTENANCE ENTRY</div>
+      <div class="form-grid" style="gap:8px">
+        <div class="form-group"><label class="form-label">Date</label><input class="form-control" id="ml-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+        <div class="form-group"><label class="form-label">Cost (₦)</label><input class="form-control" id="ml-cost" type="number" placeholder="0"></div>
+        <div class="form-group"><label class="form-label">Technician</label><input class="form-control" id="ml-tech" placeholder="Name"></div>
+        <div class="form-group"><label class="form-label">Description</label><input class="form-control" id="ml-desc" placeholder="What was done"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" style="margin-top:10px;width:100%" onclick="addMaintLog('${a.id}')">+ Add Entry</button>
+    </div>
+    <div class="data-table-wrap" style="margin-bottom:0">
+      <table class="data-table">
+        <thead><tr><th>Date</th><th>Description</th><th>Technician</th><th>Cost (₦)</th><th></th></tr></thead>
+        <tbody>${logRows}</tbody>
+      </table>
+    </div>
+  </div>`;
+}
+
+function addMaintLog(assetId) {
+  const a = assets.find(x => x.id === assetId);
+  if (!a) return;
+  const desc = document.getElementById('ml-desc').value.trim();
+  if (!desc) { toast('Description required', '⚠', true); return; }
+  if (!a.maintenanceLogs) a.maintenanceLogs = [];
+  a.maintenanceLogs.push({
+    date: document.getElementById('ml-date').value,
+    cost: document.getElementById('ml-cost').value || 0,
+    tech: document.getElementById('ml-tech').value,
+    desc
+  });
+  addAudit('MAINTENANCE_LOGGED', assetId, 'Admin User', desc);
+  save();
+  // Refresh the maintenance tab
+  document.getElementById('dtab-content-maint').innerHTML = buildMaintenanceLog(a);
+  toast('Maintenance entry added', '🔧');
+}
+
+function deleteMaintLog(assetId, idx) {
+  const a = assets.find(x => x.id === assetId);
+  if (!a || !a.maintenanceLogs) return;
+  a.maintenanceLogs.splice(idx, 1);
+  save();
+  document.getElementById('dtab-content-maint').innerHTML = buildMaintenanceLog(a);
+  toast('Entry removed', '🗑');
 }
 
 // ── CAPTURE ──
@@ -2367,6 +2890,76 @@ function openCaptureModal() {
 function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
 document.getElementById('modal-overlay').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
 
+// ── FEATURE 6: BULK ACTIONS ──
+let selectedAssetIds = new Set();
+
+function onAssetRowCheck() {
+  selectedAssetIds = new Set([...document.querySelectorAll('.asset-row-check:checked')].map(c => c.dataset.id));
+  updateBulkBar();
+}
+
+function toggleSelectAllAssets(checked) {
+  document.querySelectorAll('.asset-row-check').forEach(c => { c.checked = checked; });
+  selectedAssetIds = checked ? new Set([...document.querySelectorAll('.asset-row-check')].map(c => c.dataset.id)) : new Set();
+  updateBulkBar();
+}
+
+function updateBulkBar() {
+  const bar = document.getElementById('bulk-action-bar');
+  const n = selectedAssetIds.size;
+  if (n === 0) { bar.classList.remove('visible'); return; }
+  bar.classList.add('visible');
+  document.getElementById('bulk-count-label').textContent = n + ' asset' + (n > 1 ? 's' : '') + ' selected';
+}
+
+function clearBulkSelection() {
+  selectedAssetIds.clear();
+  document.querySelectorAll('.asset-row-check').forEach(c => c.checked = false);
+  const sa = document.getElementById('select-all-assets');
+  if (sa) sa.checked = false;
+  updateBulkBar();
+}
+
+function bulkDelete() {
+  const n = selectedAssetIds.size;
+  if (!n) return;
+  if (!confirm('Delete ' + n + ' selected asset(s)? This cannot be undone.')) return;
+  assets = assets.filter(a => !selectedAssetIds.has(a.id));
+  addAudit('BULK_DELETE', 'MULTIPLE', 'Admin User', n + ' assets deleted');
+  save(); clearBulkSelection(); renderAssets(); renderDashboard();
+  toast(n + ' assets deleted', '🗑');
+}
+
+function bulkExportCSV() {
+  const selected = assets.filter(a => selectedAssetIds.has(a.id));
+  if (!selected.length) return;
+  const headers = ['ID','Name','Type','Geometry','Latitude','Longitude','Condition','Material','Agent','Date'];
+  const rows = selected.map(a => [a.id,a.name,a.type,a.geom,a.lat,a.lng,a.condition,a.material||'',a.agent,a.date]);
+  const csv = [headers,...rows].map(r => r.join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const link = document.createElement('a'); link.href=URL.createObjectURL(blob);
+  link.download='selected_assets.csv'; link.click();
+  toast(selected.length + ' assets exported', '⬇');
+}
+
+function bulkUpdateCondition() {
+  const cond = prompt('Set condition for ' + selectedAssetIds.size + ' selected assets:\nGood / Fair / Poor / Critical');
+  if (!cond || !['Good','Fair','Poor','Critical'].includes(cond)) { toast('Invalid condition', '⚠', true); return; }
+  selectedAssetIds.forEach(id => {
+    const a = assets.find(x => x.id === id);
+    if (!a) return;
+    const old = a.condition;
+    if (old !== cond) {
+      if (!a.conditionHistory) a.conditionHistory = [];
+      a.conditionHistory.push({ from: old, to: cond, ts: Date.now(), user: 'Admin User (Bulk)' });
+      a.condition = cond;
+    }
+  });
+  addAudit('BULK_UPDATE', 'MULTIPLE', 'Admin User', selectedAssetIds.size + ' assets → ' + cond);
+  save(); clearBulkSelection(); renderAssets();
+  toast(selectedAssetIds.size + ' assets updated to ' + cond, '✎');
+}
+
 // ── EXPORT ──
 function exportCSV() {
   const headers = ['ID','Name','Type','Geometry','Latitude','Longitude','Condition','Material','Elevation','Area','Agent','Date','Notes'];
@@ -2415,14 +3008,101 @@ function timeAgo(ts) {
   return Math.floor(d/86400000) + 'd ago';
 }
 
+// ── FEATURE 5: INDEXEDDB PHOTO STORAGE ──
+let photoDB = null;
+function initPhotoDB() {
+  return new Promise((res, rej) => {
+    const req = indexedDB.open('AssetSpatialPhotos', 1);
+    req.onupgradeneeded = e => e.target.result.createObjectStore('photos', { keyPath: 'key' });
+    req.onsuccess = e => { photoDB = e.target.result; res(); };
+    req.onerror = () => { console.warn('IndexedDB unavailable'); res(); };
+  });
+}
+function savePhoto(assetId, dataUrl) {
+  if (!photoDB) return Promise.resolve();
+  return new Promise((res) => {
+    const key = assetId + '_' + Date.now();
+    const tx = photoDB.transaction('photos','readwrite');
+    tx.objectStore('photos').put({ key, assetId, dataUrl, ts: Date.now() });
+    tx.oncomplete = res;
+  });
+}
+function getPhotos(assetId) {
+  if (!photoDB) return Promise.resolve([]);
+  return new Promise((res) => {
+    const tx = photoDB.transaction('photos','readonly');
+    const store = tx.objectStore('photos');
+    const results = [];
+    store.openCursor().onsuccess = e => {
+      const cursor = e.target.result;
+      if (cursor) { if (cursor.value.assetId === assetId) results.push(cursor.value); cursor.continue(); }
+      else res(results.sort((a,b) => a.ts - b.ts));
+    };
+  });
+}
+function deletePhoto(key) {
+  if (!photoDB) return Promise.resolve();
+  return new Promise((res) => {
+    const tx = photoDB.transaction('photos','readwrite');
+    tx.objectStore('photos').delete(key);
+    tx.oncomplete = res;
+  });
+}
+async function renderPhotoGallery(assetId, containerId) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  const photos = await getPhotos(assetId);
+  if (!photos.length) {
+    el.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:12px 0">No photos yet. Use Field Capture to attach images.</div>';
+    return;
+  }
+  el.innerHTML = '<div class="photo-gallery">' +
+    photos.map(p => `<div class="photo-thumb">
+      <img src="${p.dataUrl}" onclick="openLightbox('${p.dataUrl}')" loading="lazy">
+      <button class="del-photo" onclick="event.stopPropagation();deletePhotoFromGallery('${p.key}','${assetId}','${containerId}')">✕</button>
+    </div>`).join('') + '</div>';
+}
+async function deletePhotoFromGallery(key, assetId, containerId) {
+  await deletePhoto(key);
+  renderPhotoGallery(assetId, containerId);
+  toast('Photo deleted', '🗑');
+}
+function openLightbox(src) {
+  const lb = document.createElement('div');
+  lb.className = 'photo-lightbox';
+  lb.innerHTML = '<img src="' + src + '">';
+  lb.onclick = () => lb.remove();
+  document.body.appendChild(lb);
+}
+
+// Patch captureAsset to also save photo to IndexedDB
+const _origCapture = window.captureAsset;
+
 // ── INIT ──
-renderDashboard();
+initPhotoDB().then(() => renderDashboard());
 </script>
+
+<!-- ════ QR CODE MODAL ════ -->
+<div id="qr-modal-overlay">
+  <div class="qr-modal-box">
+    <div class="qr-asset-label" id="qr-asset-name">ASSET NAME</div>
+    <div class="qr-asset-id" id="qr-asset-id">AST-0000</div>
+    <canvas id="qr-canvas" width="200" height="200"></canvas>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:16px">Scan to open asset record</div>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-primary" onclick="downloadQR()">⬇ Download PNG</button>
+      <button class="btn btn-secondary" onclick="printQR()">🖨 Print</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('qr-modal-overlay').classList.remove('open')">Close</button>
+    </div>
+  </div>
+</div>
 
 <!-- ── External libs ── -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/5.0.4/tesseract.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
 // ══════════════════════════════════════════════════════════════════
@@ -3488,6 +4168,252 @@ if (typeof _origNav === 'function') {
     _origNav(el);
     if (el && el.dataset && el.dataset.page === 'viz') setTimeout(renderViz, 50);
   };
+}
+
+// ══════════════════════════════════════════════════════════════════
+// FEATURE 9: DARK MODE
+// ══════════════════════════════════════════════════════════════════
+function toggleDarkMode() {
+  const isDark = document.body.classList.toggle('dark-mode');
+  LS.set('asdm_darkmode', isDark);
+  const label = document.getElementById('dm-label');
+  const btn = document.getElementById('dark-mode-toggle');
+  if (isDark) { label.textContent = 'Light'; btn.textContent = '☀ '; btn.appendChild(label); }
+  else { label.textContent = 'Dark'; btn.textContent = '🌙 '; btn.appendChild(label); }
+}
+
+// Restore dark mode preference on load
+(function() {
+  const saved = LS.get('asdm_darkmode');
+  if (saved) {
+    document.body.classList.add('dark-mode');
+    const label = document.getElementById('dm-label');
+    const btn = document.getElementById('dark-mode-toggle');
+    if (label && btn) { label.textContent = 'Light'; btn.textContent = '☀ '; btn.appendChild(label); }
+  }
+})();
+
+// ══════════════════════════════════════════════════════════════════
+// FEATURE 8: QR CODE PER ASSET
+// ══════════════════════════════════════════════════════════════════
+let currentQRAssetId = null;
+
+function openQRModal(assetId) {
+  const a = assets.find(x => x.id === assetId);
+  if (!a) return;
+  currentQRAssetId = assetId;
+  document.getElementById('qr-asset-name').textContent = a.name || a.id;
+  document.getElementById('qr-asset-id').textContent = a.id + (a.lat ? ' · ' + parseFloat(a.lat).toFixed(4) + '°N, ' + parseFloat(a.lng).toFixed(4) + '°E' : '');
+  
+  const canvas = document.getElementById('qr-canvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, 200, 200);
+  
+  // Build QR data string
+  const qrData = JSON.stringify({ id: a.id, name: a.name, type: a.type, lat: a.lat, lng: a.lng, app: 'AssetSpatial' });
+  
+  // Use QRCode library if available, fallback to canvas drawing
+  const qrWrap = document.createElement('div');
+  qrWrap.style.display = 'none';
+  document.body.appendChild(qrWrap);
+  
+  try {
+    new QRCode(qrWrap, {
+      text: qrData,
+      width: 200,
+      height: 200,
+      colorDark: '#0f2e1c',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.M
+    });
+    setTimeout(() => {
+      const img = qrWrap.querySelector('img') || qrWrap.querySelector('canvas');
+      if (img) {
+        if (img.tagName === 'CANVAS') {
+          ctx.drawImage(img, 0, 0, 200, 200);
+        } else {
+          const i = new Image();
+          i.onload = () => ctx.drawImage(i, 0, 0, 200, 200);
+          i.src = img.src;
+        }
+      }
+      qrWrap.remove();
+    }, 100);
+  } catch(e) {
+    // Fallback: simple canvas QR placeholder with text
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 200, 200);
+    ctx.fillStyle = '#0f2e1c';
+    ctx.font = 'bold 11px Space Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('QR: ' + a.id, 100, 90);
+    ctx.fillText(a.type || '', 100, 110);
+    ctx.fillText('AssetSpatial', 100, 130);
+    qrWrap.remove();
+  }
+  
+  document.getElementById('qr-modal-overlay').classList.add('open');
+}
+
+function downloadQR() {
+  const canvas = document.getElementById('qr-canvas');
+  const a = document.createElement('a');
+  a.download = 'QR_' + (currentQRAssetId || 'asset') + '.png';
+  a.href = canvas.toDataURL('image/png');
+  a.click();
+  toast('QR code downloaded', '⬇');
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// FEATURE 10: PDF REPORT EXPORT
+// ══════════════════════════════════════════════════════════════════
+async function generatePDFReport() {
+  if (typeof window.jspdf === 'undefined') {
+    toast('PDF library loading, please try again in a moment', '⚠', true);
+    return;
+  }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = 210, marginL = 16, marginR = 16, contentW = W - marginL - marginR;
+  const today = new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' });
+  const orgName = settings.org || 'AssetSpatial Platform';
+
+  // ── COVER PAGE ──
+  doc.setFillColor(0, 135, 83);
+  doc.rect(0, 0, W, 60, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(28);
+  doc.text('ASSET MANAGEMENT', marginL, 28);
+  doc.text('REPORT', marginL, 40);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'normal');
+  doc.text(orgName, marginL, 52);
+
+  doc.setTextColor(70, 90, 80);
+  doc.setFontSize(10);
+  doc.text('Generated: ' + today, marginL, 72);
+  doc.text('Total Assets: ' + assets.length, marginL, 80);
+  doc.text('Field Agents: ' + users.filter(u=>u.role==='Field Agent').length, marginL, 88);
+
+  // ── KPI BOXES ──
+  const conds = ['Good','Fair','Poor','Critical'];
+  const condColors = [[0,135,83],[230,167,0],[255,107,53],[214,69,69]];
+  const condCounts = conds.map(c => assets.filter(a=>a.condition===c).length);
+  const kpiY = 102;
+  const kpiW = (contentW - 9) / 4;
+  conds.forEach((c, i) => {
+    const x = marginL + i * (kpiW + 3);
+    doc.setFillColor(...condColors[i]);
+    doc.roundedRect(x, kpiY, kpiW, 20, 2, 2, 'F');
+    doc.setTextColor(255,255,255);
+    doc.setFont('helvetica','bold');
+    doc.setFontSize(16);
+    doc.text(String(condCounts[i]), x + kpiW/2, kpiY + 12, { align:'center' });
+    doc.setFontSize(7);
+    doc.setFont('helvetica','normal');
+    doc.text(c.toUpperCase(), x + kpiW/2, kpiY + 18, { align:'center' });
+  });
+
+  // ── SECTION: ASSET TABLE ──
+  doc.setTextColor(15, 46, 28);
+  doc.setFontSize(13);
+  doc.setFont('helvetica','bold');
+  doc.text('ASSET REGISTRY', marginL, 136);
+  doc.setDrawColor(0, 135, 83);
+  doc.setLineWidth(0.5);
+  doc.line(marginL, 138, W - marginR, 138);
+
+  // Table header
+  const cols = ['ID', 'Name', 'Type', 'Condition', 'Agent', 'Date'];
+  const colW = [22, 52, 32, 22, 32, 24];
+  let y = 144;
+  doc.setFillColor(233, 245, 239);
+  doc.rect(marginL, y-4, contentW, 7, 'F');
+  doc.setTextColor(70, 107, 90);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(7);
+  let cx = marginL;
+  cols.forEach((c,i) => { doc.text(c, cx+1, y); cx += colW[i]; });
+  y += 5;
+
+  doc.setFont('helvetica','normal');
+  doc.setFontSize(7.5);
+  const condBg = { Good:[204,240,220], Fair:[255,240,180], Poor:[255,215,190], Critical:[245,190,190] };
+  
+  assets.slice(0, 60).forEach((a, idx) => {
+    if (y > 270) { doc.addPage(); y = 20; }
+    if (idx % 2 === 0) { doc.setFillColor(245,247,246); doc.rect(marginL, y-3.5, contentW, 6, 'F'); }
+    doc.setTextColor(15,46,28);
+    cx = marginL;
+    const row = [a.id, (a.name||'').slice(0,26), (a.type||'').slice(0,18), a.condition||'', (a.agent||'').slice(0,18), a.date||''];
+    row.forEach((v, i) => {
+      if (i === 3 && condBg[v]) {
+        doc.setFillColor(...condBg[v]);
+        doc.roundedRect(cx, y-3, colW[i]-2, 5, 1, 1, 'F');
+        doc.setTextColor(15,46,28);
+      }
+      doc.text(String(v||''), cx+1, y); cx += colW[i];
+    });
+    y += 6;
+  });
+
+  if (assets.length > 60) {
+    doc.setTextColor(122, 155, 137);
+    doc.setFontSize(8);
+    doc.text('... and ' + (assets.length - 60) + ' more records', marginL, y + 4);
+    y += 10;
+  }
+
+  // ── TYPE BREAKDOWN PAGE ──
+  doc.addPage();
+  doc.setFillColor(0, 135, 83);
+  doc.rect(0, 0, W, 18, 'F');
+  doc.setTextColor(255,255,255);
+  doc.setFont('helvetica','bold');
+  doc.setFontSize(12);
+  doc.text('ASSET TYPE BREAKDOWN', marginL, 12);
+  
+  y = 30;
+  const types = ['Infrastructure','Land / Property','Utility','Environmental','Equipment'];
+  const typeColors2 = [[0,135,83],[0,168,107],[230,167,0],[214,69,69],[46,134,193]];
+  const typeCounts = types.map(t => assets.filter(a=>a.type===t).length);
+  const total = assets.length || 1;
+
+  doc.setTextColor(15,46,28);
+  types.forEach((t, i) => {
+    const cnt = typeCounts[i];
+    const pct = Math.round(cnt/total*100);
+    doc.setFontSize(10);
+    doc.setFont('helvetica','bold');
+    doc.text(t, marginL, y);
+    doc.setFont('helvetica','normal');
+    doc.setFontSize(8);
+    doc.setTextColor(122,155,137);
+    doc.text(cnt + ' assets (' + pct + '%)', W - marginR - 30, y);
+    doc.setFillColor(...typeColors2[i]);
+    const barW = Math.max((cnt/total)*140, cnt?2:0);
+    doc.roundedRect(marginL, y+2, barW, 5, 1, 1, 'F');
+    doc.setFillColor(225,235,228);
+    doc.roundedRect(marginL + barW, y+2, 140-barW, 5, 1, 1, 'F');
+    doc.setTextColor(15,46,28);
+    y += 20;
+  });
+
+  // ── FOOTER ──
+  const pageCount = doc.internal.getNumberOfPages();
+  for (let p = 1; p <= pageCount; p++) {
+    doc.setPage(p);
+    doc.setFontSize(7);
+    doc.setTextColor(122,155,137);
+    doc.text('AssetSpatial Platform — ' + today + ' — Page ' + p + ' of ' + pageCount, W/2, 290, { align:'center' });
+  }
+
+  doc.save('AssetSpatial_Report_' + new Date().toISOString().slice(0,10) + '.pdf');
+  addAudit('EXPORT', 'ALL', 'Admin User', 'PDF report generated');
+  save();
+  toast('PDF report downloaded', '📄');
 }
 </script>
 </body>

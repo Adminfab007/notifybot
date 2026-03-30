@@ -1,0 +1,117 @@
+Let me do a thorough read of the whole file first before giving you a proper answer.Now I have a very thorough understanding of every page and feature. Let me give you a comprehensive, honest analysis.Good, I have the design system loaded. Now let me give you a thorough, honest breakdown followed by a visual roadmap.
+
+Here's my full assessment after reading every page, every function, and every data structure:
+
+**What the platform is:** A field asset management system — likely for infrastructure teams in Nigeria (the Nigeria green theme, Lagos coordinates, field agents like "Emeka Obi", "Aisha Bello"). The core workflow is: field agents capture physical assets (bridges, pipes, land parcels, utility poles) via GPS, then supervisors review them on a map and in analytics.
+
+**What exists and actually works:**
+- Field Capture form with real GPS, type-specific sub-forms, media upload
+- Asset Registry with search/filter
+- Real Google Maps with road/satellite/hybrid toggle
+- Excel import with column mapping + auto-categorisation
+- OCR scanner (image + document) via Tesseract.js
+- Chart.js data visualisation
+- Audit log
+- User management
+
+**What exists but is broken or fake:**
+- The "Live" badge on the map — nothing is live
+- Settings toggles (Offline Mode, Auto Geocoding, Webhooks) do nothing
+- The OCR → database pipeline loses data in complex cases
+- No actual edit capability on assets (view and delete only)
+- The preview map in Field Capture is still a fake CSS grid
+- Media uploads preview locally but aren't stored (localStorage workaround is fragile)
+
+Now here are the 10 highest-impact features I'd add:Here's my honest read of the platform after going through every page and function:
+
+**The core idea is solid** — it's a field asset management system for infrastructure teams (you can see the Nigeria DNA in the green palette, Lagos coordinates, and the field agent names). The workflow makes sense: capture in the field → review on the map → analyse in the dashboard → import from Excel.
+
+**The biggest structural hole** is that there's no *edit* on assets — only view and delete. That means the moment a condition changes in the real world, you have no way to update the record. That alone makes it more of a data entry tool than an asset management tool.
+
+**The second biggest gap** is that there's no *time dimension* — you can see what condition assets are in right now, but not how they got there, what's due for inspection, or what they've cost. That's what separates a spreadsheet from an actual management platform.
+
+Click any card above to have me build that feature directly into your file. I'd start with **1 (edit)** and **2 (inspection scheduling)** since those are the ones that turn this from a database viewer into something people would actually rely on daily.
+
+
+1
+Inline asset editing
+🔥 Critical
+Right now you can only view or delete assets. Add an Edit button that opens a pre-filled form in the modal — users fix condition, update notes, correct coordinates — and saves back. Without this the database gets stale.
+Asset Registry
+Modal form
+localStorage
+2
+Inspection scheduling & alerts
+🔥 Critical
+The biggest gap for a real asset management tool. Each asset needs a next inspection date. Overdue assets should appear in a red alert panel on the dashboard. A "Due this week" list turns this from a database into an operational tool.
+Dashboard
+Alerts panel
+Date logic
+3
+Condition change history
+🔥 Critical
+Every time condition changes (Good → Fair → Poor), log it with a timestamp. Show a mini timeline in the asset detail modal. This is the difference between a snapshot tool and a real asset lifecycle tracker.
+Asset detail modal
+Timeline UI
+Change log
+4
+Global search
+High
+A search bar in the top header that searches across assets, users, and audit entries simultaneously. Results appear in a dropdown as you type, grouped by type. Click a result to jump straight to it. Currently you have to know which page to search on.
+Header
+Instant search
+All pages
+5
+Persistent photo gallery
+High
+Media uploads currently vanish on page refresh because blob URLs are temporary. Store images properly in IndexedDB so they survive refreshes. Show a thumbnail grid in the asset detail. This makes field photos actually useful.
+IndexedDB
+Field Capture
+Asset detail
+6
+Bulk actions in Asset Registry
+Medium
+Add checkboxes to each row. When rows are selected, a floating action bar appears at the bottom with: bulk delete, export selected to CSV, bulk update condition. Essential when importing 50+ assets via Excel and needing to clean them up.
+Asset Registry
+Checkboxes
+Bulk CSV export
+7
+Maintenance cost tracker
+Medium
+A maintenance log on each asset: date, cost (₦), technician, description. Total lifetime cost shown on the asset detail. A cost-by-type bar chart on the Analytics page. This turns the platform into something that can justify its budget.
+Asset detail
+Cost log
+Analytics
+8
+QR code per asset
+Medium
+Generate a printable QR code for each asset encoding its ID and coordinates. Stick it on the physical asset. Field agents scan it to jump straight to that asset's record. Uses a CDN QR library — no backend needed.
+Asset detail
+QR library
+Print-friendly
+9
+Dark mode
+Medium
+A sun/moon toggle in the header. Field agents use this on phones outdoors and indoors — dark mode matters. Store preference in localStorage. All CSS variables are already structured to support this cleanly.
+CSS variables
+Header toggle
+localStorage
+10
+PDF report export
+Medium
+A "Generate Report" button that produces a formatted PDF: cover page with org name + date, KPI summary, full asset table with condition badges, and per-type breakdown charts. This is what gets sent to management and clients.
+PDF export
+jsPDF
+
+
+function printQR() {
+  const canvas = document.getElementById('qr-canvas');
+  const a = assets.find(x => x.id === currentQRAssetId);
+  const w = window.open('', '_blank');
+  w.document.write(`<!DOCTYPE html><html><head><title>QR — ${currentQRAssetId}</title>
+    <style>body{font-family:monospace;text-align:center;padding:40px}img{width:200px;height:200px;border:1px solid #ccc}h2{font-size:20px;margin-bottom:4px}p{font-size:11px;color:#666;margin:0}</style></head>
+    <body><h2>${a ? a.name : currentQRAssetId}</h2><p>${currentQRAssetId}</p><br>
+    <img src="${canvas.toDataURL()}"><br><br><p>AssetSpatial Platform</p>
+    <script>window.onload=()=>window.print()<\/script></body></html>`);
+  w.document.close();
+}
