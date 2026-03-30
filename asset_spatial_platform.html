@@ -932,27 +932,45 @@ closeBtn.addEventListener("click", function () {
     <div id="page-map" class="page">
       <div class="section-header">
         <div class="section-title">LIVE ASSET MAP</div>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <span class="tag tag-green">● LIVE</span>
           <span id="map-asset-count" style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text3)">0 assets</span>
+          <!-- Map type toggle -->
+          <div style="display:flex;border:1px solid var(--border2);border-radius:6px;overflow:hidden;margin-left:8px" id="map-type-toggle">
+            <button id="mtype-road" onclick="setMapType('road')" style="padding:5px 12px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;transition:all 0.15s">🗺 Road</button>
+            <button id="mtype-satellite" onclick="setMapType('satellite')" style="padding:5px 12px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;transition:all 0.15s;border-left:1px solid var(--border)">🛰 Satellite</button>
+            <button id="mtype-hybrid" onclick="setMapType('hybrid')" style="padding:5px 12px;font-size:11px;font-weight:600;border:none;cursor:pointer;background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;transition:all 0.15s;border-left:1px solid var(--border)">🌐 Hybrid</button>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="openAllInGoogleMaps()" title="Open all assets in Google Maps">🗺 Open in Google Maps</button>
         </div>
       </div>
-      <div class="map-container">
-        <div class="map-bg" id="map-canvas">
-          <!-- dots injected here -->
-          <div class="map-overlay">
-            <div class="map-overlay-btn" title="Zoom In">+</div>
-            <div class="map-overlay-btn" title="Zoom Out">−</div>
-            <div class="map-overlay-btn" title="Layers">⊞</div>
-            <div class="map-overlay-btn" title="Measure">⊕</div>
-          </div>
-          <div class="map-legend">
+
+      <!-- GOOGLE MAPS EMBED -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:12px;position:relative;">
+        <div id="gmap-wrap" style="width:100%;height:420px;position:relative;">
+          <iframe
+            id="gmap-iframe"
+            width="100%" height="100%"
+            style="border:0;display:block;"
+            loading="lazy"
+            allowfullscreen
+            referrerpolicy="no-referrer-when-downgrade"
+            src="https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d31597!2d3.3792!3d6.4550!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sng!4v1700000000000">
+          </iframe>
+          <!-- floating legend -->
+          <div style="position:absolute;bottom:12px;left:12px;background:rgba(255,255,255,0.95);border:1px solid var(--border);border-radius:8px;padding:10px 14px;display:flex;gap:14px;font-size:11px;color:var(--text2);box-shadow:0 2px 8px rgba(0,0,0,0.12);pointer-events:none;">
             <span><span class="legend-dot" style="background:var(--accent)"></span>Infrastructure</span>
             <span><span class="legend-dot" style="background:var(--accent2)"></span>Land / Property</span>
             <span><span class="legend-dot" style="background:var(--accent3)"></span>Utility</span>
             <span><span class="legend-dot" style="background:var(--danger)"></span>Environmental</span>
           </div>
-          <div class="map-coords" id="map-coords">6.4550°N, 3.3841°E | WGS84</div>
+          <!-- map type badge overlay -->
+          <div id="map-type-badge" style="position:absolute;top:12px;left:12px;background:rgba(0,0,0,0.55);color:#fff;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:1px;padding:4px 9px;border-radius:4px;pointer-events:none;text-transform:uppercase;">ROAD</div>
+        </div>
+        <!-- asset chip strip below map -->
+        <div id="map-chip-strip" style="display:flex;gap:8px;flex-wrap:wrap;padding:12px 14px;border-top:1px solid var(--border);background:var(--surface2);min-height:44px;align-items:center;">
+          <span style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-right:4px;">ASSETS →</span>
+          <span style="font-size:11px;color:var(--text3)" id="map-chip-empty">Add assets to see them on the map</span>
         </div>
       </div>
 
@@ -1076,11 +1094,11 @@ document.addEventListener("click", function (e) {
                 <div class="gps-field">
                   <span class="gps-value" id="cap-coords-display">—</span>
                   <span class="gps-lock" id="gps-accuracy"></span>
-                  <button class="btn-gps" onclick="simulateGPS()">📡 Get GPS</button>
+                  <button class="btn-gps" onclick="simulateGPS()">📡 Get My Location</button>
                 </div>
                 <input type="hidden" id="cap-lat">
                 <input type="hidden" id="cap-lng">
-                <div class="form-hint" style="margin-top:4px">Click "Get GPS" to simulate coordinate capture</div>
+                <div class="form-hint" style="margin-top:4px">Click to capture your real GPS coordinates</div>
               </div>
               <div class="form-group">
                 <label class="form-label">Elevation (m)</label>
@@ -1349,70 +1367,209 @@ cameraInput.addEventListener('change', (e) => previewFiles(e.target.files));
     <!-- ════════════ OCR SCANNER ════════════ -->
     <div id="page-ocr" class="page">
       <div class="section-header" style="margin-bottom:4px">
-        <div class="section-title">OCR DOCUMENT SCANNER</div>
-        <span class="tag tag-blue" style="font-size:9px">Tesseract.js</span>
+        <div class="section-title">OCR SCANNER</div>
+        <div style="display:flex;gap:6px">
+          <span class="tag tag-blue" style="font-size:9px">Tesseract.js</span>
+          <span class="tag tag-green" style="font-size:9px">PDF.js</span>
+        </div>
       </div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:18px">Scan physical field sheets, survey forms, or printed asset records. Extracted text is automatically parsed and can be added to the database.</div>
-      <div class="two-col">
-        <div>
-          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px">
-            <div id="ocr-dropzone" style="border:2px dashed var(--border2);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:border-color 0.2s;margin-bottom:16px" onclick="document.getElementById('ocr-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="ocrDrop(event)">
-              <div style="font-size:32px;margin-bottom:8px">&#128247;</div>
-              <div style="font-size:13px;color:var(--text2);margin-bottom:4px">Drop image here or click to browse</div>
-              <div style="font-size:11px;color:var(--text3)">Supports: JPG, PNG, WEBP, BMP</div>
-              <input type="file" id="ocr-file" accept="image/*" style="display:none" onchange="ocrLoad(this.files[0])">
-            </div>
-            <div id="ocr-preview-wrap" style="display:none;margin-bottom:16px;text-align:center">
-              <img id="ocr-img" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border)">
-            </div>
-            <div id="ocr-progress" style="display:none;margin-bottom:14px">
-              <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:6px" id="ocr-status-text">Initialising...</div>
-              <div style="background:var(--surface2);border-radius:20px;height:6px;overflow:hidden">
-                <div id="ocr-bar" style="height:100%;background:var(--accent);border-radius:20px;width:0%;transition:width 0.3s"></div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:18px">Scan images or read text from PDF / Word documents. Extracted content can be saved as a new document or added to the asset database.</div>
+
+      <!-- ── TAB SWITCHER ── -->
+      <div style="display:flex;gap:0;margin-bottom:20px;border:1px solid var(--border);border-radius:8px;overflow:hidden;width:fit-content">
+        <button id="ocr-tab-img" onclick="switchOCRTab('img')" style="padding:9px 20px;font-size:12.5px;font-weight:600;border:none;cursor:pointer;background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;transition:all 0.15s">
+          📷 Image OCR
+        </button>
+        <button id="ocr-tab-doc" onclick="switchOCRTab('doc')" style="padding:9px 20px;font-size:12.5px;font-weight:600;border:none;cursor:pointer;background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;transition:all 0.15s;border-left:1px solid var(--border)">
+          📄 Document OCR
+        </button>
+      </div>
+
+      <!-- ══════════════════════════════════════
+           TAB A: IMAGE OCR
+      ══════════════════════════════════════ -->
+      <div id="ocr-panel-img">
+        <div class="two-col">
+          <div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px">
+              <div id="ocr-dropzone" style="border:2px dashed var(--border2);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:border-color 0.2s;margin-bottom:16px" onclick="document.getElementById('ocr-file').click()" ondragover="event.preventDefault();this.style.borderColor='var(--accent)'" ondragleave="this.style.borderColor='var(--border2)'" ondrop="ocrDrop(event)">
+                <div style="font-size:32px;margin-bottom:8px">📷</div>
+                <div style="font-size:13px;color:var(--text2);margin-bottom:4px">Drop image here or click to browse</div>
+                <div style="font-size:11px;color:var(--text3)">Supports: JPG, PNG, WEBP, BMP</div>
+                <input type="file" id="ocr-file" accept="image/*" style="display:none" onchange="ocrLoad(this.files[0])">
+              </div>
+              <div id="ocr-preview-wrap" style="display:none;margin-bottom:16px;text-align:center">
+                <img id="ocr-img" style="max-width:100%;max-height:200px;border-radius:8px;border:1px solid var(--border)">
+              </div>
+              <div id="ocr-progress" style="display:none;margin-bottom:14px">
+                <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:6px" id="ocr-status-text">Initialising...</div>
+                <div style="background:var(--surface2);border-radius:20px;height:6px;overflow:hidden">
+                  <div id="ocr-bar" style="height:100%;background:var(--accent);border-radius:20px;width:0%;transition:width 0.3s"></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px">
+                <button class="btn btn-primary" style="flex:1" onclick="runOCR()" id="ocr-btn" disabled>🔍 Run OCR</button>
+                <button class="btn btn-secondary" onclick="clearOCR()">✕ Clear</button>
               </div>
             </div>
-            <div style="display:flex;gap:10px">
-              <button class="btn btn-primary" style="flex:1" onclick="runOCR()" id="ocr-btn" disabled>&#128269; Run OCR</button>
-              <button class="btn btn-secondary" onclick="clearOCR()">&#10005; Clear</button>
-            </div>
-          </div>
-        </div>
-        <div>
-          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
-            <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">EXTRACTED TEXT</div>
-            <textarea id="ocr-output" class="form-control" style="min-height:130px;font-family:'Space Mono',monospace;font-size:11px" placeholder="OCR output will appear here..." oninput="parseOCRText()"></textarea>
-          </div>
-          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px">
-            <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">PARSED ASSET FIELDS</div>
-            <div class="form-grid">
-              <div class="form-group"><label class="form-label">Asset Name</label><input class="form-control" id="op-name" placeholder="Auto-detected"></div>
-              <div class="form-group"><label class="form-label">Asset Type</label>
-                <select class="form-control" id="op-type">
-                  <option value="">Detected...</option>
-                  <option>Infrastructure</option><option>Land / Property</option>
-                  <option>Utility</option><option>Environmental</option><option>Equipment</option>
+
+            <!-- Save panel — appears after image OCR completes -->
+            <div id="ocr-save-doc-panel" style="display:none;margin-top:14px;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:18px">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">💾 SAVE SCANNED CONTENT AS DOCUMENT</div>
+              <div class="form-group" style="margin-bottom:10px">
+                <label class="form-label">Document Title</label>
+                <input class="form-control" id="ocr-doc-title" placeholder="e.g. Field Survey Sheet — March 2026">
+              </div>
+              <div class="form-group" style="margin-bottom:12px">
+                <label class="form-label">Save Format</label>
+                <select class="form-control" id="ocr-doc-format">
+                  <option value="txt">Plain Text (.txt)</option>
+                  <option value="json">Structured JSON (.json)</option>
                 </select>
               </div>
-              <div class="form-group"><label class="form-label">Condition</label>
-                <select class="form-control" id="op-cond"><option>Good</option><option>Fair</option><option>Poor</option><option>Critical</option></select>
-              </div>
-              <div class="form-group"><label class="form-label">Material</label><input class="form-control" id="op-material" placeholder="—"></div>
-              <div class="form-group"><label class="form-label">Latitude</label><input class="form-control" id="op-lat" placeholder="e.g. 6.4550"></div>
-              <div class="form-group"><label class="form-label">Longitude</label><input class="form-control" id="op-lng" placeholder="e.g. 3.3841"></div>
-              <div class="form-group full"><label class="form-label">Notes</label><textarea class="form-control" id="op-notes" style="min-height:60px" placeholder="—"></textarea></div>
+              <button class="btn btn-primary" style="width:100%" onclick="ocrSaveDocument()">⬇ Download as New Document</button>
+              <div style="font-size:11px;color:var(--text3);margin-top:8px">Your scanned text will be packaged as a standalone downloadable file.</div>
             </div>
-            <div style="margin-top:14px;display:flex;gap:10px">
-              <button class="btn btn-primary" style="flex:1" onclick="ocrAddToDatabase()">+ Add to Database</button>
-              <button class="btn btn-secondary" onclick="clearOCRParsed()">Reset</button>
+          </div>
+
+          <div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">EXTRACTED TEXT</div>
+              <textarea id="ocr-output" class="form-control" style="min-height:130px;font-family:'Space Mono',monospace;font-size:11px" placeholder="OCR output will appear here..." oninput="parseOCRText()"></textarea>
+            </div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">PARSED ASSET FIELDS</div>
+              <div class="form-grid">
+                <div class="form-group"><label class="form-label">Asset Name</label><input class="form-control" id="op-name" placeholder="Auto-detected"></div>
+                <div class="form-group"><label class="form-label">Asset Type</label>
+                  <select class="form-control" id="op-type">
+                    <option value="">Detected...</option>
+                    <option>Infrastructure</option><option>Land / Property</option>
+                    <option>Utility</option><option>Environmental</option><option>Equipment</option>
+                  </select>
+                </div>
+                <div class="form-group"><label class="form-label">Condition</label>
+                  <select class="form-control" id="op-cond"><option>Good</option><option>Fair</option><option>Poor</option><option>Critical</option></select>
+                </div>
+                <div class="form-group"><label class="form-label">Material</label><input class="form-control" id="op-material" placeholder="—"></div>
+                <div class="form-group"><label class="form-label">Latitude</label><input class="form-control" id="op-lat" placeholder="e.g. 6.4550"></div>
+                <div class="form-group"><label class="form-label">Longitude</label><input class="form-control" id="op-lng" placeholder="e.g. 3.3841"></div>
+                <div class="form-group full"><label class="form-label">Notes</label><textarea class="form-control" id="op-notes" style="min-height:60px" placeholder="—"></textarea></div>
+              </div>
+              <div style="margin-top:14px;display:flex;gap:10px">
+                <button class="btn btn-primary" style="flex:1" onclick="ocrAddToDatabase()">+ Add to Database</button>
+                <button class="btn btn-secondary" onclick="clearOCRParsed()">Reset</button>
+              </div>
             </div>
           </div>
         </div>
       </div>
-      <div style="margin-top:20px">
+
+      <!-- ══════════════════════════════════════
+           TAB B: DOCUMENT OCR (PDF / Word)
+      ══════════════════════════════════════ -->
+      <div id="ocr-panel-doc" style="display:none">
+        <div class="two-col">
+          <div>
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px">
+              <!-- Drop zone -->
+              <div id="doc-ocr-dropzone"
+                style="border:2px dashed var(--border2);border-radius:10px;padding:32px;text-align:center;cursor:pointer;transition:border-color 0.2s;margin-bottom:16px"
+                onclick="document.getElementById('doc-ocr-file').click()"
+                ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+                ondragleave="this.style.borderColor='var(--border2)'"
+                ondrop="docOcrDrop(event)">
+                <div style="font-size:32px;margin-bottom:8px">📄</div>
+                <div style="font-size:13px;color:var(--text2);margin-bottom:4px" id="doc-ocr-drop-label">Drop PDF or Word document here, or click to browse</div>
+                <div style="font-size:11px;color:var(--text3)">Supports: .pdf · .docx · .doc · .txt</div>
+                <input type="file" id="doc-ocr-file" accept=".pdf,.docx,.doc,.txt" style="display:none" onchange="docOcrLoad(this.files[0])">
+              </div>
+
+              <!-- File info badge -->
+              <div id="doc-ocr-file-info" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:none;align-items:center;gap:10px">
+                <span style="font-size:20px" id="doc-ocr-file-icon">📄</span>
+                <div style="flex:1">
+                  <div style="font-size:12px;font-weight:600" id="doc-ocr-file-name">—</div>
+                  <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace" id="doc-ocr-file-meta">—</div>
+                </div>
+                <button class="btn btn-secondary btn-sm" onclick="clearDocOCR()">✕</button>
+              </div>
+
+              <!-- Progress -->
+              <div id="doc-ocr-progress" style="display:none;margin-bottom:14px">
+                <div style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text3);margin-bottom:6px" id="doc-ocr-status">Reading document...</div>
+                <div style="background:var(--surface2);border-radius:20px;height:6px;overflow:hidden">
+                  <div id="doc-ocr-bar" style="height:100%;background:var(--accent);border-radius:20px;width:0%;transition:width 0.4s"></div>
+                </div>
+              </div>
+
+              <div style="display:flex;gap:10px">
+                <button class="btn btn-primary" style="flex:1" onclick="runDocOCR()" id="doc-ocr-btn" disabled>📖 Extract Text</button>
+                <button class="btn btn-secondary" onclick="clearDocOCR()">✕ Clear</button>
+              </div>
+            </div>
+
+            <!-- Save as document panel — shown after extraction -->
+            <div id="doc-ocr-save-panel" style="display:none;margin-top:14px;background:var(--surface);border:1px solid var(--accent);border-radius:10px;padding:18px">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--accent);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">💾 SAVE EXTRACTED CONTENT AS NEW DOCUMENT</div>
+              <div class="form-group" style="margin-bottom:10px">
+                <label class="form-label">Document Title</label>
+                <input class="form-control" id="doc-ocr-save-title" placeholder="e.g. Extracted Survey Report">
+              </div>
+              <div class="form-group" style="margin-bottom:12px">
+                <label class="form-label">Save Format</label>
+                <select class="form-control" id="doc-ocr-save-format">
+                  <option value="txt">Plain Text (.txt)</option>
+                  <option value="json">Structured JSON (.json)</option>
+                </select>
+              </div>
+              <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="docOcrSaveDocument()">⬇ Download as New Document</button>
+              <button class="btn btn-secondary" style="width:100%" onclick="docOcrAddToDatabase()">+ Add Parsed Fields to Database</button>
+              <div style="font-size:11px;color:var(--text3);margin-top:8px">The extracted text will be saved as a standalone downloadable file.</div>
+            </div>
+          </div>
+
+          <div>
+            <!-- Extracted text -->
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:16px">
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+                <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase">EXTRACTED TEXT</div>
+                <span id="doc-ocr-word-count" style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3)"></span>
+              </div>
+              <textarea id="doc-ocr-output" class="form-control" style="min-height:200px;font-family:'Space Mono',monospace;font-size:11px;line-height:1.7" placeholder="Extracted document text will appear here..." oninput="parseDocOCRText()"></textarea>
+            </div>
+
+            <!-- Auto-parsed fields -->
+            <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px">AUTO-PARSED ASSET FIELDS</div>
+              <div class="form-grid">
+                <div class="form-group"><label class="form-label">Asset Name</label><input class="form-control" id="doc-op-name" placeholder="Auto-detected"></div>
+                <div class="form-group"><label class="form-label">Asset Type</label>
+                  <select class="form-control" id="doc-op-type">
+                    <option value="">Detected...</option>
+                    <option>Infrastructure</option><option>Land / Property</option>
+                    <option>Utility</option><option>Environmental</option><option>Equipment</option>
+                  </select>
+                </div>
+                <div class="form-group"><label class="form-label">Condition</label>
+                  <select class="form-control" id="doc-op-cond"><option>Good</option><option>Fair</option><option>Poor</option><option>Critical</option></select>
+                </div>
+                <div class="form-group"><label class="form-label">Material</label><input class="form-control" id="doc-op-material" placeholder="—"></div>
+                <div class="form-group"><label class="form-label">Latitude</label><input class="form-control" id="doc-op-lat" placeholder="e.g. 6.4550"></div>
+                <div class="form-group"><label class="form-label">Longitude</label><input class="form-control" id="doc-op-lng" placeholder="e.g. 3.3841"></div>
+                <div class="form-group full"><label class="form-label">Notes / Summary</label><textarea class="form-control" id="doc-op-notes" style="min-height:60px" placeholder="—"></textarea></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SCAN HISTORY (shared) ── -->
+      <div style="margin-top:28px">
         <div class="section-title" style="margin-bottom:12px">SCAN HISTORY</div>
         <div class="data-table-wrap">
           <table class="data-table">
-            <thead><tr><th>#</th><th>File</th><th>Status</th><th>Asset Detected</th><th>Type</th><th>Time</th><th>Action</th></tr></thead>
+            <thead><tr><th>#</th><th>File</th><th>Mode</th><th>Status</th><th>Asset Detected</th><th>Type</th><th>Time</th></tr></thead>
             <tbody id="ocr-history"><tr><td colspan="7" style="padding:20px;color:var(--text3);text-align:center">No scans yet</td></tr></tbody>
           </table>
         </div>
@@ -1450,6 +1607,7 @@ cameraInput.addEventListener('change', (e) => previewFiles(e.target.files));
               <button class="btn btn-primary" onclick="xlImportAll()">&#8679; Import All to Database</button>
               <button class="btn btn-secondary" onclick="xlDownloadJSON()">&#8681; Download as JSON</button>
               <button class="btn btn-secondary" onclick="xlDownloadCSV()">&#8681; Download Categorised CSV</button>
+              <button class="btn btn-secondary" onclick="xlSaveDocument()">&#128196; Save as New Document</button>
             </div>
           </div>
         </div>
@@ -1469,12 +1627,13 @@ cameraInput.addEventListener('change', (e) => previewFiles(e.target.files));
       </div>
       <div id="xl-result-wrap" style="display:none;margin-top:20px">
         <div class="section-header">
-          <div class="section-title">CATEGORISED RECORDS</div>
+          <div class="section-title">IMPORTED RECORDS</div>
           <div id="xl-cat-counts" style="display:flex;gap:8px;font-size:11px"></div>
         </div>
-        <div class="data-table-wrap">
-          <table class="data-table" id="xl-result-table">
-            <thead id="xl-result-thead"><tr><th>#</th><th>Name</th><th>Detected Type</th><th>Confidence</th><th>Lat</th><th>Lng</th><th>Condition</th><th>Status</th></tr></thead>
+        <div style="font-size:12px;color:var(--text3);margin-bottom:10px">Columns reflect your original Excel headers. Empty cells show as —</div>
+        <div class="data-table-wrap" style="overflow-x:auto">
+          <table class="data-table" id="xl-result-table" style="white-space:nowrap">
+            <thead id="xl-result-thead"></thead>
             <tbody id="xl-result-tbody"></tbody>
           </table>
         </div>
@@ -1623,26 +1782,130 @@ function renderDashboard() {
     </div>`).join('');
 }
 
+// ── MAP TYPE ──
+let currentMapType = 'road'; // 'road' | 'satellite' | 'hybrid'
+
+function setMapType(type) {
+  currentMapType = type;
+
+  // Update toggle button styles
+  const styles = {
+    active: 'background:var(--accent);color:#fff;',
+    inactive: 'background:var(--surface2);color:var(--text2);'
+  };
+  ['road','satellite','hybrid'].forEach(t => {
+    const btn = document.getElementById('mtype-' + t);
+    if (!btn) return;
+    const isActive = t === type;
+    btn.style.cssText = btn.style.cssText.replace(/background:[^;]+;color:[^;]+;/, '');
+    if (isActive) {
+      btn.style.background = 'var(--accent)';
+      btn.style.color = '#fff';
+    } else {
+      btn.style.background = 'var(--surface2)';
+      btn.style.color = 'var(--text2)';
+    }
+  });
+
+  // Update badge
+  const badge = document.getElementById('map-type-badge');
+  const labels = { road: 'ROAD', satellite: '🛰 SATELLITE', hybrid: '🌐 HYBRID' };
+  if (badge) badge.textContent = labels[type] || type.toUpperCase();
+
+  // Re-render the map with new type
+  renderMap();
+}
+
+// Encodes maptype into the Google Maps embed pb string
+// !5e0 = roadmap, !5e1 = satellite, !5e2 = terrain — but for hybrid we use !5e1 + labels
+function mapTypePbCode() {
+  // In Google Maps embed pb format:
+  // !5e0 = roadmap
+  // !5e1 = satellite (no labels)
+  // !5e4 = satellite with labels (hybrid)
+  if (currentMapType === 'satellite') return '!5e1';
+  if (currentMapType === 'hybrid')    return '!5e4';
+  return '!5e0'; // road
+}
+
 // ── MAP ──
 function renderMap() {
   document.getElementById('map-asset-count').textContent = assets.length + ' assets';
-  const canvas = document.getElementById('map-canvas');
-  // remove old dots
-  canvas.querySelectorAll('.map-asset-dot').forEach(d => d.remove());
 
-  const colors = { 'Infrastructure':'dot-green', 'Land / Property':'dot-blue', 'Utility':'dot-orange', 'Environmental':'', 'Equipment':'dot-gray' };
-  assets.forEach(a => {
-    const dot = document.createElement('div');
-    dot.className = `map-asset-dot ${colors[a.type] || 'dot-green'}`;
-    // scatter based on lat/lng within display bounds
-    const x = 5 + ((a.lng - 3.36) / 0.06) * 85;
-    const y = 5 + ((6.48 - a.lat) / 0.06) * 75;
-    dot.style.left = Math.max(3, Math.min(95, x)) + '%';
-    dot.style.top = Math.max(3, Math.min(90, y)) + '%';
-    dot.title = a.name;
-    dot.onclick = () => showAssetDetail(a);
-    canvas.appendChild(dot);
+  // ── Google Maps Embed ──
+  // Filter assets that have valid coordinates
+  const geoAssets = assets.filter(a => {
+    const lat = parseFloat(a.lat), lng = parseFloat(a.lng);
+    return !isNaN(lat) && !isNaN(lng);
   });
+
+  const iframe = document.getElementById('gmap-iframe');
+
+  if (geoAssets.length === 0) {
+    // Default view: Lagos area
+    iframe.src = "https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d31597!2d3.3792!3d6.4550!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1" + mapTypePbCode() + "!2m2!1sen!2sng!4v" + Date.now();
+  } else if (geoAssets.length === 1) {
+    // Single asset: centre on it with a pin
+    const a = geoAssets[0];
+    const lat = parseFloat(a.lat), lng = parseFloat(a.lng);
+    const label = encodeURIComponent(a.name || 'Asset');
+    iframe.src = `https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d800!2d${lng}!3d${lat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1${mapTypePbCode()}!2m2!1sen!2sng!4v${Date.now()}`;
+  } else {
+    // Multiple assets: build a search URL that shows all pins
+    // Use directions/search embed with the centroid as focus + markers
+    const lats = geoAssets.map(a => parseFloat(a.lat));
+    const lngs = geoAssets.map(a => parseFloat(a.lng));
+    const centerLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+    const centerLng = (Math.min(...lngs) + Math.max(...lngs)) / 2;
+
+    // Calculate zoom level based on spread
+    const latSpread = Math.max(...lats) - Math.min(...lats);
+    const lngSpread = Math.max(...lngs) - Math.min(...lngs);
+    const spread = Math.max(latSpread, lngSpread);
+    const zoom = spread < 0.01 ? 15 : spread < 0.05 ? 13 : spread < 0.2 ? 11 : spread < 1 ? 9 : 7;
+
+    // Build a search embed centred on the assets
+    // We encode all asset names as a comma-separated search query
+    const firstAsset = geoAssets[0];
+    const q = encodeURIComponent((firstAsset.name || 'Asset') + ', ' + parseFloat(firstAsset.lat).toFixed(4) + ', ' + parseFloat(firstAsset.lng).toFixed(4));
+    iframe.src = `https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d${Math.round(20000/zoom*5)}!2d${centerLng}!3d${centerLat}!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1${mapTypePbCode()}!2m2!1sen!2sng!4v${Date.now()}`;
+  }
+
+  // ── Chip strip: clickable asset chips that open Google Maps ──
+  const chipEmpty = document.getElementById('map-chip-empty');
+  const strip = document.getElementById('map-chip-strip');
+  // remove old chips
+  strip.querySelectorAll('.map-chip').forEach(c => c.remove());
+
+  if (geoAssets.length === 0) {
+    if (chipEmpty) chipEmpty.style.display = '';
+  } else {
+    if (chipEmpty) chipEmpty.style.display = 'none';
+    const typeColors2 = { 'Infrastructure':'var(--accent)', 'Land / Property':'var(--accent2)', 'Utility':'#e6a700', 'Environmental':'var(--danger)', 'Equipment':'var(--text2)' };
+    geoAssets.forEach(a => {
+      const lat = parseFloat(a.lat), lng = parseFloat(a.lng);
+      const chip = document.createElement('a');
+      chip.className = 'map-chip';
+      chip.href = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
+      chip.target = '_blank';
+      chip.title = `Open ${a.name} (${lat.toFixed(5)}, ${lng.toFixed(5)}) in Google Maps`;
+      chip.style.cssText = `
+        display:inline-flex;align-items:center;gap:6px;
+        background:var(--bg);border:1px solid var(--border2);
+        border-radius:20px;padding:3px 10px 3px 6px;
+        font-size:11px;color:var(--text);text-decoration:none;
+        font-family:'DM Sans',sans-serif;cursor:pointer;
+        transition:border-color 0.15s,box-shadow 0.15s;
+      `;
+      chip.onmouseover = () => { chip.style.borderColor = typeColors2[a.type] || 'var(--accent)'; chip.style.boxShadow = '0 1px 6px rgba(0,0,0,0.1)'; };
+      chip.onmouseout = () => { chip.style.borderColor = 'var(--border2)'; chip.style.boxShadow = 'none'; };
+      chip.innerHTML = `<span style="width:8px;height:8px;border-radius:50%;background:${typeColors2[a.type]||'var(--accent)'};flex-shrink:0;"></span>
+        <span style="font-weight:500">${a.name || a.id}</span>
+        <span style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3)">${lat.toFixed(4)}, ${lng.toFixed(4)}</span>
+        <span style="font-size:9px;color:var(--text3)">↗</span>`;
+      strip.appendChild(chip);
+    });
+  }
 
   const tbody = document.getElementById('map-table-body');
   tbody.innerHTML = assets.map(a => {
@@ -1658,9 +1921,33 @@ function renderMap() {
       '<td class="coord-display">' + lngStr + '</td>' +
       '<td>' + geomIcon(a.geom) + ' ' + (a.geom || '—') + '</td>' +
       '<td><span class="tag ' + condColor(a.condition) + '">' + (a.condition || '—') + '</span></td>' +
-      '<td><button class="btn btn-secondary btn-sm" onclick="showAssetDetail(assets.find(x=>x.id===\'' + a.id + '\'))">View</button></td>' +
+      '<td style="display:flex;gap:5px">' +
+        '<button class="btn btn-secondary btn-sm" onclick="showAssetDetail(assets.find(x=>x.id===\'' + a.id + '\'))">View</button>' +
+        (!isNaN(lat) && !isNaN(lng) ? '<a class="btn btn-secondary btn-sm" href="https://www.google.com/maps/search/?api=1&query=' + lat + ',' + lng + '" target="_blank" title="Open in Google Maps" style="text-decoration:none">📍</a>' : '') +
+      '</td>' +
       '</tr>';
   }).join('') || '<tr><td colspan="8"><div class="empty-state" style="padding:28px"><div class="empty-icon" style="font-size:28px">◎</div><div class="empty-title">No records</div></div></td></tr>';
+}
+
+function openAllInGoogleMaps() {
+  const geoAssets = assets.filter(a => {
+    const lat = parseFloat(a.lat), lng = parseFloat(a.lng);
+    return !isNaN(lat) && !isNaN(lng);
+  });
+  if (!geoAssets.length) { toast('No assets with coordinates', '⚠', true); return; }
+  if (geoAssets.length === 1) {
+    const a = geoAssets[0];
+    window.open('https://www.google.com/maps/search/?api=1&query=' + parseFloat(a.lat) + ',' + parseFloat(a.lng), '_blank');
+    return;
+  }
+  // For multiple assets, open a search with the first asset and all others listed
+  const query = geoAssets.map(a => parseFloat(a.lat).toFixed(5) + ',' + parseFloat(a.lng).toFixed(5)).join('/');
+  // Build a multi-waypoint directions URL
+  const origin = parseFloat(geoAssets[0].lat) + ',' + parseFloat(geoAssets[0].lng);
+  const dest = parseFloat(geoAssets[geoAssets.length-1].lat) + ',' + parseFloat(geoAssets[geoAssets.length-1].lng);
+  const waypoints = geoAssets.slice(1,-1).map(a => parseFloat(a.lat) + ',' + parseFloat(a.lng)).join('|');
+  let url = 'https://www.google.com/maps/dir/' + geoAssets.map(a => parseFloat(a.lat).toFixed(6) + ',' + parseFloat(a.lng).toFixed(6)).join('/');
+  window.open(url, '_blank');
 }
 
 // ── ASSETS ──
@@ -1725,66 +2012,69 @@ function showAssetDetail(a) {
   document.getElementById('modal-title').textContent = 'ASSET DETAIL — ' + a.id;
   document.getElementById('modal-body-inner').className = '';
 
-  const latVal = typeof a.lat === 'number' ? a.lat : parseFloat(a.lat);
-  const lngVal = typeof a.lng === 'number' ? a.lng : parseFloat(a.lng);
-  const latStr = isNaN(latVal) ? (a.lat || '—') : latVal.toFixed(6) + '°N';
-  const lngStr = isNaN(lngVal) ? (a.lng || '—') : lngVal.toFixed(6) + '°E';
-
-  const imageRow = a.image
-    ? '<div class="detail-item"><div class="detail-val"><img src="' + a.image + '" alt="Asset Image" width="120" height="80" style="object-fit:cover;border-radius:6px;" /></div></div>'
-    : '';
-
-  // Core platform fields always shown at top
-  let html = '<div class="detail-grid">' + imageRow +
-    '<div class="detail-item"><div class="detail-key">Asset Name</div><div class="detail-val">' + (a.name || '—') + '</div></div>' +
-    '<div class="detail-item"><div class="detail-key">Asset ID</div><div class="detail-val" style="font-family:\'Space Mono\',monospace;color:var(--accent)">' + a.id + '</div></div>' +
-    '<div class="detail-item"><div class="detail-key">Type</div><div class="detail-val"><span class="tag ' + typeColor(a.type) + '">' + (a.type || '—') + '</span></div></div>' +
-    '<div class="detail-item"><div class="detail-key">Geometry</div><div class="detail-val">' + geomIcon(a.geom) + ' ' + (a.geom || '—') + '</div></div>' +
-    '<div class="detail-item"><div class="detail-key">Condition</div><div class="detail-val"><span class="tag ' + condColor(a.condition) + '">' + (a.condition || '—') + '</span></div></div>' +
-    '<div class="detail-item"><div class="detail-key">Field Agent</div><div class="detail-val">' + (a.agent || '—') + '</div></div>' +
-    '<div class="detail-item"><div class="detail-key">Date</div><div class="detail-val">' + (a.date || '—') + '</div></div>' +
-    '<div class="detail-item" style="grid-column:1/-1"><div class="detail-key">GPS Coordinates</div>' +
-    '<div class="detail-coords">LAT: ' + latStr + ' &nbsp;|&nbsp; LNG: ' + lngStr + ' &nbsp;|&nbsp; CRS: WGS84</div></div>';
-
-  // Keys that are handled above or are internal — skip in dynamic section
-  const SKIP_KEYS = new Set([
-    'id','name','type','geom','lat','lng','condition','agent','date','ts','image',
-    'material','notes','elev','area','typeFields',
+  // Internal / meta keys to always skip — never shown to user
+  const INTERNAL_KEYS = new Set([
+    'ts','image','typeFields',
     '_importSource','_customFields','_name','_lat','_lng','_condition',
     '_notes','_material','_elevation','_area','_autoType','_confidence','_row','_raw'
   ]);
 
-  // Collect all remaining keys from this specific asset record
-  const extraEntries = Object.entries(a).filter(([k]) => !SKIP_KEYS.has(k));
-
-  if (extraEntries.length > 0) {
-    html += '<div class="detail-item" style="grid-column:1/-1;margin-top:8px">' +
-      '<div style="font-family:\'Space Mono\',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;padding:8px 0 6px;border-top:1px solid var(--border);margin-bottom:4px">' +
-      'ALL FIELDS (' + extraEntries.length + ')</div>' +
-      '<div class="detail-grid" style="gap:8px">';
-    extraEntries.forEach(([key, val]) => {
-      html += '<div class="detail-item">' +
-        '<div class="detail-key">' + key + '</div>' +
-        '<div class="detail-val">' + (val !== '' && val !== null && val !== undefined ? val : '—') + '</div>' +
-        '</div>';
-    });
-    html += '</div></div>';
-  } else {
-    // For non-imported assets show the standard extra fields
-    html +=
-      '<div class="detail-item"><div class="detail-key">Material</div><div class="detail-val">' + (a.material || '—') + '</div></div>' +
-      '<div class="detail-item"><div class="detail-key">Elevation</div><div class="detail-val">' + (a.elev ? a.elev + ' m' : '—') + '</div></div>' +
-      '<div class="detail-item"><div class="detail-key">Area / Dimension</div><div class="detail-val">' + (a.area || '—') + '</div></div>' +
-      '<div class="detail-item" style="grid-column:1/-1"><div class="detail-key">Notes</div><div class="detail-val" style="color:var(--text2)">' + (a.notes || '—') + '</div></div>';
+  // Helper: value is non-empty
+  function hasValue(v) {
+    return v !== '' && v !== null && v !== undefined && v !== '—' && v !== 0 && v !== false;
   }
 
-  html += '<div class="detail-item" style="grid-column:1/-1"><div class="detail-key">Captured</div>' +
-    '<div class="detail-val coord-display">' + new Date(a.ts).toLocaleString() + '</div></div>';
+  // Format special fields nicely
+  function fmtKey(k) {
+    return k.replace(/_/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  function fmtVal(k, v) {
+    if (k === 'lat') {
+      const n = parseFloat(v); return isNaN(n) ? v : n.toFixed(6) + '°N';
+    }
+    if (k === 'lng') {
+      const n = parseFloat(v); return isNaN(n) ? v : n.toFixed(6) + '°E';
+    }
+    if (k === 'type') return '<span class="tag ' + typeColor(v) + '">' + v + '</span>';
+    if (k === 'condition') return '<span class="tag ' + condColor(v) + '">' + v + '</span>';
+    if (k === 'geom') return geomIcon(v) + ' ' + v;
+    if (k === 'id') return '<span style="font-family:\'Space Mono\',monospace;color:var(--accent)">' + v + '</span>';
+    return String(v);
+  }
+
+  // Build properties list from JSON — only non-empty, non-internal keys
+  const entries = Object.entries(a).filter(([k, v]) => !INTERNAL_KEYS.has(k) && hasValue(v));
+
+  // Image row if present
+  const imageRow = a.image
+    ? '<div class="detail-item" style="grid-column:1/-1"><img src="' + a.image + '" alt="Asset Image" style="max-width:100%;max-height:160px;object-fit:cover;border-radius:8px;border:1px solid var(--border)" /></div>'
+    : '';
+
+  let html = '<div class="detail-grid">' + imageRow;
+
+  entries.forEach(([k, v]) => {
+    const isFullWidth = (k === 'notes' || k === 'lat' || k === 'lng' || String(v).length > 60);
+    html += '<div class="detail-item"' + (isFullWidth ? ' style="grid-column:1/-1"' : '') + '>' +
+      '<div class="detail-key">' + fmtKey(k) + '</div>' +
+      '<div class="detail-val">' + fmtVal(k, v) + '</div>' +
+      '</div>';
+  });
+
   html += '</div>';
 
+  if (entries.length === 0) {
+    html = '<div style="color:var(--text3);font-size:13px;padding:16px;text-align:center">No properties to display.</div>';
+  }
+
   document.getElementById('modal-body-inner').innerHTML = html;
+  const lat = parseFloat(a.lat), lng = parseFloat(a.lng);
+  const mapsBtn = (!isNaN(lat) && !isNaN(lng))
+    ? `<a class="btn btn-secondary btn-sm" href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank" style="text-decoration:none">📍 View on Google Maps</a>`
+    : '';
   document.getElementById('modal-footer').innerHTML =
     '<button class="btn btn-secondary" onclick="closeModal()">Close</button>' +
+    mapsBtn +
     '<button class="btn btn-danger btn-sm" onclick="deleteAsset(\'' + a.id + '\');closeModal()">Delete</button>';
   document.getElementById('modal-overlay').classList.add('open');
 }
@@ -1797,21 +2087,76 @@ function initCapturePage() {
 }
 
 function simulateGPS() {
-  const lat = (6.44 + Math.random() * 0.06).toFixed(6);
-  const lng = (3.37 + Math.random() * 0.06).toFixed(6);
-  document.getElementById('cap-lat').value = lat;
-  document.getElementById('cap-lng').value = lng;
-  document.getElementById('cap-coords-display').textContent = lat + '°N, ' + lng + '°E';
-  document.getElementById('gps-accuracy').textContent = '±' + (2 + Math.random()*4).toFixed(1) + 'm';
-  document.getElementById('preview-coords').textContent = lat + '°N, ' + lng + '°E | WGS84';
-  // add a dot to preview map
-  const pm = document.getElementById('preview-map');
-  pm.querySelectorAll('.map-asset-dot').forEach(d => d.remove());
-  const dot = document.createElement('div');
-  dot.className = 'map-asset-dot dot-green';
-  dot.style.left = '45%'; dot.style.top = '45%';
-  pm.appendChild(dot);
-  toast('GPS coordinates captured', '📡');
+  const btn = document.querySelector('.btn-gps');
+  const hint = document.querySelector('.form-hint');
+
+  if (!navigator.geolocation) {
+    toast('Geolocation is not supported by your browser', '⚠', true);
+    return;
+  }
+
+  // Loading state
+  if (btn) { btn.textContent = '⏳ Locating…'; btn.disabled = true; btn.style.cssText += ';opacity:0.7'; }
+  document.getElementById('cap-coords-display').textContent = 'Acquiring GPS…';
+  document.getElementById('gps-accuracy').textContent = '';
+
+  navigator.geolocation.getCurrentPosition(
+    function(pos) {
+      const lat = pos.coords.latitude.toFixed(6);
+      const lng = pos.coords.longitude.toFixed(6);
+      const acc = pos.coords.accuracy ? pos.coords.accuracy.toFixed(1) : null;
+
+      document.getElementById('cap-lat').value = lat;
+      document.getElementById('cap-lng').value = lng;
+      document.getElementById('cap-coords-display').textContent = lat + '°N, ' + lng + '°E';
+      document.getElementById('gps-accuracy').textContent = acc ? '±' + acc + 'm' : '';
+      document.getElementById('preview-coords').textContent = lat + '°N, ' + lng + '°E | WGS84';
+
+      // Replace preview map with real Google Maps iframe centred on actual location
+      const pm = document.getElementById('preview-map');
+      pm.querySelectorAll('.map-asset-dot').forEach(d => d.remove());
+      pm.style.background = 'none';
+      pm.style.padding = '0';
+      let pmIframe = document.getElementById('preview-gmap-iframe');
+      if (!pmIframe) {
+        pmIframe = document.createElement('iframe');
+        pmIframe.id = 'preview-gmap-iframe';
+        pmIframe.style.cssText = 'width:100%;height:100%;border:0;border-radius:8px;display:block;';
+        pmIframe.loading = 'lazy';
+        pmIframe.allowFullscreen = true;
+        pm.innerHTML = '';
+        pm.appendChild(pmIframe);
+      }
+      pmIframe.src = 'https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d500!2d' + lng + '!3d' + lat + '!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sen!2sng!4v' + Date.now();
+
+      // Restore button with success style
+      if (btn) {
+        btn.textContent = '✓ Location Set';
+        btn.disabled = false;
+        btn.style.background = 'rgba(0,135,83,0.15)';
+        btn.style.borderColor = 'rgba(0,135,83,0.5)';
+        btn.style.color = 'var(--accent)';
+        btn.style.opacity = '1';
+      }
+      if (hint) hint.textContent = 'Real GPS location captured' + (acc ? ' (accuracy ±' + acc + 'm)' : '');
+      toast('📍 Location captured: ' + lat + ', ' + lng, '📡');
+    },
+
+    function(err) {
+      let msg;
+      if (err.code === 1) msg = 'Location access denied — please allow location in your browser settings.';
+      else if (err.code === 2) msg = 'Location unavailable — check your device GPS or network.';
+      else if (err.code === 3) msg = 'Location request timed out — try again.';
+      else msg = 'Could not get location: ' + err.message;
+
+      document.getElementById('cap-coords-display').textContent = '—';
+      if (btn) { btn.textContent = '📡 Get My Location'; btn.disabled = false; btn.style.opacity = '1'; }
+      if (hint) hint.textContent = msg;
+      toast(msg, '⚠', true);
+    },
+
+    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+  );
 }
 
 function captureAsset() {
@@ -2341,6 +2686,13 @@ async function runOCR() {
     toast('OCR complete — ' + text.split('\n').length + ' lines extracted', '✓');
     ocrHistory.unshift({ file: ocrFile.name, status:'Success', asset: document.getElementById('op-name').value||'—', type: document.getElementById('op-type').value||'—', ts: Date.now() });
     renderOCRHistory();
+    // Show save-as-document panel
+    const savePanel = document.getElementById('ocr-save-doc-panel');
+    if (savePanel) {
+      savePanel.style.display = 'block';
+      const nameBase = ocrFile.name.replace(/\.[^.]+$/, '');
+      document.getElementById('ocr-doc-title').value = nameBase + ' — Scan ' + new Date().toLocaleDateString();
+    }
   } catch(err) {
     statusTxt.textContent = 'Error: ' + err.message;
     toast('OCR failed: ' + err.message, '⚠', true);
@@ -2424,7 +2776,55 @@ function clearOCR() {
   document.getElementById('ocr-btn').disabled = true;
   document.getElementById('ocr-progress').style.display = 'none';
   document.getElementById('ocr-bar').style.width = '0%';
+  const savePanel = document.getElementById('ocr-save-doc-panel');
+  if (savePanel) savePanel.style.display = 'none';
   clearOCRParsed();
+}
+
+function ocrSaveDocument() {
+  const text = document.getElementById('ocr-output').value.trim();
+  if (!text) { toast('No scanned content to save', '⚠', true); return; }
+  const title = (document.getElementById('ocr-doc-title').value.trim() || 'OCR Scan Document');
+  const fmt = document.getElementById('ocr-doc-format').value;
+
+  let content, mime, ext;
+  if (fmt === 'json') {
+    const doc = {
+      title,
+      scannedAt: new Date().toISOString(),
+      sourceFile: ocrFile ? ocrFile.name : 'unknown',
+      content: text,
+      lines: text.split('\n').filter(l => l.trim()),
+      parsedFields: {
+        name: document.getElementById('op-name').value || '',
+        type: document.getElementById('op-type').value || '',
+        condition: document.getElementById('op-cond').value || '',
+        material: document.getElementById('op-material').value || '',
+        lat: document.getElementById('op-lat').value || '',
+        lng: document.getElementById('op-lng').value || '',
+        notes: document.getElementById('op-notes').value || '',
+      }
+    };
+    content = JSON.stringify(doc, null, 2);
+    mime = 'application/json';
+    ext = 'json';
+  } else {
+    content = title + '\n' + '='.repeat(title.length) + '\n' +
+      'Scanned: ' + new Date().toLocaleString() + '\n' +
+      'Source: ' + (ocrFile ? ocrFile.name : 'unknown') + '\n\n' +
+      text;
+    mime = 'text/plain';
+    ext = 'txt';
+  }
+
+  const blob = new Blob([content], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = title.replace(/[^a-zA-Z0-9_\- ]/g, '_') + '.' + ext;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('Document saved: ' + a.download, '⬇');
 }
 
 function clearOCRParsed() {
@@ -2438,17 +2838,313 @@ function renderOCRHistory() {
   tbody.innerHTML = ocrHistory.map((h,i) => `
     <tr>
       <td class="coord-display">${ocrHistory.length - i}</td>
-      <td>${h.file}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${h.file}</td>
+      <td><span class="tag ${h.mode==='doc'?'tag-blue':'tag-gray'}" style="font-size:9px">${h.mode==='doc'?'Document':'Image'}</span></td>
       <td><span class="tag ${h.status==='Success'?'tag-green':'tag-red'}">${h.status}</span></td>
-      <td>${h.asset}</td>
+      <td>${h.asset||'—'}</td>
       <td><span class="tag tag-blue">${h.type||'—'}</span></td>
       <td class="coord-display">${new Date(h.ts).toLocaleTimeString()}</td>
-      <td><button class="btn btn-secondary btn-sm">View</button></td>
     </tr>`).join('') || '<tr><td colspan="7" style="padding:20px;color:var(--text3);text-align:center">No scans yet</td></tr>';
 }
 
 // ══════════════════════════════════════════════════════════════════
-// EXCEL IMPORTER
+// DOCUMENT OCR — PDF / DOCX / TXT
+// ══════════════════════════════════════════════════════════════════
+
+// Tab switcher
+function switchOCRTab(tab) {
+  const isImg = tab === 'img';
+  document.getElementById('ocr-panel-img').style.display = isImg ? '' : 'none';
+  document.getElementById('ocr-panel-doc').style.display = isImg ? 'none' : '';
+  document.getElementById('ocr-tab-img').style.background = isImg ? 'var(--accent)' : 'var(--surface2)';
+  document.getElementById('ocr-tab-img').style.color = isImg ? '#fff' : 'var(--text2)';
+  document.getElementById('ocr-tab-doc').style.background = isImg ? 'var(--surface2)' : 'var(--accent)';
+  document.getElementById('ocr-tab-doc').style.color = isImg ? 'var(--text2)' : '#fff';
+}
+
+let docOcrFile = null;
+
+function docOcrDrop(e) {
+  e.preventDefault();
+  document.getElementById('doc-ocr-dropzone').style.borderColor = 'var(--border2)';
+  const file = e.dataTransfer.files[0];
+  if (file) docOcrLoad(file);
+}
+
+function docOcrLoad(file) {
+  if (!file) return;
+  docOcrFile = file;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const icons = { pdf: '📕', docx: '📘', doc: '📘', txt: '📄' };
+  const icon = icons[ext] || '📄';
+
+  document.getElementById('doc-ocr-drop-label').textContent = file.name;
+  const infoDiv = document.getElementById('doc-ocr-file-info');
+  infoDiv.style.display = 'flex';
+  document.getElementById('doc-ocr-file-icon').textContent = icon;
+  document.getElementById('doc-ocr-file-name').textContent = file.name;
+  document.getElementById('doc-ocr-file-meta').textContent = ext.toUpperCase() + ' · ' + (file.size / 1024).toFixed(1) + ' KB';
+  document.getElementById('doc-ocr-btn').disabled = false;
+  toast('Document loaded — click Extract Text', icon);
+}
+
+async function runDocOCR() {
+  if (!docOcrFile) return;
+  const btn = document.getElementById('doc-ocr-btn');
+  const prog = document.getElementById('doc-ocr-progress');
+  const bar = document.getElementById('doc-ocr-bar');
+  const status = document.getElementById('doc-ocr-status');
+  btn.disabled = true;
+  prog.style.display = 'block';
+  bar.style.width = '10%';
+  status.textContent = 'Reading file...';
+
+  const ext = docOcrFile.name.split('.').pop().toLowerCase();
+  let extractedText = '';
+
+  try {
+    if (ext === 'txt') {
+      // Plain text — just read it
+      bar.style.width = '50%';
+      status.textContent = 'Reading plain text...';
+      extractedText = await docOcrFile.text();
+      bar.style.width = '100%';
+
+    } else if (ext === 'pdf') {
+      // PDF — use PDF.js
+      status.textContent = 'Loading PDF.js...';
+      bar.style.width = '20%';
+
+      // Load PDF.js dynamically if not already loaded
+      if (!window.pdfjsLib) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+          s.onload = resolve; s.onerror = reject;
+          document.head.appendChild(s);
+        });
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc =
+          'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      }
+
+      status.textContent = 'Parsing PDF pages...';
+      bar.style.width = '40%';
+      const arrayBuffer = await docOcrFile.arrayBuffer();
+      const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      const totalPages = pdf.numPages;
+      const pageTexts = [];
+
+      for (let p = 1; p <= totalPages; p++) {
+        bar.style.width = (40 + (p / totalPages) * 55) + '%';
+        status.textContent = 'Extracting page ' + p + ' of ' + totalPages + '...';
+        const page = await pdf.getPage(p);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(' ');
+        pageTexts.push('--- Page ' + p + ' ---\n' + pageText);
+      }
+      extractedText = pageTexts.join('\n\n');
+      bar.style.width = '100%';
+
+    } else if (ext === 'docx' || ext === 'doc') {
+      // DOCX — use mammoth.js
+      status.textContent = 'Loading mammoth.js...';
+      bar.style.width = '20%';
+
+      if (!window.mammoth) {
+        await new Promise((resolve, reject) => {
+          const s = document.createElement('script');
+          s.src = 'https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js';
+          s.onload = resolve; s.onerror = reject;
+          document.head.appendChild(s);
+        });
+      }
+
+      status.textContent = 'Extracting Word document text...';
+      bar.style.width = '60%';
+      const arrayBuffer = await docOcrFile.arrayBuffer();
+      const result = await window.mammoth.extractRawText({ arrayBuffer });
+      extractedText = result.value;
+      if (result.messages && result.messages.length) {
+        extractedText += '\n\n[Extraction notes: ' + result.messages.map(m => m.message).join('; ') + ']';
+      }
+      bar.style.width = '100%';
+
+    } else {
+      toast('Unsupported file type: .' + ext, '⚠', true);
+      btn.disabled = false;
+      prog.style.display = 'none';
+      return;
+    }
+
+    // Populate output
+    const outputEl = document.getElementById('doc-ocr-output');
+    outputEl.value = extractedText.trim();
+    const wordCount = extractedText.trim().split(/\s+/).filter(Boolean).length;
+    document.getElementById('doc-ocr-word-count').textContent = wordCount.toLocaleString() + ' words';
+
+    status.textContent = 'Extraction complete ✓';
+    parseDocOCRText();
+
+    // Show save panel
+    const savePanel = document.getElementById('doc-ocr-save-panel');
+    savePanel.style.display = 'block';
+    const baseName = docOcrFile.name.replace(/\.[^.]+$/, '');
+    document.getElementById('doc-ocr-save-title').value = baseName + ' — Extracted ' + new Date().toLocaleDateString();
+
+    ocrHistory.unshift({
+      file: docOcrFile.name,
+      mode: 'doc',
+      status: 'Success',
+      asset: document.getElementById('doc-op-name').value || '—',
+      type: document.getElementById('doc-op-type').value || '—',
+      ts: Date.now()
+    });
+    renderOCRHistory();
+    toast('Text extracted — ' + wordCount.toLocaleString() + ' words', '✓');
+
+  } catch (err) {
+    status.textContent = 'Error: ' + err.message;
+    bar.style.width = '100%';
+    bar.style.background = 'var(--danger)';
+    toast('Extraction failed: ' + err.message, '⚠', true);
+    ocrHistory.unshift({ file: docOcrFile.name, mode:'doc', status:'Failed', asset:'—', type:'—', ts: Date.now() });
+    renderOCRHistory();
+  }
+
+  btn.disabled = false;
+}
+
+function parseDocOCRText() {
+  const text = document.getElementById('doc-ocr-output').value;
+  if (!text.trim()) return;
+  const lower = text.toLowerCase();
+
+  const nameMatch = text.match(/(?:asset|name|title|project)[:\s]+([A-Za-z0-9 _-]{3,50})/i);
+  if (nameMatch) document.getElementById('doc-op-name').value = nameMatch[1].trim();
+
+  const latMatch = text.match(/(?:lat(?:itude)?)[:\s]*([+-]?\d{1,3}\.\d{2,8})/i);
+  if (latMatch) document.getElementById('doc-op-lat').value = latMatch[1];
+
+  const lngMatch = text.match(/(?:lon(?:gitude)?|lng)[:\s]*([+-]?\d{1,3}\.\d{2,8})/i);
+  if (lngMatch) document.getElementById('doc-op-lng').value = lngMatch[1];
+
+  const matMatch = text.match(/(?:material)[:\s]+([A-Za-z/ ]{3,25})/i);
+  if (matMatch) document.getElementById('doc-op-material').value = matMatch[1].trim();
+
+  const condMap = [
+    ['critical','danger','critical'],
+    ['poor','damaged','dilapidated','poor'],
+    ['fair','moderate','fair'],
+    ['good','excellent','good']
+  ];
+  for (const [a, b, val] of condMap) {
+    if (lower.includes(a) || lower.includes(b)) {
+      document.getElementById('doc-op-cond').value = val.charAt(0).toUpperCase() + val.slice(1);
+      break;
+    }
+  }
+
+  const typeKeywords = {
+    'Infrastructure':  ['bridge','road','dam','culvert','building','retaining wall','pavement'],
+    'Land / Property': ['land','parcel','plot','property','title','cadastral','boundary'],
+    'Utility':         ['pipe','pipeline','cable','power','electricity','water supply','gas','sewage','telecoms'],
+    'Environmental':   ['wetland','forest','reserve','erosion','flood','species','wildlife'],
+    'Equipment':       ['machine','equipment','generator','pump','vehicle','crane','compressor'],
+  };
+  let best = '', bestScore = 0;
+  Object.entries(typeKeywords).forEach(([t, kws]) => {
+    const s = kws.filter(k => lower.includes(k)).length;
+    if (s > bestScore) { bestScore = s; best = t; }
+  });
+  if (best) document.getElementById('doc-op-type').value = best;
+
+  const notes = text.trim().slice(0, 500);
+  document.getElementById('doc-op-notes').value = notes.length < text.trim().length ? notes + '...' : notes;
+}
+
+function docOcrSaveDocument() {
+  const text = document.getElementById('doc-ocr-output').value.trim();
+  if (!text) { toast('No extracted content to save', '⚠', true); return; }
+  const title = document.getElementById('doc-ocr-save-title').value.trim() || 'Extracted Document';
+  const fmt = document.getElementById('doc-ocr-save-format').value;
+
+  let content, ext;
+  if (fmt === 'json') {
+    const doc = {
+      title,
+      extractedAt: new Date().toISOString(),
+      sourceFile: docOcrFile ? docOcrFile.name : 'unknown',
+      wordCount: text.split(/\s+/).filter(Boolean).length,
+      content: text,
+      parsedFields: {
+        name:      document.getElementById('doc-op-name').value || '',
+        type:      document.getElementById('doc-op-type').value || '',
+        condition: document.getElementById('doc-op-cond').value || '',
+        material:  document.getElementById('doc-op-material').value || '',
+        lat:       document.getElementById('doc-op-lat').value || '',
+        lng:       document.getElementById('doc-op-lng').value || '',
+        notes:     document.getElementById('doc-op-notes').value || '',
+      }
+    };
+    content = JSON.stringify(doc, null, 2);
+    ext = 'json';
+  } else {
+    content = title + '\n' + '='.repeat(Math.min(title.length, 60)) + '\n' +
+      'Extracted from: ' + (docOcrFile ? docOcrFile.name : 'unknown') + '\n' +
+      'Date: ' + new Date().toLocaleString() + '\n\n' +
+      text;
+    ext = 'txt';
+  }
+
+  const blob = new Blob([content], { type: ext === 'json' ? 'application/json' : 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = title.replace(/[^a-zA-Z0-9_\- ]/g, '_') + '.' + ext;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Saved: ' + a.download, '⬇');
+}
+
+function docOcrAddToDatabase() {
+  const name = document.getElementById('doc-op-name').value.trim();
+  const type = document.getElementById('doc-op-type').value;
+  if (!name || !type) { toast('Asset Name and Type required', '⚠', true); return; }
+  const lat = parseFloat(document.getElementById('doc-op-lat').value) || (6.4 + Math.random()*0.3);
+  const lng = parseFloat(document.getElementById('doc-op-lng').value) || (3.3 + Math.random()*0.3);
+  assetCounter++;
+  const a = {
+    id: 'AST-' + assetCounter, name, type, geom: 'Point',
+    lat: lat.toFixed(6), lng: lng.toFixed(6),
+    condition: document.getElementById('doc-op-cond').value,
+    material:  document.getElementById('doc-op-material').value,
+    notes:     document.getElementById('doc-op-notes').value,
+    agent: 'Doc OCR Import',
+    date: new Date().toISOString().slice(0, 10),
+    ts: Date.now()
+  };
+  assets.push(a);
+  addAudit('ASSET_CREATED', a.id, 'Admin User', 'Doc OCR import — ' + name);
+  save(); renderDashboard(); renderAssets();
+  toast('Asset added from document: ' + name, '✓');
+}
+
+function clearDocOCR() {
+  docOcrFile = null;
+  document.getElementById('doc-ocr-output').value = '';
+  document.getElementById('doc-ocr-file-info').style.display = 'none';
+  document.getElementById('doc-ocr-drop-label').textContent = 'Drop PDF or Word document here, or click to browse';
+  document.getElementById('doc-ocr-btn').disabled = true;
+  document.getElementById('doc-ocr-progress').style.display = 'none';
+  document.getElementById('doc-ocr-bar').style.width = '0%';
+  document.getElementById('doc-ocr-bar').style.background = 'var(--accent)';
+  document.getElementById('doc-ocr-save-panel').style.display = 'none';
+  document.getElementById('doc-ocr-word-count').textContent = '';
+  ['doc-op-name','doc-op-material','doc-op-lat','doc-op-lng','doc-op-notes'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('doc-op-type').value = '';
+  document.getElementById('doc-op-cond').value = 'Good';
+}
+
+
 // ══════════════════════════════════════════════════════════════════
 let xlData = [];
 let xlHeaders = [];
@@ -2648,17 +3344,19 @@ function xlProcess() {
     .map(([t, c]) => '<span class="tag tag-blue">' + t + ': ' + c + '</span>').join('');
 
   // Results table — ALL original Excel headers as columns (fully dynamic, no preset columns)
-  document.getElementById('xl-result-thead').innerHTML = '<tr><th>#</th>' +
-    xlHeaders.map(h => '<th>' + h + '</th>').join('') +
-    '<th>Auto Type</th><th>Confidence</th><th>Status</th></tr>';
+  document.getElementById('xl-result-thead').innerHTML = '<tr>' +
+    '<th style="background:var(--surface2);border:1px solid var(--border);padding:8px 12px;font-family:\'Space Mono\',monospace;font-size:9px;color:var(--text3)">#</th>' +
+    xlHeaders.map(h => '<th style="background:var(--surface2);border:1px solid var(--border);padding:8px 12px;font-family:\'Space Mono\',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px">' + h + '</th>').join('') +
+    '</tr>';
 
   document.getElementById('xl-result-tbody').innerHTML = xlCategorised.map((r, i) =>
     '<tr>' +
-    '<td class="coord-display">' + (i + 1) + '</td>' +
-    xlHeaders.map(h => '<td style="font-size:11px;color:var(--text2)">' + (r[h] !== '' && r[h] !== undefined ? r[h] : '—') + '</td>').join('') +
-    '<td><span class="tag tag-green">' + r._autoType + '</span></td>' +
-    '<td><span class="tag ' + confColors[r._confidence] + '">' + r._confidence + '</span></td>' +
-    '<td><span class="tag tag-gray" data-status-row="' + i + '">Pending</span></td>' +
+    '<td style="border:1px solid var(--border);padding:7px 12px;font-family:\'Space Mono\',monospace;font-size:10px;color:var(--text3);background:var(--surface2)">' + (i + 1) + '</td>' +
+    xlHeaders.map(h => {
+      const val = r[h];
+      const hasVal = val !== '' && val !== undefined && val !== null;
+      return '<td style="border:1px solid var(--border);padding:7px 12px;font-size:12px;color:' + (hasVal ? 'var(--text)' : 'var(--text3)') + '">' + (hasVal ? val : '—') + '</td>';
+    }).join('') +
     '</tr>'
   ).join('');
 
@@ -2677,30 +3375,20 @@ function xlImportAll() {
     const lng = parseFloat(r._lng) || (3.0 + Math.random() * 0.7);
     assetCounter++;
 
-    // Build asset: start with platform meta fields
-    const asset = {
-      id: 'AST-' + assetCounter,
-      name: r._name || ('Row ' + r._row),
-      type: r._autoType,
-      geom: r.geom || 'Point',
-      lat: lat.toFixed(6),
-      lng: lng.toFixed(6),
-      condition: r._condition || 'Good',
-      material: r._material || '',
-      notes: r._notes || '',
-      agent: r.agent || 'Excel Import',
-      date: r.date,
-      ts: Date.now(),
-      elev: r._elevation || '',
-      area: r._area || '',
-      _importSource: 'excel',
-    };
-
-    // Attach ALL original Excel columns as flat top-level properties
+    // Build asset using ONLY original Excel column values (keyed by original header name)
+    const asset = { id: 'AST-' + assetCounter, ts: Date.now() };
     xlHeaders.forEach(h => {
       const val = r[h];
       if (val !== '' && val !== undefined && val !== null) asset[h] = val;
     });
+
+    // Minimal platform meta (used for map/filtering only, not displayed as static fields)
+    asset.lat = lat.toFixed(6);
+    asset.lng = lng.toFixed(6);
+    asset.type = r._autoType || 'Infrastructure';
+    asset.geom = 'Point';
+    asset.agent = 'Excel Import';
+    asset.date = new Date().toISOString().slice(0, 10);
 
     assets.push(asset);
     added++;
@@ -2739,6 +3427,37 @@ function xlDownloadCSV() {
 function xlCopyJSON() {
   const val = document.getElementById('xl-json-output').value;
   navigator.clipboard.writeText(val).then(()=>toast('JSON copied to clipboard','✓'));
+}
+
+function xlSaveDocument() {
+  if (!xlCategorised.length) { toast('No data to save', '⚠', true); return; }
+  // Build a clean plain-text document that mirrors the spreadsheet layout
+  const colWidths = {};
+  xlHeaders.forEach(h => { colWidths[h] = Math.max(h.length, 10); });
+  xlCategorised.forEach(r => {
+    xlHeaders.forEach(h => {
+      const len = String(r[h] !== '' && r[h] !== undefined ? r[h] : '—').length;
+      if (len > colWidths[h]) colWidths[h] = Math.min(len, 30);
+    });
+  });
+
+  const pad = (s, w) => String(s).slice(0, w).padEnd(w);
+  const sep = xlHeaders.map(h => '-'.repeat(colWidths[h])).join('  ');
+  const header = xlHeaders.map(h => pad(h.toUpperCase(), colWidths[h])).join('  ');
+  const rows = xlCategorised.map(r =>
+    xlHeaders.map(h => pad(r[h] !== '' && r[h] !== undefined ? r[h] : '—', colWidths[h])).join('  ')
+  );
+
+  const title = 'Excel Import — ' + new Date().toLocaleDateString();
+  const content = [title, '='.repeat(title.length), '', header, sep, ...rows, '', sep, xlCategorised.length + ' records total'].join('\n');
+
+  const blob = new Blob([content], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'excel_import_' + new Date().toISOString().slice(0,10) + '.txt';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Document saved', '⬇');
 }
 
 // ══════════════════════════════════════════════════════════════════
