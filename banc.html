@@ -1,0 +1,2230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NovaPay — Banking Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #0A0A0F;
+    --ink-2: #14141C;
+    --ink-3: #1E1E2A;
+    --surface: #242433;
+    --surface-2: #2E2E40;
+    --border: rgba(255,255,255,0.07);
+    --border-2: rgba(255,255,255,0.12);
+    --text: #F0EFF8;
+    --text-2: #9A99B2;
+    --text-3: #5C5B72;
+    --accent: #7B6EF6;
+    --accent-2: #9D93F8;
+    --accent-glow: rgba(123,110,246,0.25);
+    --green: #2DD4A0;
+    --green-dim: rgba(45,212,160,0.12);
+    --red: #F2637A;
+    --red-dim: rgba(242,99,122,0.12);
+    --amber: #F59E0B;
+    --amber-dim: rgba(245,158,11,0.12);
+    --blue: #38BDF8;
+    --blue-dim: rgba(56,189,248,0.12);
+    --radius: 16px;
+    --radius-sm: 10px;
+    --radius-xs: 6px;
+    --sidebar-w: 260px;
+    --transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--ink);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  /* ---- SIDEBAR ---- */
+  .sidebar {
+    width: var(--sidebar-w);
+    min-height: 100vh;
+    background: var(--ink-2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+  }
+
+  .sidebar::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 1px;
+    background: linear-gradient(to bottom, transparent, var(--accent) 40%, transparent);
+    opacity: 0.3;
+  }
+
+  .logo {
+    padding: 28px 24px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo-icon {
+    width: 36px; height: 36px;
+    background: linear-gradient(135deg, var(--accent), #A78BFA);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+
+  .logo-text {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 20px;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text span { color: var(--accent-2); }
+
+  .nav {
+    padding: 16px 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .nav-label {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-3);
+    padding: 12px 12px 6px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+    color: var(--text-2);
+    font-size: 14px;
+    font-weight: 400;
+    position: relative;
+    text-decoration: none;
+  }
+
+  .nav-item:hover { background: var(--surface); color: var(--text); }
+
+  .nav-item.active {
+    background: rgba(123,110,246,0.15);
+    color: var(--accent-2);
+    font-weight: 500;
+  }
+
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 3px; height: 60%;
+    background: var(--accent);
+    border-radius: 0 3px 3px 0;
+    box-shadow: 0 0 8px var(--accent);
+  }
+
+  .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+  .nav-badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .sidebar-footer {
+    padding: 16px 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .user-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: var(--transition);
+  }
+
+  .user-card:hover { background: var(--surface); }
+
+  .avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7B6EF6, #2DD4A0);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { font-size: 11px; color: var(--text-2); }
+
+  /* ---- MAIN ---- */
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .main::-webkit-scrollbar { width: 6px; }
+  .main::-webkit-scrollbar-track { background: transparent; }
+  .main::-webkit-scrollbar-thumb { background: var(--surface-2); border-radius: 3px; }
+
+  /* ---- TOPBAR ---- */
+  .topbar {
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--ink);
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    backdrop-filter: blur(10px);
+  }
+
+  .topbar-title { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 20px; }
+  .topbar-sub { font-size: 13px; color: var(--text-2); margin-top: 2px; }
+
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+
+  .icon-btn {
+    width: 38px; height: 38px;
+    border-radius: var(--radius-sm);
+    background: var(--ink-3);
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 16px;
+    color: var(--text-2);
+    position: relative;
+  }
+
+  .icon-btn:hover { background: var(--surface); color: var(--text); border-color: var(--border-2); }
+
+  .notif-dot {
+    position: absolute;
+    top: 7px; right: 7px;
+    width: 7px; height: 7px;
+    background: var(--accent);
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    box-shadow: 0 0 6px var(--accent);
+  }
+
+  .date-chip {
+    background: var(--ink-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--text-2);
+    font-family: 'DM Mono', monospace;
+  }
+
+  /* ---- CONTENT ---- */
+  .content { padding: 28px 32px; display: flex; flex-direction: column; gap: 28px; }
+
+  /* ---- BALANCE HERO ---- */
+  .balance-hero {
+    background: linear-gradient(135deg, #1A1730 0%, #1E1A3A 50%, #1A2530 100%);
+    border: 1px solid rgba(123,110,246,0.2);
+    border-radius: 20px;
+    padding: 32px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .balance-hero::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(123,110,246,0.3), transparent 70%);
+    pointer-events: none;
+  }
+
+  .balance-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: 30%;
+    width: 150px; height: 150px;
+    background: radial-gradient(circle, rgba(45,212,160,0.15), transparent 70%);
+    pointer-events: none;
+  }
+
+  .balance-main { border-right: 1px solid var(--border); padding-right: 32px; }
+  .balance-stat { padding: 0 32px; border-right: 1px solid var(--border); }
+  .balance-stat:last-child { border-right: none; padding-right: 0; }
+
+  .bal-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-3);
+    font-weight: 500;
+    margin-bottom: 8px;
+  }
+
+  .bal-amount {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .bal-amount .currency { font-size: 20px; color: var(--text-2); margin-right: 2px; }
+
+  .bal-change {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+
+  .bal-change.up { background: var(--green-dim); color: var(--green); }
+  .bal-change.down { background: var(--red-dim); color: var(--red); }
+
+  .stat-amount {
+    font-family: 'DM Mono', monospace;
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .stat-amount.green { color: var(--green); }
+  .stat-amount.red { color: var(--red); }
+
+  /* ---- GRID 3 ---- */
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-main { display: grid; grid-template-columns: 1fr 340px; gap: 20px; }
+
+  /* ---- CARDS ---- */
+  .card {
+    background: var(--ink-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    transition: var(--transition);
+  }
+
+  .card:hover { border-color: var(--border-2); }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+  }
+
+  .card-action {
+    font-size: 12px;
+    color: var(--accent-2);
+    cursor: pointer;
+    font-weight: 500;
+    transition: var(--transition);
+  }
+
+  .card-action:hover { color: var(--text); }
+
+  /* ---- QUICK STATS ---- */
+  .stat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .stat-icon {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px;
+  }
+
+  .stat-number {
+    font-family: 'DM Mono', monospace;
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+  }
+
+  .stat-label { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+
+  .stat-footer {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--text-2);
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+  }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 2px 8px; border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+  }
+
+  .pill.green { background: var(--green-dim); color: var(--green); }
+  .pill.red { background: var(--red-dim); color: var(--red); }
+  .pill.amber { background: var(--amber-dim); color: var(--amber); }
+  .pill.blue { background: var(--blue-dim); color: var(--blue); }
+  .pill.purple { background: rgba(123,110,246,0.15); color: var(--accent-2); }
+
+  /* ---- CHART ---- */
+  .chart-container { position: relative; height: 180px; margin-top: 8px; }
+
+  canvas { width: 100% !important; }
+
+  /* ---- TRANSACTIONS ---- */
+  .tx-list { display: flex; flex-direction: column; gap: 4px; }
+
+  .tx-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    cursor: pointer;
+  }
+
+  .tx-item:hover { background: var(--ink-3); }
+
+  .tx-icon {
+    width: 42px; height: 42px;
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .tx-info { flex: 1; min-width: 0; }
+  .tx-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tx-date { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+  .tx-category { font-size: 11px; padding: 2px 7px; border-radius: 20px; display: inline-block; margin-top: 2px; }
+
+  .tx-amount {
+    font-family: 'DM Mono', monospace;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .tx-amount.credit { color: var(--green); }
+  .tx-amount.debit { color: var(--text); }
+  .tx-status { font-size: 11px; color: var(--text-3); margin-top: 2px; text-align: right; }
+
+  /* ---- PAYMENT CARDS ---- */
+  .payment-card {
+    height: 160px;
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .payment-card:hover { transform: translateY(-2px); }
+
+  .payment-card::before {
+    content: '';
+    position: absolute;
+    top: -30px; right: -30px;
+    width: 100px; height: 100px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.05);
+  }
+
+  .payment-card::after {
+    content: '';
+    position: absolute;
+    bottom: -20px; left: 40%;
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.04);
+  }
+
+  .card-visa { background: linear-gradient(135deg, #1a237e, #283593); }
+  .card-master { background: linear-gradient(135deg, #3e0000, #6b0000); }
+  .card-debit { background: linear-gradient(135deg, #004d40, #00695c); }
+
+  .card-number { font-family: 'DM Mono', monospace; font-size: 13px; letter-spacing: 2px; color: rgba(255,255,255,0.7); }
+  .card-name { font-size: 11px; letter-spacing: 1px; text-transform: uppercase; color: rgba(255,255,255,0.6); }
+  .card-expiry { font-family: 'DM Mono', monospace; font-size: 11px; color: rgba(255,255,255,0.7); }
+  .card-brand { font-weight: 700; font-size: 14px; letter-spacing: -0.5px; }
+
+  .card-chip {
+    width: 28px; height: 20px;
+    background: linear-gradient(135deg, #ffd700, #b8860b);
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+
+  /* ---- SPEND PIE ---- */
+  .spend-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+
+  .spend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+  }
+
+  .spend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .spend-name { flex: 1; color: var(--text-2); }
+  .spend-pct { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text-2); }
+  .spend-bar-track { flex: 2; height: 4px; background: var(--surface); border-radius: 2px; overflow: hidden; }
+  .spend-bar-fill { height: 100%; border-radius: 2px; transition: width 1s cubic-bezier(0.4,0,0.2,1); }
+
+  /* ---- QUICK ACTIONS ---- */
+  .actions-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+
+  .action-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 8px;
+    border-radius: var(--radius-sm);
+    background: var(--ink-3);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: var(--transition);
+    font-size: 12px;
+    color: var(--text-2);
+    text-align: center;
+  }
+
+  .action-btn:hover {
+    background: var(--surface);
+    border-color: var(--accent);
+    color: var(--text);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(123,110,246,0.15);
+  }
+
+  .action-btn-icon {
+    width: 40px; height: 40px;
+    border-radius: 10px;
+    background: var(--accent-glow);
+    border: 1px solid rgba(123,110,246,0.2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    transition: var(--transition);
+  }
+
+  .action-btn:hover .action-btn-icon { background: var(--accent); border-color: var(--accent); }
+
+  /* ---- MODAL ---- */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.active { display: flex; }
+
+  .modal {
+    background: var(--ink-2);
+    border: 1px solid var(--border-2);
+    border-radius: 20px;
+    padding: 28px;
+    width: 420px;
+    max-width: 90vw;
+    animation: modal-in 0.25s cubic-bezier(0.4,0,0.2,1);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  @keyframes modal-in {
+    from { opacity: 0; transform: scale(0.96) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .modal-sub { font-size: 13px; color: var(--text-2); margin-bottom: 24px; }
+
+  .form-group { margin-bottom: 16px; }
+  .form-label { font-size: 12px; font-weight: 500; color: var(--text-2); margin-bottom: 6px; display: block; letter-spacing: 0.3px; }
+
+  .form-input {
+    width: 100%;
+    background: var(--ink-3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    transition: var(--transition);
+    outline: none;
+  }
+
+  .form-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+
+  select.form-input option { background: var(--ink-3); }
+
+  .form-input::placeholder { color: var(--text-3); }
+
+  .btn-row { display: flex; gap: 10px; margin-top: 20px; }
+
+  .btn {
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition);
+    border: none;
+    flex: 1;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+
+  .btn-primary:hover { background: var(--accent-2); box-shadow: 0 0 30px var(--accent-glow); }
+
+  .btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text-2);
+  }
+
+  .btn-ghost:hover { background: var(--ink-3); color: var(--text); }
+
+  /* ---- TOAST ---- */
+  #toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--ink-3);
+    border: 1px solid var(--border-2);
+    border-radius: var(--radius-sm);
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 200;
+    font-size: 13px;
+    font-weight: 500;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+    pointer-events: none;
+    min-width: 260px;
+  }
+
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.success { border-color: rgba(45,212,160,0.4); }
+  #toast.error { border-color: rgba(242,99,122,0.4); }
+  .toast-icon { font-size: 18px; }
+
+  /* ---- LOADING ---- */
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface) 25%, var(--surface-2) 50%, var(--surface) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+    border-radius: 4px;
+  }
+
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ---- SECTION VIEW MANAGEMENT ---- */
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ---- PROGRESS RING ---- */
+  .progress-ring { transform: rotate(-90deg); }
+  .progress-ring-circle {
+    fill: none;
+    stroke: var(--accent);
+    stroke-width: 4;
+    stroke-linecap: round;
+    transition: stroke-dashoffset 1s ease;
+  }
+  .progress-ring-bg { fill: none; stroke: var(--surface); stroke-width: 4; }
+
+  /* ---- TRANSFERS SECTION ---- */
+  .recipient-list { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 16px; }
+  .recipient-list::-webkit-scrollbar { height: 0; }
+
+  .recipient-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  .recipient-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    border: 2px solid var(--border);
+    transition: var(--transition);
+  }
+
+  .recipient-chip:hover .recipient-avatar { border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+  .recipient-chip.selected .recipient-avatar { border-color: var(--accent); box-shadow: 0 0 12px var(--accent-glow); }
+
+  .recipient-name { font-size: 11px; color: var(--text-2); white-space: nowrap; }
+
+  /* ---- GOALS ---- */
+  .goal-item {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .goal-item:last-child { border-bottom: none; }
+  .goal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .goal-name { font-size: 14px; font-weight: 500; }
+  .goal-progress-track { height: 6px; background: var(--surface); border-radius: 3px; overflow: hidden; }
+  .goal-progress-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+
+  /* ---- ANIMATIONS ---- */
+  @keyframes fade-up {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .fade-up { animation: fade-up 0.4s cubic-bezier(0.4,0,0.2,1) both; }
+  .delay-1 { animation-delay: 0.05s; }
+  .delay-2 { animation-delay: 0.1s; }
+  .delay-3 { animation-delay: 0.15s; }
+  .delay-4 { animation-delay: 0.2s; }
+
+  /* ---- RESPONSIVE ---- */
+  @media (max-width: 1100px) {
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .grid-main { grid-template-columns: 1fr; }
+    .balance-hero { grid-template-columns: 1fr; gap: 20px; }
+    .balance-main { border-right: none; padding-right: 0; border-bottom: 1px solid var(--border); padding-bottom: 20px; }
+    .balance-stat { border-right: none; padding: 0; }
+  }
+
+  @media (max-width: 768px) {
+    :root { --sidebar-w: 0px; }
+    .sidebar { display: none; }
+    .grid-3 { grid-template-columns: 1fr; }
+    .content { padding: 16px; }
+    .topbar { padding: 16px; }
+    .actions-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
+  /* Analytics section */
+  .analytics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .full-width { grid-column: 1/-1; }
+  .monthly-bar-container { display: flex; align-items: flex-end; gap: 8px; height: 120px; margin-top: 8px; }
+  .monthly-bar-group { display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; }
+  .monthly-bar-wrap { display: flex; gap: 3px; align-items: flex-end; width: 100%; }
+  .monthly-bar {
+    flex: 1;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.8s cubic-bezier(0.4,0,0.2,1);
+    cursor: pointer;
+    min-height: 4px;
+  }
+  .monthly-bar:hover { opacity: 0.8; }
+  .monthly-label { font-size: 10px; color: var(--text-3); font-family: 'DM Mono', monospace; }
+
+  /* Settings section */
+  .settings-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-label { font-size: 14px; font-weight: 500; }
+  .settings-desc { font-size: 12px; color: var(--text-2); margin-top: 2px; }
+
+  .toggle {
+    width: 44px; height: 24px;
+    background: var(--surface);
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+    transition: var(--transition);
+    flex-shrink: 0;
+    border: 1px solid var(--border);
+  }
+
+  .toggle.on { background: var(--accent); border-color: var(--accent); }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 18px; height: 18px;
+    background: white;
+    border-radius: 50%;
+    transition: var(--transition);
+  }
+  .toggle.on::after { left: 22px; }
+
+  /* Notifications panel */
+  .notif-panel {
+    position: fixed;
+    top: 70px; right: 20px;
+    width: 320px;
+    background: var(--ink-2);
+    border: 1px solid var(--border-2);
+    border-radius: var(--radius);
+    z-index: 50;
+    box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+    display: none;
+    overflow: hidden;
+  }
+
+  .notif-panel.open { display: block; animation: fade-up 0.2s ease both; }
+  .notif-header { padding: 16px 18px; border-bottom: 1px solid var(--border); font-family: 'Syne', sans-serif; font-weight: 700; font-size: 15px; display: flex; justify-content: space-between; align-items: center; }
+  .notif-close { color: var(--text-2); cursor: pointer; font-size: 18px; }
+  .notif-item { padding: 14px 18px; border-bottom: 1px solid var(--border); display: flex; gap: 12px; }
+  .notif-item:last-child { border-bottom: none; }
+  .notif-dot-item { width: 8px; height: 8px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+  .notif-text { font-size: 13px; line-height: 1.5; }
+  .notif-time { font-size: 11px; color: var(--text-3); margin-top: 2px; }
+  .notif-unread { background: rgba(123,110,246,0.05); }
+
+  /* ---- PROFILE EDIT ---- */
+  .profile-avatar-lg {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7B6EF6, #2DD4A0);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    font-size: 28px;
+    margin: 0 auto 16px;
+    cursor: pointer;
+    position: relative;
+    border: 3px solid var(--accent);
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">💎</div>
+    <div class="logo-text">Nova<span>Pay</span></div>
+  </div>
+  <nav class="nav">
+    <div class="nav-label">Menu</div>
+    <div class="nav-item active" onclick="navigate('dashboard', this)">
+      <span class="nav-icon">⊞</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="navigate('analytics', this)">
+      <span class="nav-icon">📊</span> Analytics
+    </div>
+    <div class="nav-item" onclick="navigate('transactions', this)">
+      <span class="nav-icon">↕</span> Transactions
+      <span class="nav-badge" id="tx-badge">0</span>
+    </div>
+    <div class="nav-item" onclick="navigate('transfers', this)">
+      <span class="nav-icon">↗</span> Transfers
+    </div>
+    <div class="nav-item" onclick="navigate('cards', this)">
+      <span class="nav-icon">▭</span> My Cards
+    </div>
+    <div class="nav-item" onclick="navigate('goals', this)">
+      <span class="nav-icon">◎</span> Goals
+    </div>
+    <div class="nav-label">Account</div>
+    <div class="nav-item" onclick="navigate('settings', this)">
+      <span class="nav-icon">⚙</span> Settings
+    </div>
+    <div class="nav-item" onclick="openModal('support-modal')">
+      <span class="nav-icon">?</span> Support
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="user-card" onclick="navigate('settings', document.querySelector('.nav-item:last-child'))">
+      <div class="avatar" id="sidebar-avatar">JD</div>
+      <div class="user-info">
+        <div class="user-name" id="sidebar-name">James Donahue</div>
+        <div class="user-role">Premium Account</div>
+      </div>
+      <span style="color:var(--text-3); font-size:12px;">›</span>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="page-title">Dashboard</div>
+      <div class="topbar-sub" id="page-sub">Good morning, <span id="greeting-name">James</span> 👋</div>
+    </div>
+    <div class="topbar-right">
+      <div class="date-chip" id="date-display"></div>
+      <div class="icon-btn" onclick="toggleNotif()" id="notif-btn">🔔<div class="notif-dot"></div></div>
+      <div class="icon-btn" onclick="openModal('transfer-modal')">↗</div>
+      <div class="icon-btn" onclick="navigate('settings', null)">👤</div>
+    </div>
+  </div>
+
+  <!-- NOTIFICATIONS PANEL -->
+  <div class="notif-panel" id="notif-panel">
+    <div class="notif-header">
+      Notifications
+      <span class="notif-close" onclick="toggleNotif()">×</span>
+    </div>
+    <div class="notif-item notif-unread">
+      <div class="notif-dot-item" style="background:var(--green)"></div>
+      <div>
+        <div class="notif-text">Salary credit of <strong>$5,200.00</strong> received from Acme Corp</div>
+        <div class="notif-time">2 hours ago</div>
+      </div>
+    </div>
+    <div class="notif-item notif-unread">
+      <div class="notif-dot-item" style="background:var(--accent)"></div>
+      <div>
+        <div class="notif-text">New login detected from Chrome / macOS</div>
+        <div class="notif-time">5 hours ago</div>
+      </div>
+    </div>
+    <div class="notif-item">
+      <div class="notif-dot-item" style="background:var(--amber)"></div>
+      <div>
+        <div class="notif-text">Your bill payment of $142.00 is due in 3 days</div>
+        <div class="notif-time">Yesterday</div>
+      </div>
+    </div>
+    <div class="notif-item">
+      <div class="notif-dot-item" style="background:var(--text-3)"></div>
+      <div>
+        <div class="notif-text">Statement for March 2025 is now available</div>
+        <div class="notif-time">2 days ago</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ DASHBOARD SECTION ============ -->
+  <div class="section active" id="section-dashboard">
+    <div class="content">
+
+      <!-- Balance Hero -->
+      <div class="balance-hero fade-up">
+        <div class="balance-main">
+          <div class="bal-label">Total Balance</div>
+          <div class="bal-amount"><span class="currency">$</span><span id="total-balance">0.00</span></div>
+          <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+            <span class="bal-change up" id="balance-change">▲ 3.2% this month</span>
+            <span style="font-size:12px; color:var(--text-3); line-height:20px;">across all accounts</span>
+          </div>
+        </div>
+        <div class="balance-stat">
+          <div class="bal-label">Income</div>
+          <div class="stat-amount green" id="total-income">$0.00</div>
+          <div style="font-size:12px; color:var(--text-2); margin-top:4px;">This month</div>
+          <div style="margin-top:8px;"><span class="pill green">▲ 12%</span></div>
+        </div>
+        <div class="balance-stat">
+          <div class="bal-label">Expenses</div>
+          <div class="stat-amount red" id="total-expenses">$0.00</div>
+          <div style="font-size:12px; color:var(--text-2); margin-top:4px;">This month</div>
+          <div style="margin-top:8px;"><span class="pill red">▼ 5%</span></div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="card fade-up delay-1">
+        <div class="card-header">
+          <div class="card-title">Quick Actions</div>
+        </div>
+        <div class="actions-grid">
+          <div class="action-btn" onclick="openModal('transfer-modal')">
+            <div class="action-btn-icon">↗</div> Send Money
+          </div>
+          <div class="action-btn" onclick="openModal('receive-modal')">
+            <div class="action-btn-icon">↙</div> Receive
+          </div>
+          <div class="action-btn" onclick="openModal('pay-modal')">
+            <div class="action-btn-icon">📱</div> Pay Bills
+          </div>
+          <div class="action-btn" onclick="openModal('topup-modal')">
+            <div class="action-btn-icon">⊕</div> Top Up
+          </div>
+        </div>
+      </div>
+
+      <!-- Spending Chart + Spend Categories -->
+      <div class="grid-main fade-up delay-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Spending Overview</div>
+            <div class="card-action">6 Months ↓</div>
+          </div>
+          <div class="chart-container">
+            <canvas id="spending-chart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Top Categories</div>
+            <div class="card-action">View all →</div>
+          </div>
+          <div class="spend-list" id="spend-list"></div>
+        </div>
+      </div>
+
+      <!-- Recent Transactions + Savings Goal -->
+      <div class="grid-main fade-up delay-3">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Recent Transactions</div>
+            <div class="card-action" onclick="navigate('transactions', null)">See all →</div>
+          </div>
+          <div class="tx-list" id="recent-tx-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Savings Goals</div>
+            <div class="card-action" onclick="navigate('goals', null)">Manage →</div>
+          </div>
+          <div id="dashboard-goals"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ ANALYTICS SECTION ============ -->
+  <div class="section" id="section-analytics">
+    <div class="content">
+      <div class="analytics-grid">
+        <div class="card full-width">
+          <div class="card-header">
+            <div class="card-title">Monthly Cash Flow</div>
+            <div style="display:flex; gap:12px;">
+              <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2)"><span style="width:10px;height:10px;border-radius:2px;background:var(--green);display:inline-block"></span>Income</span>
+              <span style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text-2)"><span style="width:10px;height:10px;border-radius:2px;background:var(--red);display:inline-block"></span>Expenses</span>
+            </div>
+          </div>
+          <div class="monthly-bar-container" id="monthly-bars"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Income Sources</div></div>
+          <div id="income-sources"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Spending by Category</div></div>
+          <div class="spend-list" id="analytics-spend-list"></div>
+        </div>
+        <div class="card full-width">
+          <div class="card-header"><div class="card-title">Net Worth Trend</div></div>
+          <div class="chart-container">
+            <canvas id="net-worth-chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TRANSACTIONS SECTION ============ -->
+  <div class="section" id="section-transactions">
+    <div class="content">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">All Transactions</div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <select class="form-input" style="width:140px;padding:6px 10px;font-size:12px;" onchange="filterTransactions(this.value)" id="tx-filter">
+              <option value="all">All Types</option>
+              <option value="credit">Income</option>
+              <option value="debit">Expenses</option>
+            </select>
+            <div class="icon-btn" onclick="openModal('add-tx-modal')" style="width:auto;padding:0 12px;font-size:12px;gap:6px;color:var(--accent-2);">⊕ Add</div>
+          </div>
+        </div>
+        <div class="tx-list" id="all-tx-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TRANSFERS SECTION ============ -->
+  <div class="section" id="section-transfers">
+    <div class="content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Send Money</div></div>
+          <div class="card-sub" style="font-size:13px;color:var(--text-2);margin-bottom:16px;">Select a recipient</div>
+          <div class="recipient-list" id="recipient-list"></div>
+          <div class="form-group">
+            <label class="form-label">Amount</label>
+            <input class="form-input" type="number" placeholder="0.00" id="transfer-amount" step="0.01" min="0">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Note (optional)</label>
+            <input class="form-input" type="text" placeholder="What's it for?" id="transfer-note">
+          </div>
+          <button class="btn btn-primary" onclick="doTransfer()" style="width:100%">Send Money →</button>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Transfer History</div></div>
+          <div class="tx-list" id="transfer-history"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CARDS SECTION ============ -->
+  <div class="section" id="section-cards">
+    <div class="content">
+      <div class="grid-2">
+        <div>
+          <div class="card-header" style="margin-bottom:16px;">
+            <div class="card-title" style="font-family:'Syne',sans-serif;font-weight:700;">My Cards</div>
+            <div class="card-action" onclick="openModal('add-card-modal')">+ Add Card</div>
+          </div>
+          <div id="cards-list" style="display:flex;flex-direction:column;gap:12px;"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Card Details</div></div>
+          <div id="card-detail-panel" style="color:var(--text-2);font-size:13px;text-align:center;padding:32px 0;">
+            Select a card to view details
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ GOALS SECTION ============ -->
+  <div class="section" id="section-goals">
+    <div class="content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Savings Goals</div>
+            <div class="card-action" onclick="openModal('add-goal-modal')">+ New Goal</div>
+          </div>
+          <div id="goals-list"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Contribute to Goal</div></div>
+          <div class="form-group">
+            <label class="form-label">Select Goal</label>
+            <select class="form-input" id="contribute-goal-select"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Amount</label>
+            <input class="form-input" type="number" placeholder="0.00" id="contribute-amount" min="0" step="0.01">
+          </div>
+          <button class="btn btn-primary" onclick="contributeToGoal()" style="width:100%">Add Contribution →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS SECTION ============ -->
+  <div class="section" id="section-settings">
+    <div class="content">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">Profile</div></div>
+          <div class="profile-avatar-lg" id="profile-avatar-lg">JD</div>
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input class="form-input" type="text" id="settings-name" placeholder="Your name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input class="form-input" type="email" id="settings-email" placeholder="email@example.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Phone</label>
+            <input class="form-input" type="tel" id="settings-phone" placeholder="+1 (555) 000-0000">
+          </div>
+          <button class="btn btn-primary" onclick="saveProfile()" style="width:100%">Save Changes</button>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">Preferences</div></div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Email Notifications</div>
+              <div class="settings-desc">Receive transaction alerts</div>
+            </div>
+            <div class="toggle on" id="toggle-email" onclick="toggleSetting('email')"></div>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Push Notifications</div>
+              <div class="settings-desc">Instant alerts on activity</div>
+            </div>
+            <div class="toggle on" id="toggle-push" onclick="toggleSetting('push')"></div>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Two-Factor Auth</div>
+              <div class="settings-desc">Extra security layer</div>
+            </div>
+            <div class="toggle" id="toggle-2fa" onclick="toggleSetting('2fa')"></div>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Dark Mode</div>
+              <div class="settings-desc">Always-on dark interface</div>
+            </div>
+            <div class="toggle on" id="toggle-dark" onclick="toggleSetting('dark')"></div>
+          </div>
+          <div class="settings-row">
+            <div>
+              <div class="settings-label">Biometric Login</div>
+              <div class="settings-desc">Face ID / Fingerprint</div>
+            </div>
+            <div class="toggle" id="toggle-bio" onclick="toggleSetting('bio')"></div>
+          </div>
+          <div style="margin-top:20px;">
+            <button class="btn btn-ghost" onclick="clearData()" style="width:100%;color:var(--red);border-color:var(--red-dim)">Reset All Data</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end main -->
+
+<!-- ============ MODALS ============ -->
+
+<!-- Transfer Modal -->
+<div class="modal-overlay" id="transfer-modal">
+  <div class="modal">
+    <div class="modal-title">↗ Send Money</div>
+    <div class="modal-sub">Transfer funds instantly</div>
+    <div class="form-group">
+      <label class="form-label">Recipient Name</label>
+      <input class="form-input" type="text" placeholder="e.g. Sarah Johnson" id="m-recipient">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Amount ($)</label>
+      <input class="form-input" type="number" placeholder="0.00" id="m-amount" step="0.01" min="0.01">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <select class="form-input" id="m-category">
+        <option value="Transfer">Transfer</option>
+        <option value="Food">Food & Dining</option>
+        <option value="Shopping">Shopping</option>
+        <option value="Bills">Bills</option>
+        <option value="Transport">Transport</option>
+        <option value="Entertainment">Entertainment</option>
+        <option value="Health">Health</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Note</label>
+      <input class="form-input" type="text" placeholder="Optional note">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closeModal('transfer-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="sendMoney()">Confirm Send →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Receive Modal -->
+<div class="modal-overlay" id="receive-modal">
+  <div class="modal">
+    <div class="modal-title">↙ Receive Money</div>
+    <div class="modal-sub">Share your payment details</div>
+    <div style="background:var(--ink-3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:20px;text-align:center;margin-bottom:16px;">
+      <div style="font-size:48px;margin-bottom:8px;">⠿</div>
+      <div style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text-2);" id="receive-account-num">**** **** **** ****</div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Add Incoming Transaction</label>
+      <input class="form-input" type="text" placeholder="Sender name" id="r-sender">
+    </div>
+    <div class="form-group">
+      <input class="form-input" type="number" placeholder="Amount ($)" id="r-amount" step="0.01" min="0.01">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closeModal('receive-modal')">Close</button>
+      <button class="btn btn-primary" onclick="receiveMoney()">Record Receipt</button>
+    </div>
+  </div>
+</div>
+
+<!-- Pay Bills Modal -->
+<div class="modal-overlay" id="pay-modal">
+  <div class="modal">
+    <div class="modal-title">📱 Pay Bills</div>
+    <div class="modal-sub">Schedule or pay a bill instantly</div>
+    <div class="form-group">
+      <label class="form-label">Bill Type</label>
+      <select class="form-input" id="bill-type">
+        <option>Electricity</option>
+        <option>Internet</option>
+        <option>Water</option>
+        <option>Phone</option>
+        <option>Rent</option>
+        <option>Insurance</option>
+        <option>Subscription</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Amount ($)</label>
+      <input class="form-input" type="number" placeholder="0.00" id="bill-amount" step="0.01" min="0.01">
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closeModal('pay-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="payBill()">Pay Now →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Top Up Modal -->
+<div class="modal-overlay" id="topup-modal">
+  <div class="modal">
+    <div class="modal-title">⊕ Top Up Balance</div>
+    <div class="modal-sub">Add funds to your account</div>
+    <div class="form-group">
+      <label class="form-label">Source</label>
+      <select class="form-input">
+        <option>Bank Transfer</option>
+        <option>Debit Card</option>
+        <option>Credit Card</option>
+        <option>Crypto Wallet</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Amount ($)</label>
+      <input class="form-input" type="number" placeholder="0.00" id="topup-amount" step="0.01" min="0.01">
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px;">
+      <div class="icon-btn" style="flex:1;width:auto;padding:8px;font-size:13px;color:var(--text-2);" onclick="document.getElementById('topup-amount').value='100'">$100</div>
+      <div class="icon-btn" style="flex:1;width:auto;padding:8px;font-size:13px;color:var(--text-2);" onclick="document.getElementById('topup-amount').value='500'">$500</div>
+      <div class="icon-btn" style="flex:1;width:auto;padding:8px;font-size:13px;color:var(--text-2);" onclick="document.getElementById('topup-amount').value='1000'">$1,000</div>
+      <div class="icon-btn" style="flex:1;width:auto;padding:8px;font-size:13px;color:var(--text-2);" onclick="document.getElementById('topup-amount').value='5000'">$5,000</div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closeModal('topup-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="topUp()">Add Funds →</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Transaction Modal -->
+<div class="modal-overlay" id="add-tx-modal">
+  <div class="modal">
+    <div class="modal-title">⊕ Add Transaction</div>
+    <div class="modal-sub">Manually record a transaction</div>
+    <div class="form-group">
+      <label class="form-label">Type</label>
+      <select class="form-input" id="tx-type">
+        <option value="credit">Income (Credit)</option>
+        <option value="debit">Expense (Debit)</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <input class="form-input" type="text" placeholder="e.g. Grocery shopping" id="tx-desc">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Amount ($)</label>
+      <input class="form-input" type="number" placeholder="0.00" id="tx-amt" step="0.01" min="0.01">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Category</label>
+      <select class="form-input" id="tx-cat">
+        <option>Salary</option><option>Food</option><option>Shopping</option>
+        <option>Bills</option><option>Transport</option><option>Entertainment</option>
+        <option>Health</option><option>Transfer</option><option>Other</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closeModal('add-tx-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addTransaction()">Add Transaction</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Goal Modal -->
+<div class="modal-overlay" id="add-goal-modal">
+  <div class="modal">
+    <div class="modal-title">◎ New Savings Goal</div>
+    <div class="modal-sub">Set a target to work towards</div>
+    <div class="form-group">
+      <label class="form-label">Goal Name</label>
+      <input class="form-input" type="text" placeholder="e.g. Vacation, New Car" id="goal-name">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Target Amount ($)</label>
+      <input class="form-input" type="number" placeholder="0.00" id="goal-target" step="0.01" min="1">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Icon</label>
+      <select class="form-input" id="goal-icon">
+        <option>🏖️</option><option>🚗</option><option>🏠</option><option>💻</option>
+        <option>📱</option><option>✈️</option><option>🎓</option><option>💍</option>
+        <option>🏋️</option><option>🎸</option>
+      </select>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-ghost" onclick="closeModal('add-goal-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="addGoal()">Create Goal</button>
+    </div>
+  </div>
+</div>
+
+<!-- Support Modal -->
+<div class="modal-overlay" id="support-modal">
+  <div class="modal">
+    <div class="modal-title">? Support Center</div>
+    <div class="modal-sub">How can we help you today?</div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;">
+      <div class="card" style="padding:14px;cursor:pointer;" onclick="showToast('Opening chat...','info')">
+        💬 &nbsp; <strong>Live Chat</strong> — Available 24/7
+      </div>
+      <div class="card" style="padding:14px;cursor:pointer;" onclick="showToast('Calling support...','info')">
+        📞 &nbsp; <strong>Phone Support</strong> — 1-800-NOVA-PAY
+      </div>
+      <div class="card" style="padding:14px;cursor:pointer;" onclick="showToast('Opening FAQ...','info')">
+        📋 &nbsp; <strong>FAQ & Help Center</strong>
+      </div>
+    </div>
+    <button class="btn btn-ghost" onclick="closeModal('support-modal')" style="width:100%">Close</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"><span class="toast-icon" id="toast-icon"></span><span id="toast-msg"></span></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+// ================================================================
+// DATA LAYER — LocalStorage
+// ================================================================
+const KEYS = {
+  transactions: 'np_transactions',
+  balance: 'np_balance',
+  profile: 'np_profile',
+  goals: 'np_goals',
+  settings: 'np_settings',
+  cards: 'np_cards',
+  recipients: 'np_recipients'
+};
+
+const load = k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } };
+const save = (k,v) => localStorage.setItem(k, JSON.stringify(v));
+
+// Default data seed
+function seedData() {
+  if (!load(KEYS.balance)) save(KEYS.balance, 24837.50);
+
+  if (!load(KEYS.profile)) save(KEYS.profile, {
+    name: 'James Donahue', email: 'james.donahue@email.com', phone: '+1 (555) 482-9201', initials: 'JD'
+  });
+
+  if (!load(KEYS.settings)) save(KEYS.settings, { email: true, push: true, '2fa': false, dark: true, bio: false });
+
+  if (!load(KEYS.transactions)) {
+    const now = Date.now();
+    const day = 86400000;
+    save(KEYS.transactions, [
+      { id: uid(), type:'credit', name:'Acme Corp Salary', amount:5200, category:'Salary', date: now-1*day, icon:'💼' },
+      { id: uid(), type:'debit', name:'Netflix', amount:15.99, category:'Entertainment', date: now-2*day, icon:'🎬' },
+      { id: uid(), type:'debit', name:'Whole Foods Market', amount:127.40, category:'Food', date: now-2*day, icon:'🛒' },
+      { id: uid(), type:'debit', name:'Uber', amount:23.50, category:'Transport', date: now-3*day, icon:'🚗' },
+      { id: uid(), type:'credit', name:'Freelance Payment', amount:850, category:'Other', date: now-4*day, icon:'💰' },
+      { id: uid(), type:'debit', name:'Amazon', amount:89.99, category:'Shopping', date: now-4*day, icon:'📦' },
+      { id: uid(), type:'debit', name:'Electric Bill', amount:142, category:'Bills', date: now-5*day, icon:'⚡' },
+      { id: uid(), type:'debit', name:'Spotify', amount:9.99, category:'Entertainment', date: now-5*day, icon:'🎵' },
+      { id: uid(), type:'debit', name:'Gym Membership', amount:49, category:'Health', date: now-6*day, icon:'🏋️' },
+      { id: uid(), type:'credit', name:'Interest Credit', amount:12.30, category:'Other', date: now-7*day, icon:'📈' },
+      { id: uid(), type:'debit', name:'Coffee Shop', amount:18.40, category:'Food', date: now-7*day, icon:'☕' },
+      { id: uid(), type:'debit', name:'Pharmacy', amount:35.60, category:'Health', date: now-8*day, icon:'💊' },
+    ]);
+  }
+
+  if (!load(KEYS.goals)) save(KEYS.goals, [
+    { id: uid(), name: 'Dream Vacation', icon: '🏖️', target: 5000, saved: 2150, color: '#7B6EF6' },
+    { id: uid(), name: 'New MacBook', icon: '💻', target: 2500, saved: 800, color: '#2DD4A0' },
+    { id: uid(), name: 'Emergency Fund', icon: '🏠', target: 10000, saved: 6400, color: '#F59E0B' },
+  ]);
+
+  if (!load(KEYS.cards)) save(KEYS.cards, [
+    { id: uid(), type:'Visa', number:'4242 4242 4242 4242', name:'James Donahue', expiry:'09/28', cvv:'***', color:'card-visa', limit:10000, spent:3240 },
+    { id: uid(), type:'Mastercard', number:'5555 5555 5555 4444', name:'James Donahue', expiry:'03/27', cvv:'***', color:'card-master', limit:5000, spent:820 },
+    { id: uid(), type:'Debit', number:'4000 0000 0000 0002', name:'James Donahue', expiry:'12/26', cvv:'***', color:'card-debit', limit:null, spent:null },
+  ]);
+
+  if (!load(KEYS.recipients)) save(KEYS.recipients, [
+    { id: uid(), name:'Sarah J.', initials:'SJ', color:'#7B6EF6' },
+    { id: uid(), name:'Mike T.', initials:'MT', color:'#2DD4A0' },
+    { id: uid(), name:'Emma R.', initials:'ER', color:'#F59E0B' },
+    { id: uid(), name:'Alex K.', initials:'AK', color:'#F2637A' },
+    { id: uid(), name:'Chris L.', initials:'CL', color:'#38BDF8' },
+  ]);
+}
+
+function uid() { return Math.random().toString(36).slice(2,10); }
+
+// ================================================================
+// COMPUTED VALUES
+// ================================================================
+function getBalance() { return load(KEYS.balance) || 0; }
+function setBalance(v) { save(KEYS.balance, Math.max(0, parseFloat(v.toFixed(2)))); }
+
+function getTransactions() { return load(KEYS.transactions) || []; }
+function addTx(tx) {
+  const txs = getTransactions();
+  txs.unshift({ ...tx, id: uid(), date: Date.now() });
+  save(KEYS.transactions, txs);
+}
+
+function getMonthSummary() {
+  const txs = getTransactions();
+  const now = new Date();
+  const monthTxs = txs.filter(t => {
+    const d = new Date(t.date);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  });
+  const income = monthTxs.filter(t=>t.type==='credit').reduce((a,b)=>a+b.amount,0);
+  const expenses = monthTxs.filter(t=>t.type==='debit').reduce((a,b)=>a+b.amount,0);
+  return { income, expenses };
+}
+
+function getSpendByCategory() {
+  const txs = getTransactions().filter(t=>t.type==='debit');
+  const map = {};
+  txs.forEach(t => { map[t.category] = (map[t.category]||0) + t.amount; });
+  const total = Object.values(map).reduce((a,b)=>a+b,0);
+  return Object.entries(map).map(([cat, amt]) => ({
+    cat, amt, pct: total ? Math.round(amt/total*100) : 0
+  })).sort((a,b)=>b.amt-a.amt);
+}
+
+// ================================================================
+// FORMATTING
+// ================================================================
+const fmt = v => new Intl.NumberFormat('en-US', { minimumFractionDigits:2, maximumFractionDigits:2 }).format(v);
+const fmtDate = ts => {
+  const d = new Date(ts);
+  const now = new Date();
+  const diff = Math.floor((now-d)/86400000);
+  if (diff===0) return 'Today';
+  if (diff===1) return 'Yesterday';
+  return d.toLocaleDateString('en-US', {month:'short', day:'numeric'});
+};
+
+const catColors = {
+  Salary:'#2DD4A0', Food:'#F59E0B', Shopping:'#38BDF8', Bills:'#F2637A',
+  Transport:'#A78BFA', Entertainment:'#7B6EF6', Health:'#34D399', Transfer:'#60A5FA', Other:'#9CA3AF'
+};
+const catIcons = {
+  Salary:'💼', Food:'🍔', Shopping:'🛍️', Bills:'⚡', Transport:'🚗',
+  Entertainment:'🎬', Health:'❤️', Transfer:'↗', Other:'💳'
+};
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+let currentSection = 'dashboard';
+let spendChart, netWorthChart;
+
+function navigate(section, el) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('section-' + section).classList.add('active');
+  if (el) el.classList.add('active');
+  currentSection = section;
+
+  const titles = {
+    dashboard: ['Dashboard', 'Overview of your finances'],
+    analytics: ['Analytics', 'Detailed financial insights'],
+    transactions: ['Transactions', 'All your activity'],
+    transfers: ['Transfers', 'Send & receive money'],
+    cards: ['My Cards', 'Manage your payment cards'],
+    goals: ['Goals', 'Your savings targets'],
+    settings: ['Settings', 'Account & preferences']
+  };
+  const [title, sub] = titles[section] || ['Dashboard',''];
+  document.getElementById('page-title').textContent = title;
+  document.getElementById('page-sub').textContent = sub || '';
+
+  renderSection(section);
+  if (notifOpen) toggleNotif();
+}
+
+function renderSection(s) {
+  if (s==='dashboard') renderDashboard();
+  if (s==='analytics') renderAnalytics();
+  if (s==='transactions') renderAllTransactions();
+  if (s==='transfers') renderTransfers();
+  if (s==='cards') renderCards();
+  if (s==='goals') renderGoals();
+  if (s==='settings') renderSettings();
+}
+
+// ================================================================
+// RENDER DASHBOARD
+// ================================================================
+function renderDashboard() {
+  const bal = getBalance();
+  const {income, expenses} = getMonthSummary();
+
+  document.getElementById('total-balance').textContent = fmt(bal);
+  document.getElementById('total-income').textContent = '$' + fmt(income);
+  document.getElementById('total-expenses').textContent = '$' + fmt(expenses);
+
+  // Recent transactions (last 5)
+  const txs = getTransactions().slice(0, 5);
+  const list = document.getElementById('recent-tx-list');
+  list.innerHTML = txs.length ? txs.map(txHTML).join('') : '<div style="text-align:center;color:var(--text-3);padding:24px;font-size:13px;">No transactions yet</div>';
+
+  renderSpendList('spend-list');
+  renderSpendingChart();
+  renderDashboardGoals();
+  document.getElementById('tx-badge').textContent = getTransactions().length;
+}
+
+function txHTML(t) {
+  const icon = t.icon || catIcons[t.category] || '💳';
+  const bg = catColors[t.category] ? catColors[t.category]+'22' : 'var(--surface)';
+  return `<div class="tx-item">
+    <div class="tx-icon" style="background:${bg}">${icon}</div>
+    <div class="tx-info">
+      <div class="tx-name">${t.name}</div>
+      <div class="tx-date">${fmtDate(t.date)} · <span class="pill ${t.type==='credit'?'green':'blue'}" style="padding:1px 6px;font-size:10px;">${t.category}</span></div>
+    </div>
+    <div>
+      <div class="tx-amount ${t.type==='credit'?'credit':''}">${t.type==='credit'?'+':'-'}$${fmt(t.amount)}</div>
+      <div class="tx-status">Completed</div>
+    </div>
+  </div>`;
+}
+
+function renderSpendList(containerId) {
+  const cats = getSpendByCategory().slice(0, 5);
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = cats.map(c => `
+    <div class="spend-item">
+      <div class="spend-dot" style="background:${catColors[c.cat]||'#888'}"></div>
+      <div class="spend-name">${c.cat}</div>
+      <div class="spend-bar-track"><div class="spend-bar-fill" style="background:${catColors[c.cat]||'#888'};width:${c.pct}%"></div></div>
+      <div class="spend-pct">${c.pct}%</div>
+    </div>`).join('') || '<div style="color:var(--text-3);font-size:13px;text-align:center;padding:16px;">No data yet</div>';
+}
+
+function renderSpendingChart() {
+  const ctx = document.getElementById('spending-chart');
+  if (!ctx) return;
+  if (spendChart) { spendChart.destroy(); spendChart = null; }
+
+  const months = ['Nov','Dec','Jan','Feb','Mar','Apr'];
+  const txs = getTransactions();
+  const spending = months.map((_,i) => {
+    const base = [1800,2100,1650,2300,1900,0][i];
+    if (i < 5) return base + Math.random()*200-100;
+    return txs.filter(t=>t.type==='debit').reduce((a,b)=>a+b.amount,0);
+  });
+
+  spendChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: [{
+        data: spending,
+        borderColor: '#7B6EF6',
+        backgroundColor: 'rgba(123,110,246,0.08)',
+        fill: true,
+        tension: 0.4,
+        pointBackgroundColor: '#7B6EF6',
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        backgroundColor: '#1E1E2A', titleColor: '#F0EFF8', bodyColor: '#9A99B2',
+        borderColor: 'rgba(255,255,255,0.07)', borderWidth: 1, padding: 10,
+        callbacks: { label: ctx => ' $' + fmt(ctx.parsed.y) }
+      }},
+      scales: {
+        x: { grid: { color:'rgba(255,255,255,0.04)' }, ticks: { color:'#5C5B72', font:{size:11} } },
+        y: { grid: { color:'rgba(255,255,255,0.04)' }, ticks: { color:'#5C5B72', font:{size:11}, callback: v=>'$'+v } }
+      }
+    }
+  });
+}
+
+function renderDashboardGoals() {
+  const goals = load(KEYS.goals) || [];
+  const el = document.getElementById('dashboard-goals');
+  if (!el) return;
+  el.innerHTML = goals.slice(0,3).map(g => {
+    const pct = Math.min(100, Math.round(g.saved/g.target*100));
+    return `<div class="goal-item">
+      <div class="goal-header">
+        <div class="goal-name">${g.icon} ${g.name}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-2);">${pct}%</div>
+      </div>
+      <div style="font-size:12px;color:var(--text-2);margin-bottom:8px;">$${fmt(g.saved)} of $${fmt(g.target)}</div>
+      <div class="goal-progress-track"><div class="goal-progress-fill" style="width:${pct}%;background:${g.color}"></div></div>
+    </div>`;
+  }).join('') || '<div style="color:var(--text-3);font-size:13px;text-align:center;padding:24px;">No goals yet. <span style="color:var(--accent-2);cursor:pointer;" onclick="navigate(\'goals\',null)">Add one →</span></div>';
+}
+
+// ================================================================
+// RENDER ANALYTICS
+// ================================================================
+function renderAnalytics() {
+  // Monthly bars
+  const months = ['Oct','Nov','Dec','Jan','Feb','Mar'];
+  const income =  [4200,5100,4800,5200,4900,5200];
+  const expenses= [2100,1900,2400,1800,2100,1650];
+  const barsEl = document.getElementById('monthly-bars');
+  if (!barsEl) return;
+  const maxVal = Math.max(...income,...expenses);
+
+  barsEl.innerHTML = months.map((m,i) => `
+    <div class="monthly-bar-group">
+      <div class="monthly-bar-wrap">
+        <div class="monthly-bar" style="background:var(--green);height:${income[i]/maxVal*100}px;" title="Income: $${income[i]}"></div>
+        <div class="monthly-bar" style="background:var(--red);height:${expenses[i]/maxVal*100}px;" title="Expenses: $${expenses[i]}"></div>
+      </div>
+      <div class="monthly-label">${m}</div>
+    </div>`).join('');
+
+  // Income sources
+  const sources = [
+    { name:'Salary', pct:76, color:'#2DD4A0' },
+    { name:'Freelance', pct:18, color:'#7B6EF6' },
+    { name:'Interest', pct:6, color:'#38BDF8' },
+  ];
+  const srcEl = document.getElementById('income-sources');
+  if (srcEl) srcEl.innerHTML = `<div class="spend-list">${sources.map(s=>`
+    <div class="spend-item">
+      <div class="spend-dot" style="background:${s.color}"></div>
+      <div class="spend-name">${s.name}</div>
+      <div class="spend-bar-track"><div class="spend-bar-fill" style="background:${s.color};width:${s.pct}%"></div></div>
+      <div class="spend-pct">${s.pct}%</div>
+    </div>`).join('')}</div>`;
+
+  renderSpendList('analytics-spend-list');
+
+  // Net worth chart
+  const nwCtx = document.getElementById('net-worth-chart');
+  if (!nwCtx) return;
+  if (netWorthChart) { netWorthChart.destroy(); netWorthChart = null; }
+  const nwData = [18200,19100,20500,21300,22800,24837];
+  netWorthChart = new Chart(nwCtx, {
+    type: 'line',
+    data: {
+      labels: [...months],
+      datasets: [{
+        data: nwData,
+        borderColor: '#2DD4A0',
+        backgroundColor: 'rgba(45,212,160,0.07)',
+        fill: true, tension: 0.4,
+        pointBackgroundColor: '#2DD4A0',
+        pointRadius: 4, borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: {display:false}, tooltip:{
+        backgroundColor:'#1E1E2A',titleColor:'#F0EFF8',bodyColor:'#9A99B2',
+        borderColor:'rgba(255,255,255,0.07)',borderWidth:1,padding:10,
+        callbacks:{label:c=>' $'+fmt(c.parsed.y)}
+      }},
+      scales: {
+        x:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5C5B72',font:{size:11}}},
+        y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5C5B72',font:{size:11},callback:v=>'$'+v}}
+      }
+    }
+  });
+}
+
+// ================================================================
+// RENDER TRANSACTIONS
+// ================================================================
+function renderAllTransactions(filter='all') {
+  let txs = getTransactions();
+  if (filter==='credit') txs = txs.filter(t=>t.type==='credit');
+  if (filter==='debit') txs = txs.filter(t=>t.type==='debit');
+  const el = document.getElementById('all-tx-list');
+  if (!el) return;
+  el.innerHTML = txs.length ? txs.map(txHTML).join('') : '<div style="text-align:center;color:var(--text-3);padding:40px;font-size:13px;">No transactions found</div>';
+}
+
+function filterTransactions(v) { renderAllTransactions(v); }
+
+// ================================================================
+// RENDER TRANSFERS
+// ================================================================
+let selectedRecipient = null;
+function renderTransfers() {
+  const recipients = load(KEYS.recipients) || [];
+  const rl = document.getElementById('recipient-list');
+  if (rl) rl.innerHTML = recipients.map(r=>`
+    <div class="recipient-chip" id="rc-${r.id}" onclick="selectRecipient('${r.id}')">
+      <div class="recipient-avatar" style="background:${r.color}22;color:${r.color}">${r.initials}</div>
+      <div class="recipient-name">${r.name}</div>
+    </div>`).join('') + `
+    <div class="recipient-chip" onclick="openModal('add-recip-modal')">
+      <div class="recipient-avatar" style="background:var(--surface);color:var(--text-3);font-size:20px;">+</div>
+      <div class="recipient-name">New</div>
+    </div>`;
+
+  // Transfer history
+  const transfers = getTransactions().filter(t=>t.category==='Transfer');
+  const th = document.getElementById('transfer-history');
+  if (th) th.innerHTML = transfers.length ? transfers.map(txHTML).join('') : '<div style="color:var(--text-3);font-size:13px;text-align:center;padding:24px;">No transfers yet</div>';
+}
+
+function selectRecipient(id) {
+  selectedRecipient = id;
+  document.querySelectorAll('.recipient-chip').forEach(c => c.classList.remove('selected'));
+  const el = document.getElementById('rc-'+id);
+  if (el) el.classList.add('selected');
+  const r = (load(KEYS.recipients)||[]).find(x=>x.id===id);
+  if (r && document.getElementById('m-recipient')) document.getElementById('m-recipient').value = r.name;
+}
+
+function doTransfer() {
+  const amt = parseFloat(document.getElementById('transfer-amount').value);
+  if (!amt || amt<=0) return showToast('Enter a valid amount','error');
+  const bal = getBalance();
+  if (amt > bal) return showToast('Insufficient balance','error');
+
+  const r = selectedRecipient ? (load(KEYS.recipients)||[]).find(x=>x.id===selectedRecipient) : null;
+  const note = document.getElementById('transfer-note').value || 'Transfer';
+  addTx({ type:'debit', name: r ? `Transfer to ${r.name}` : note, amount:amt, category:'Transfer', icon:'↗' });
+  setBalance(bal - amt);
+  document.getElementById('transfer-amount').value='';
+  document.getElementById('transfer-note').value='';
+  selectedRecipient=null;
+  document.querySelectorAll('.recipient-chip').forEach(c=>c.classList.remove('selected'));
+  showToast(`$${fmt(amt)} sent successfully!`,'success');
+  renderTransfers();
+  renderDashboard();
+}
+
+// ================================================================
+// RENDER CARDS
+// ================================================================
+function renderCards() {
+  const cards = load(KEYS.cards)||[];
+  const el = document.getElementById('cards-list');
+  if (!el) return;
+  el.innerHTML = cards.map(c=>`
+    <div class="payment-card ${c.color}" onclick="showCardDetail('${c.id}')">
+      <div>
+        <div class="card-chip"></div>
+        <div class="card-number">${c.number}</div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+        <div>
+          <div class="card-name">${c.name}</div>
+          <div class="card-expiry">Expires ${c.expiry}</div>
+        </div>
+        <div class="card-brand">${c.type}</div>
+      </div>
+    </div>`).join('');
+}
+
+function showCardDetail(id) {
+  const cards = load(KEYS.cards)||[];
+  const c = cards.find(x=>x.id===id);
+  if (!c) return;
+  const el = document.getElementById('card-detail-panel');
+  const usedPct = c.limit ? Math.round(c.spent/c.limit*100) : null;
+  el.innerHTML = `
+    <div style="text-align:left;">
+      <div style="margin-bottom:16px;"><span class="pill purple">${c.type} Card</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+        <div><div class="bal-label">Card Number</div><div style="font-family:'DM Mono',monospace;font-size:13px;">${c.number}</div></div>
+        <div><div class="bal-label">Expires</div><div style="font-family:'DM Mono',monospace;font-size:13px;">${c.expiry}</div></div>
+        <div><div class="bal-label">Cardholder</div><div style="font-size:13px;">${c.name}</div></div>
+        <div><div class="bal-label">CVV</div><div style="font-family:'DM Mono',monospace;font-size:13px;">${c.cvv}</div></div>
+      </div>
+      ${c.limit ? `
+      <div style="margin-top:16px;padding-top:16px;border-top:1px solid var(--border);">
+        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
+          <span class="bal-label">Credit Used</span>
+          <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-2);">$${fmt(c.spent)} / $${fmt(c.limit)}</span>
+        </div>
+        <div class="goal-progress-track"><div class="goal-progress-fill" style="width:${usedPct}%;background:${usedPct>80?'var(--red)':'var(--accent)'}"></div></div>
+        <div style="font-size:11px;color:var(--text-3);margin-top:6px;">${usedPct}% utilization</div>
+      </div>` : ''}
+      <div style="margin-top:20px;display:flex;gap:8px;">
+        <button class="btn btn-ghost" onclick="showToast('Card frozen','info')" style="flex:1;padding:8px;">🔒 Freeze</button>
+        <button class="btn btn-ghost" onclick="showToast('Limits updated','success')" style="flex:1;padding:8px;">⚙ Settings</button>
+      </div>
+    </div>`;
+}
+
+// ================================================================
+// RENDER GOALS
+// ================================================================
+function renderGoals() {
+  const goals = load(KEYS.goals)||[];
+  const el = document.getElementById('goals-list');
+  const sel = document.getElementById('contribute-goal-select');
+
+  if (el) el.innerHTML = goals.length ? goals.map(g=>{
+    const pct = Math.min(100, Math.round(g.saved/g.target*100));
+    return `<div class="goal-item">
+      <div class="goal-header">
+        <div class="goal-name">${g.icon} ${g.name}</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <span style="font-family:'DM Mono',monospace;font-size:12px;color:var(--text-2);">${pct}%</span>
+          <span style="color:var(--red);cursor:pointer;font-size:16px;" onclick="deleteGoal('${g.id}')">×</span>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--text-2);margin-bottom:8px;">$${fmt(g.saved)} saved of $${fmt(g.target)} goal</div>
+      <div class="goal-progress-track"><div class="goal-progress-fill" style="width:${pct}%;background:${g.color}"></div></div>
+      <div style="font-size:11px;color:var(--text-3);margin-top:6px;">$${fmt(g.target-g.saved)} remaining</div>
+    </div>`;
+  }).join('') : '<div style="color:var(--text-3);font-size:13px;text-align:center;padding:24px;">No goals yet</div>';
+
+  if (sel) sel.innerHTML = goals.map(g=>`<option value="${g.id}">${g.icon} ${g.name}</option>`).join('');
+}
+
+function addGoal() {
+  const name = document.getElementById('goal-name').value.trim();
+  const target = parseFloat(document.getElementById('goal-target').value);
+  const icon = document.getElementById('goal-icon').value;
+  if (!name || !target || target<=0) return showToast('Fill in all fields','error');
+  const colors = ['#7B6EF6','#2DD4A0','#F59E0B','#F2637A','#38BDF8'];
+  const goals = load(KEYS.goals)||[];
+  goals.push({ id:uid(), name, icon, target, saved:0, color:colors[goals.length%colors.length] });
+  save(KEYS.goals, goals);
+  closeModal('add-goal-modal');
+  showToast(`Goal "${name}" created!`,'success');
+  renderGoals();
+  document.getElementById('goal-name').value='';
+  document.getElementById('goal-target').value='';
+}
+
+function deleteGoal(id) {
+  const goals = (load(KEYS.goals)||[]).filter(g=>g.id!==id);
+  save(KEYS.goals, goals);
+  renderGoals();
+  showToast('Goal removed','info');
+}
+
+function contributeToGoal() {
+  const id = document.getElementById('contribute-goal-select').value;
+  const amt = parseFloat(document.getElementById('contribute-amount').value);
+  const bal = getBalance();
+  if (!amt || amt<=0) return showToast('Enter a valid amount','error');
+  if (amt > bal) return showToast('Insufficient balance','error');
+  const goals = load(KEYS.goals)||[];
+  const g = goals.find(x=>x.id===id);
+  if (!g) return;
+  g.saved = Math.min(g.target, g.saved + amt);
+  save(KEYS.goals, goals);
+  setBalance(bal - amt);
+  addTx({ type:'debit', name:`Goal: ${g.name}`, amount:amt, category:'Transfer', icon:g.icon });
+  document.getElementById('contribute-amount').value='';
+  showToast(`$${fmt(amt)} added to "${g.name}"!`,'success');
+  renderGoals();
+  renderDashboard();
+}
+
+// ================================================================
+// RENDER SETTINGS
+// ================================================================
+function renderSettings() {
+  const p = load(KEYS.profile)||{};
+  const s = load(KEYS.settings)||{};
+  if (document.getElementById('settings-name')) document.getElementById('settings-name').value = p.name||'';
+  if (document.getElementById('settings-email')) document.getElementById('settings-email').value = p.email||'';
+  if (document.getElementById('settings-phone')) document.getElementById('settings-phone').value = p.phone||'';
+  const pa = document.getElementById('profile-avatar-lg');
+  if (pa) pa.textContent = p.initials||'??';
+  ['email','push','2fa','dark','bio'].forEach(k=>{
+    const t = document.getElementById('toggle-'+k);
+    if (t) { t.classList.toggle('on', !!s[k]); }
+  });
+}
+
+function saveProfile() {
+  const name = document.getElementById('settings-name').value.trim();
+  const email = document.getElementById('settings-email').value.trim();
+  const phone = document.getElementById('settings-phone').value.trim();
+  if (!name) return showToast('Name is required','error');
+  const parts = name.split(' ');
+  const initials = (parts[0][0]+(parts[1]?parts[1][0]:'')).toUpperCase();
+  save(KEYS.profile, { name, email, phone, initials });
+  document.getElementById('sidebar-name').textContent = name;
+  document.getElementById('sidebar-avatar').textContent = initials;
+  document.getElementById('greeting-name').textContent = parts[0];
+  const pa = document.getElementById('profile-avatar-lg');
+  if (pa) pa.textContent = initials;
+  showToast('Profile saved!','success');
+}
+
+function toggleSetting(k) {
+  const s = load(KEYS.settings)||{};
+  s[k] = !s[k];
+  save(KEYS.settings, s);
+  const t = document.getElementById('toggle-'+k);
+  if (t) t.classList.toggle('on', s[k]);
+  showToast(k.toUpperCase() + (s[k]?' enabled':' disabled'),'info');
+}
+
+function clearData() {
+  if (!confirm('This will reset ALL your data. Continue?')) return;
+  Object.values(KEYS).forEach(k => localStorage.removeItem(k));
+  showToast('Data cleared. Reloading...','info');
+  setTimeout(()=>location.reload(), 1500);
+}
+
+// ================================================================
+// MODAL ACTIONS
+// ================================================================
+function sendMoney() {
+  const recipient = document.getElementById('m-recipient').value.trim();
+  const amt = parseFloat(document.getElementById('m-amount').value);
+  const cat = document.getElementById('m-category').value;
+  const bal = getBalance();
+  if (!recipient) return showToast('Enter a recipient name','error');
+  if (!amt || amt<=0) return showToast('Enter a valid amount','error');
+  if (amt > bal) return showToast('Insufficient balance','error');
+  addTx({ type:'debit', name:'Transfer to '+recipient, amount:amt, category:cat, icon:'↗' });
+  setBalance(bal - amt);
+  closeModal('transfer-modal');
+  showToast(`$${fmt(amt)} sent to ${recipient}!`,'success');
+  renderDashboard();
+  document.getElementById('m-recipient').value='';
+  document.getElementById('m-amount').value='';
+}
+
+function receiveMoney() {
+  const sender = document.getElementById('r-sender').value.trim();
+  const amt = parseFloat(document.getElementById('r-amount').value);
+  if (!sender || !amt || amt<=0) return showToast('Fill in all fields','error');
+  addTx({ type:'credit', name:'From '+sender, amount:amt, category:'Transfer', icon:'↙' });
+  setBalance(getBalance() + amt);
+  closeModal('receive-modal');
+  showToast(`$${fmt(amt)} received from ${sender}!`,'success');
+  renderDashboard();
+  document.getElementById('r-sender').value='';
+  document.getElementById('r-amount').value='';
+}
+
+function payBill() {
+  const type = document.getElementById('bill-type').value;
+  const amt = parseFloat(document.getElementById('bill-amount').value);
+  const bal = getBalance();
+  if (!amt || amt<=0) return showToast('Enter a valid amount','error');
+  if (amt > bal) return showToast('Insufficient balance','error');
+  addTx({ type:'debit', name:type+' Bill', amount:amt, category:'Bills', icon:'⚡' });
+  setBalance(bal - amt);
+  closeModal('pay-modal');
+  showToast(`${type} bill of $${fmt(amt)} paid!`,'success');
+  document.getElementById('bill-amount').value='';
+  renderDashboard();
+}
+
+function topUp() {
+  const amt = parseFloat(document.getElementById('topup-amount').value);
+  if (!amt || amt<=0) return showToast('Enter a valid amount','error');
+  addTx({ type:'credit', name:'Account Top Up', amount:amt, category:'Other', icon:'⊕' });
+  setBalance(getBalance() + amt);
+  closeModal('topup-modal');
+  showToast(`$${fmt(amt)} added to your account!`,'success');
+  document.getElementById('topup-amount').value='';
+  renderDashboard();
+}
+
+function addTransaction() {
+  const type = document.getElementById('tx-type').value;
+  const desc = document.getElementById('tx-desc').value.trim();
+  const amt = parseFloat(document.getElementById('tx-amt').value);
+  const cat = document.getElementById('tx-cat').value;
+  if (!desc || !amt || amt<=0) return showToast('Fill in all fields','error');
+  if (type==='debit' && amt>getBalance()) return showToast('Insufficient balance','error');
+  const icon = catIcons[cat]||'💳';
+  addTx({ type, name:desc, amount:amt, category:cat, icon });
+  if (type==='debit') setBalance(getBalance()-amt);
+  else setBalance(getBalance()+amt);
+  closeModal('add-tx-modal');
+  showToast('Transaction added!','success');
+  ['tx-desc','tx-amt'].forEach(id=>document.getElementById(id).value='');
+  renderAllTransactions();
+  renderDashboard();
+}
+
+// ================================================================
+// MODAL CONTROLS
+// ================================================================
+function openModal(id) {
+  document.getElementById(id).classList.add('active');
+  document.getElementById(id).onclick = e => { if(e.target===e.currentTarget) closeModal(id); };
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+// ================================================================
+// NOTIFICATIONS
+// ================================================================
+let notifOpen = false;
+function toggleNotif() {
+  notifOpen = !notifOpen;
+  document.getElementById('notif-panel').classList.toggle('open', notifOpen);
+}
+
+// ================================================================
+// TOAST
+// ================================================================
+let toastTimer;
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  const icons = { success:'✅', error:'❌', info:'ℹ️' };
+  document.getElementById('toast-icon').textContent = icons[type]||'ℹ️';
+  document.getElementById('toast-msg').textContent = msg;
+  t.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=>{ t.className=''; }, 3000);
+}
+
+// ================================================================
+// DATE DISPLAY
+// ================================================================
+function updateDate() {
+  const now = new Date();
+  const s = now.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+  const el = document.getElementById('date-display');
+  if (el) el.textContent = s;
+  const sub = document.getElementById('page-sub');
+  const hour = now.getHours();
+  const greeting = hour<12?'Good morning':hour<17?'Good afternoon':'Good evening';
+  const p = load(KEYS.profile)||{};
+  const firstName = (p.name||'').split(' ')[0]||'there';
+  if (currentSection==='dashboard') {
+    document.getElementById('page-sub').innerHTML = `${greeting}, <span id="greeting-name">${firstName}</span> 👋`;
+  }
+  document.getElementById('greeting-name') && (document.getElementById('greeting-name').textContent = firstName);
+}
+
+// ================================================================
+// INIT
+// ================================================================
+seedData();
+updateDate();
+setInterval(updateDate, 60000);
+
+// Setup receive account number display
+const p = load(KEYS.profile)||{};
+const rn = document.getElementById('receive-account-num');
+if (rn) rn.textContent = '4242 **** **** ' + Math.floor(1000+Math.random()*9000);
+
+// Load profile to sidebar
+const prof = load(KEYS.profile)||{};
+const nameEl = document.getElementById('sidebar-name');
+const avEl = document.getElementById('sidebar-avatar');
+const gn = document.getElementById('greeting-name');
+if (nameEl) nameEl.textContent = prof.name||'User';
+if (avEl) avEl.textContent = prof.initials||'??';
+if (gn) gn.textContent = (prof.name||'').split(' ')[0]||'there';
+
+// Render initial dashboard
+renderDashboard();
+
+// Close notifications on outside click
+document.addEventListener('click', e => {
+  const panel = document.getElementById('notif-panel');
+  const btn = document.getElementById('notif-btn');
+  if (notifOpen && !panel.contains(e.target) && !btn.contains(e.target)) {
+    notifOpen = false;
+    panel.classList.remove('open');
+  }
+});
+
+// ESC key to close modals
+document.addEventListener('keydown', e => {
+  if (e.key==='Escape') {
+    document.querySelectorAll('.modal-overlay.active').forEach(m=>m.classList.remove('active'));
+    if (notifOpen) toggleNotif();
+  }
+});
+</script>
+</body>
+</html>

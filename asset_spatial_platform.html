@@ -780,11 +780,28 @@ textarea.form-control { resize: vertical; min-height: 80px; }
   background: var(--bg);
   border: 1px solid var(--border2);
   border-radius: 10px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.12);
-  z-index: 500;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  z-index: 9999;
   max-height: 380px;
   overflow-y: auto;
   display: none;
+  min-width: 280px;
+}
+@media (max-width: 768px) {
+  #global-search-wrap {
+    position: static;
+    flex: 1;
+    max-width: none;
+  }
+  #global-search-dropdown {
+    position: fixed;
+    top: 60px;
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-height: 60vh;
+    z-index: 9999;
+  }
 }
 #global-search-dropdown.open { display: block; }
 .gs-group-label {
@@ -1025,6 +1042,10 @@ body {
     <div class="nav-item" data-page="excel" onclick="nav(this)">
       <span class="nav-icon">📄</span> Excel Import
     </div>
+    <div class="nav-item" data-page="filedb" onclick="nav(this)">
+      <span class="nav-icon">🗄</span> File Database
+      <span class="nav-badge" id="nb-filedb">0</span>
+    </div>
     <div class="nav-section-label">System</div>
     <div class="nav-item" data-page="audit" onclick="nav(this)">
       <span class="nav-icon">◫</span> Audit Log
@@ -1263,6 +1284,19 @@ document.addEventListener("click", function (e) {
         </select>
         <button class="btn btn-secondary btn-sm" onclick="clearFilters()">✕ Clear</button>
       </div>
+
+      <!-- Selection toolbar — shown when any rows are checked -->
+      <div id="asset-selection-toolbar" style="display:none;align-items:center;gap:10px;padding:10px 16px;background:var(--surface2);border:1px solid var(--accent);border-radius:8px;margin-bottom:10px;flex-wrap:wrap">
+        <span style="font-family:'Space Mono',monospace;font-size:11px;color:var(--accent);font-weight:700" id="sel-toolbar-count">0 selected</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-left:4px">
+          <button class="btn btn-secondary btn-sm" onclick="toggleSelectAllAssets(true)">☑ Select All</button>
+          <button class="btn btn-secondary btn-sm" onclick="toggleSelectAllAssets(false)">☐ Deselect All</button>
+          <button class="btn btn-secondary btn-sm" onclick="bulkExportCSV()">⬇ Export Selected</button>
+          <button class="btn btn-secondary btn-sm" onclick="bulkUpdateCondition()">✎ Set Condition</button>
+          <button class="btn btn-danger" style="padding:4px 14px;font-size:12px" onclick="bulkDelete()">🗑 Delete Selected</button>
+        </div>
+      </div>
+
       <div class="data-table-wrap">
         <table class="data-table">
           <thead>
@@ -1766,8 +1800,9 @@ cameraInput.addEventListener('change', (e) => previewFiles(e.target.files));
               <div class="form-group" style="margin-bottom:12px">
                 <label class="form-label">Save Format</label>
                 <select class="form-control" id="doc-ocr-save-format">
-                  <option value="txt">Plain Text (.txt)</option>
+                  <option value="doc">Word Document (.doc)</option>
                   <option value="json">Structured JSON (.json)</option>
+                  <option value="txt">Plain Text (.txt)</option>
                 </select>
               </div>
               <button class="btn btn-primary" style="width:100%;margin-bottom:8px" onclick="docOcrSaveDocument()">⬇ Download as New Document</button>
@@ -1829,7 +1864,7 @@ cameraInput.addEventListener('change', (e) => previewFiles(e.target.files));
         <div class="section-title">EXCEL &#8594; JSON IMPORTER</div>
         <span class="tag tag-green" style="font-size:9px">SheetJS + Smart Categorisation</span>
       </div>
-      <div style="font-size:12px;color:var(--text3);margin-bottom:18px">Upload an Excel (.xlsx / .xls) or CSV file. Each row is read, auto-categorised by asset type, and represented as structured JSON — ready for database import.</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:18px">Upload an Excel (.xlsx / .xls) or CSV file. Rows are read, auto-categorised, and represented as structured JSON. After processing, you can <strong>attach the extracted data to an existing asset</strong> (e.g. a building with multiple floors) or <strong>create a new asset and attach the data to it</strong> — rows are never auto-registered as standalone assets.</div>
       <div class="two-col">
         <div>
           <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px">
@@ -1851,7 +1886,7 @@ cameraInput.addEventListener('change', (e) => previewFiles(e.target.files));
           <div id="xl-actions" style="display:none;margin-top:14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px">
             <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;margin-bottom:12px;text-transform:uppercase">Import Options</div>
             <div style="display:flex;flex-direction:column;gap:8px">
-              <button class="btn btn-primary" onclick="xlImportAll()">&#8679; Import All to Database</button>
+              <button class="btn btn-primary" onclick="xlImportAll()">&#128196; Attach / Register as Asset</button>
               <button class="btn btn-secondary" onclick="xlDownloadJSON()">&#8681; Download as JSON</button>
               <button class="btn btn-secondary" onclick="xlDownloadCSV()">&#8681; Download Categorised CSV</button>
               <button class="btn btn-secondary" onclick="xlSaveDocument()">&#128196; Save as New Document</button>
@@ -1884,6 +1919,99 @@ cameraInput.addEventListener('change', (e) => previewFiles(e.target.files));
             <tbody id="xl-result-tbody"></tbody>
           </table>
         </div>
+      </div>
+    </div>
+
+    <!-- ════════════ FILE DATABASE ════════════ -->
+    <div id="page-filedb" class="page">
+      <div class="section-header" style="margin-bottom:4px">
+        <div class="section-title">FILE DATABASE</div>
+        <span class="tag tag-blue" style="font-size:9px">Excel · CSV · Raw Files</span>
+      </div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:18px">
+        Upload and store raw Excel / CSV files directly. Files can be attached to existing assets or stored standalone (useful when OCR extraction is unreliable). Stored files are downloadable at any time.
+      </div>
+
+      <div class="two-col" style="margin-bottom:20px">
+        <!-- Upload panel -->
+        <div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px">
+            <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:12px">UPLOAD NEW FILE</div>
+            <div id="fdb-dropzone" style="border:2px dashed var(--border2);border-radius:10px;padding:28px;text-align:center;cursor:pointer;transition:border-color 0.2s;margin-bottom:14px"
+              onclick="document.getElementById('fdb-file-input').click()"
+              ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+              ondragleave="this.style.borderColor='var(--border2)'"
+              ondrop="fdbDrop(event)">
+              <div style="font-size:32px;margin-bottom:8px">🗄</div>
+              <div style="font-size:13px;color:var(--text2);margin-bottom:4px">Drop Excel / CSV files here or click to browse</div>
+              <div style="font-size:11px;color:var(--text3)">Supports: .xlsx · .xls · .csv</div>
+              <input type="file" id="fdb-file-input" accept=".xlsx,.xls,.csv" multiple style="display:none" onchange="fdbHandleFiles(this.files)">
+            </div>
+
+            <div id="fdb-upload-preview" style="display:none;margin-bottom:14px">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px">FILES READY TO UPLOAD</div>
+              <div id="fdb-preview-list" style="display:flex;flex-direction:column;gap:6px"></div>
+            </div>
+
+            <div id="fdb-attach-options" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px">
+              <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px">STORAGE OPTIONS</div>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:8px">
+                <input type="radio" name="fdb-store-mode" value="standalone" checked style="accent-color:var(--accent)" onchange="fdbToggleStoreMode()">
+                <span style="font-size:12px"><strong>Standalone</strong> — store file independently</span>
+              </label>
+              <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:10px">
+                <input type="radio" name="fdb-store-mode" value="attach" style="accent-color:var(--accent)" onchange="fdbToggleStoreMode()">
+                <span style="font-size:12px"><strong>Attach to Asset</strong> — link file to an existing asset</span>
+              </label>
+              <div id="fdb-asset-select-wrap" style="display:none">
+                <label class="form-label">Select Asset</label>
+                <select class="form-control" id="fdb-asset-select" style="font-size:12px"></select>
+              </div>
+              <div style="margin-top:10px">
+                <label class="form-label">Description / Notes (optional)</label>
+                <input class="form-control" id="fdb-file-desc" placeholder="e.g. Ground floor maintenance inventory">
+              </div>
+            </div>
+
+            <button class="btn btn-primary" id="fdb-upload-btn" style="width:100%;display:none" onclick="fdbConfirmUpload()">🗄 Save to File Database</button>
+          </div>
+        </div>
+
+        <!-- Stats panel -->
+        <div>
+          <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:22px;height:100%">
+            <div style="font-family:'Space Mono',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:14px">DATABASE SUMMARY</div>
+            <div id="fdb-summary" style="display:flex;flex-direction:column;gap:10px">
+              <div style="color:var(--text3);font-size:12px">No files stored yet.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Files table -->
+      <div class="section-header">
+        <div class="section-title">STORED FILES</div>
+        <div style="display:flex;gap:8px">
+          <input id="fdb-search" class="form-control" style="width:200px;font-size:12px" placeholder="Search files…" oninput="renderFileDB()">
+        </div>
+      </div>
+      <div class="data-table-wrap">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>File Name</th>
+              <th>Type</th>
+              <th>Size</th>
+              <th>Stored</th>
+              <th>Attached Asset</th>
+              <th>Description</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="fdb-tbody">
+            <tr><td colspan="7" style="padding:28px;text-align:center;color:var(--text3)">No files stored yet. Upload your first file above.</td></tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -1930,7 +2058,7 @@ cameraInput.addEventListener('change', (e) => previewFiles(e.target.files));
 // ── STORAGE ──
 const LS = {
   get: k => { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } },
-  set: (k, v) => localStorage.setItem(k, JSON.stringify(v)),
+  set: (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); return true; } catch(e) { console.warn('LS.set failed for', k, e); return false; } },
 };
 let assets = LS.get('asdm_assets') || [];
 let users = LS.get('asdm_users') || [];
@@ -1938,8 +2066,43 @@ let auditLog = LS.get('asdm_audit') || [];
 let settings = LS.get('asdm_settings') || { name: 'AssetSpatial Platform', org: 'Default Organisation' };
 let assetCounter = LS.get('asdm_counter') || 1000;
 
+// _xlData is stored separately per asset to avoid 5MB quota
+// key: 'asdm_xldata_<assetId>'  value: array of dataset objects
+function saveXlData(assetId, xlDataArr) {
+  try {
+    if (!xlDataArr || !xlDataArr.length) { localStorage.removeItem('asdm_xldata_' + assetId); return; }
+    localStorage.setItem('asdm_xldata_' + assetId, JSON.stringify(xlDataArr));
+  } catch(e) {
+    console.warn('saveXlData quota error for', assetId, e);
+    toast('Storage quota reached — try reducing file size', '⚠', true);
+  }
+}
+function loadXlData(assetId) {
+  try { return JSON.parse(localStorage.getItem('asdm_xldata_' + assetId)) || []; } catch { return []; }
+}
+function deleteXlData(assetId) {
+  localStorage.removeItem('asdm_xldata_' + assetId);
+}
+
+// Attach _xlData from separate storage onto asset objects after loading
+function hydrateAssets(arr) {
+  arr.forEach(a => { a._xlData = loadXlData(a.id); });
+  return arr;
+}
+assets = hydrateAssets(assets);
+
 function save() {
-  LS.set('asdm_assets', assets);
+  // Strip _xlData before saving assets (it's stored separately)
+  const stripped = assets.map(a => {
+    const copy = Object.assign({}, a);
+    // Save xlData separately
+    if (copy._xlData && copy._xlData.length) saveXlData(a.id, copy._xlData);
+    else if (copy._xlData) deleteXlData(a.id);
+    delete copy._xlData;
+    return copy;
+  });
+  const ok = LS.set('asdm_assets', stripped);
+  if (!ok) toast('⚠ Storage quota reached — export a checkpoint to free space', '⚠', true);
   LS.set('asdm_users', users);
   LS.set('asdm_audit', auditLog);
   LS.set('asdm_settings', settings);
@@ -1991,8 +2154,8 @@ function nav(el) {
   const page = el.dataset.page;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
-  const titles = { dashboard:'DASHBOARD', map:'LIVE MAP', assets:'ASSET REGISTRY', capture:'FIELD CAPTURE', analytics:'ANALYTICS', users:'USERS', audit:'AUDIT LOG', settings:'SETTINGS', viz:'VISUALISATION', ocr:'OCR IMPORT', excel:'EXCEL IMPORT' };
-  const bcs = { dashboard:'Overview', map:'Spatial / Map View', assets:'Asset Registry', capture:'Field Capture', analytics:'Analytics', users:'User Management', audit:'Audit Log', settings:'Platform Settings', viz:'Analytics / Visualisation', ocr:'Import / OCR', excel:'Import / Excel' };
+  const titles = { dashboard:'DASHBOARD', map:'LIVE MAP', assets:'ASSET REGISTRY', capture:'FIELD CAPTURE', analytics:'ANALYTICS', users:'USERS', audit:'AUDIT LOG', settings:'SETTINGS', viz:'VISUALISATION', ocr:'OCR IMPORT', excel:'EXCEL IMPORT', filedb:'FILE DATABASE' };
+  const bcs = { dashboard:'Overview', map:'Spatial / Map View', assets:'Asset Registry', capture:'Field Capture', analytics:'Analytics', users:'User Management', audit:'Audit Log', settings:'Platform Settings', viz:'Analytics / Visualisation', ocr:'Import / OCR', excel:'Import / Excel', filedb:'Data Tools / File Database' };
   document.getElementById('hdr-title').textContent = titles[page];
   document.getElementById('hdr-bc').textContent = 'AssetSpatial / ' + bcs[page];
   renderPage(page);
@@ -2358,6 +2521,7 @@ function clearFilters() {
 
 function deleteAsset(id) {
   if (!confirm('Delete this asset? This cannot be undone.')) return;
+  deleteXlData(id); // clean up separate xlData storage
   assets = assets.filter(a => a.id !== id);
   addAudit('ASSET_DELETED', id, 'Admin User', 'Asset removed');
   save(); renderAssets(); renderDashboard();
@@ -2445,7 +2609,7 @@ function showAssetDetail(a) {
   const INTERNAL_KEYS = new Set([
     'ts','image','typeFields',
     '_importSource','_customFields','_name','_lat','_lng','_condition',
-    '_notes','_material','_elevation','_area','_autoType','_confidence','_row','_raw'
+    '_notes','_material','_elevation','_area','_autoType','_confidence','_row','_raw','_xlData','_files'
   ]);
 
   // Helper: value is non-empty
@@ -2496,20 +2660,26 @@ function showAssetDetail(a) {
     html = '<div style="color:var(--text3);font-size:13px;padding:16px;text-align:center">No properties to display.</div>';
   }
 
-  // Build tabs: Details | History | Maintenance
+  // Build tabs: Details | History | Maintenance | Excel Data
   const histHtml = buildConditionHistory(a);
   const maintHtml = buildMaintenanceLog(a);
+  const xlDataHtml = buildXlDataTab(a);
+  const xlBadge = (a._xlData && a._xlData.length)
+    ? ' <span style="background:var(--accent);color:#fff;font-size:9px;padding:1px 5px;border-radius:10px;font-family:\'Space Mono\',monospace">' + a._xlData.reduce((s,d)=>s+d.rows.length,0) + '</span>'
+    : '';
   const tabHtml = `
     <div style="display:flex;border-bottom:1px solid var(--border);margin-bottom:16px;gap:0;flex-wrap:wrap">
       <button id="dtab-details" onclick="switchDetailTab('details','${a.id}')" style="padding:8px 16px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--accent);color:#fff;font-family:'DM Sans',sans-serif;border-radius:6px 6px 0 0;margin-right:2px">📋 Details</button>
       <button id="dtab-history" onclick="switchDetailTab('history','${a.id}')" style="padding:8px 16px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;border-radius:6px 6px 0 0;margin-right:2px">📈 History</button>
       <button id="dtab-maint"   onclick="switchDetailTab('maint','${a.id}')"   style="padding:8px 16px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;border-radius:6px 6px 0 0;margin-right:2px">🔧 Maintenance</button>
-      <button id="dtab-photos"  onclick="switchDetailTab('photos','${a.id}')"  style="padding:8px 16px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;border-radius:6px 6px 0 0">📷 Photos</button>
+      <button id="dtab-photos"  onclick="switchDetailTab('photos','${a.id}')"  style="padding:8px 16px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;border-radius:6px 6px 0 0;margin-right:2px">📷 Photos</button>
+      <button id="dtab-xldata"  onclick="switchDetailTab('xldata','${a.id}')"  style="padding:8px 16px;font-size:12px;font-weight:600;border:none;cursor:pointer;background:var(--surface2);color:var(--text2);font-family:'DM Sans',sans-serif;border-radius:6px 6px 0 0">📊 Excel Data${xlBadge}</button>
     </div>
     <div id="dtab-content-details">${html}</div>
     <div id="dtab-content-history" style="display:none">${histHtml}</div>
     <div id="dtab-content-maint"   style="display:none">${maintHtml}</div>
-    <div id="dtab-content-photos"  style="display:none"><div id="photo-gallery-${a.id}"><div style="color:var(--text3);font-size:12px;padding:8px">Loading photos…</div></div></div>`;
+    <div id="dtab-content-photos"  style="display:none"><div id="photo-gallery-${a.id}"><div style="color:var(--text3);font-size:12px;padding:8px">Loading photos…</div></div></div>
+    <div id="dtab-content-xldata"  style="display:none">${xlDataHtml}</div>`;
   document.getElementById('modal-body-inner').innerHTML = tabHtml;
   const lat = parseFloat(a.lat), lng = parseFloat(a.lng);
   const mapsBtn = (!isNaN(lat) && !isNaN(lng))
@@ -2525,7 +2695,7 @@ function showAssetDetail(a) {
 }
 
 function switchDetailTab(tab, assetId) {
-  ['details','history','maint','photos'].forEach(t => {
+  ['details','history','maint','photos','xldata'].forEach(t => {
     const el = document.getElementById('dtab-content-' + t);
     if (el) el.style.display = t === tab ? 'block' : 'none';
     const btn = document.getElementById('dtab-' + t);
@@ -2555,6 +2725,104 @@ function buildConditionHistory(a) {
         <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace;margin-top:3px">${new Date(h.ts).toLocaleString()} · ${h.user}</div>
       </div>`;
     }).join('') + '</div>';
+}
+
+// ── EXCEL DATA TAB ──
+function buildXlDataTab(a) {
+  if (!a._xlData || !a._xlData.length) {
+    return '<div style="text-align:center;padding:40px;color:var(--text3)">' +
+      '<div style="font-size:32px;margin-bottom:10px">📊</div>' +
+      '<div style="font-size:13px;font-weight:600;margin-bottom:6px">No Excel data attached</div>' +
+      '<div style="font-size:11px">Use the Excel Import page to extract data and attach it to this asset.</div>' +
+      '</div>';
+  }
+
+  var html = '';
+  a._xlData.forEach(function(dataset, di) {
+    var headers = dataset.headers || (dataset.rows && dataset.rows.length ? Object.keys(dataset.rows[0]) : []);
+    var dateStr = dataset.importedAt ? new Date(dataset.importedAt).toLocaleString() : '—';
+    var rowCount = dataset.rows ? dataset.rows.length : 0;
+    var aid = a.id;
+
+    // Header row cells
+    var thCells = '<th style="background:var(--surface2);padding:7px 10px;font-family:\'Space Mono\',monospace;font-size:9px;color:var(--text3);white-space:nowrap">ROW</th>';
+    headers.forEach(function(h) {
+      thCells += '<th style="background:var(--surface2);padding:7px 10px;font-family:\'Space Mono\',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;white-space:nowrap">' + h + '</th>';
+    });
+
+    // Data rows
+    var tbodyRows = '';
+    var displayRows = dataset.rows ? dataset.rows.slice(0, 50) : [];
+    displayRows.forEach(function(row, ri) {
+      var tds = '<td style="padding:5px 10px;color:var(--text3);font-family:\'Space Mono\',monospace;font-size:10px">' + (ri + 1) + '</td>';
+      headers.forEach(function(h) {
+        var v = row[h];
+        var hasV = v !== '' && v !== null && v !== undefined;
+        var display = hasV ? String(v).slice(0, 60) + (String(v).length > 60 ? '…' : '') : '—';
+        tds += '<td style="padding:5px 10px;color:' + (hasV ? 'var(--text)' : 'var(--text3)') + '">' + display + '</td>';
+      });
+      tbodyRows += '<tr>' + tds + '</tr>';
+    });
+    if (rowCount > 50) {
+      tbodyRows += '<tr><td colspan="' + (headers.length + 1) + '" style="padding:10px;text-align:center;color:var(--text3);font-size:11px">…and ' + (rowCount - 50) + ' more rows</td></tr>';
+    }
+
+    html += '<div style="margin-bottom:24px">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px">' +
+        '<div>' +
+          '<div style="font-family:\'Space Mono\',monospace;font-size:9px;color:var(--text3);letter-spacing:1.5px;text-transform:uppercase">Import #' + (di + 1) + '</div>' +
+          '<div style="font-size:11px;color:var(--text3);margin-top:2px">' + dateStr + ' · ' + rowCount + ' rows · ' + headers.length + ' columns</div>' +
+        '</div>' +
+        '<div style="display:flex;gap:6px">' +
+          '<button class="btn btn-secondary btn-sm" onclick="downloadXlDataset(\'' + aid + '\',' + di + ',\'csv\')">⬇ CSV</button>' +
+          '<button class="btn btn-secondary btn-sm" onclick="downloadXlDataset(\'' + aid + '\',' + di + ',\'json\')">⬇ JSON</button>' +
+          '<button class="btn btn-danger btn-sm" onclick="removeXlDataset(\'' + aid + '\',' + di + ')">✕ Remove</button>' +
+        '</div>' +
+      '</div>' +
+      '<div style="overflow-x:auto;border:1px solid var(--border);border-radius:8px">' +
+        '<table class="data-table" style="white-space:nowrap;font-size:11px">' +
+          '<thead><tr>' + thCells + '</tr></thead>' +
+          '<tbody>' + (tbodyRows || '<tr><td colspan="' + (headers.length + 1) + '" style="padding:16px;text-align:center;color:var(--text3)">No rows</td></tr>') + '</tbody>' +
+        '</table>' +
+      '</div>' +
+    '</div>';
+  });
+
+  return html;
+}
+
+function downloadXlDataset(assetId, di, fmt) {
+  const a = assets.find(x => x.id === assetId);
+  if (!a || !a._xlData || !a._xlData[di]) return;
+  const dataset = a._xlData[di];
+  const headers = dataset.headers || Object.keys(dataset.rows[0] || {});
+  let content, ext, mime;
+  if (fmt === 'json') {
+    content = JSON.stringify(dataset.rows, null, 2);
+    ext = 'json'; mime = 'application/json';
+  } else {
+    const csvRows = [headers, ...dataset.rows.map(r => headers.map(h => String(r[h]||'').replace(/,/g,';')))];
+    content = csvRows.map(r => r.join(',')).join('\n');
+    ext = 'csv'; mime = 'text/csv';
+  }
+  const blob = new Blob([content], {type: mime});
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.download = assetId + '_xldata_' + (di+1) + '.' + ext;
+  link.click();
+  toast('Downloaded ' + link.download, '⬇');
+}
+
+function removeXlDataset(assetId, di) {
+  if (!confirm('Remove this Excel dataset from the asset?')) return;
+  const a = assets.find(x => x.id === assetId);
+  if (!a || !a._xlData) return;
+  a._xlData.splice(di, 1);
+  saveXlData(assetId, a._xlData); // persist immediately to separate key
+  addAudit('EXCEL_DETACHED', assetId, 'Admin User', 'Excel dataset #' + (di+1) + ' removed');
+  save();
+  showAssetDetail(a);
+  toast('Dataset removed', '🗑');
 }
 
 // ── FEATURE 7 (part): MAINTENANCE LOG ──
@@ -2899,6 +3167,8 @@ function saveSettings() {
 function resetAllData() {
   if (!confirm('⚠ This will permanently delete ALL data. Are you sure?')) return;
   if (!confirm('Final confirmation: delete everything?')) return;
+  // Clean up all separate xlData keys
+  Object.keys(localStorage).filter(k => k.startsWith('asdm_xldata_')).forEach(k => localStorage.removeItem(k));
   assets = []; users = []; auditLog = []; assetCounter = 1000;
   save(); renderDashboard(); toast('All data reset', '🗑');
 }
@@ -2926,10 +3196,20 @@ function toggleSelectAllAssets(checked) {
 
 function updateBulkBar() {
   const bar = document.getElementById('bulk-action-bar');
+  const toolbar = document.getElementById('asset-selection-toolbar');
   const n = selectedAssetIds.size;
-  if (n === 0) { bar.classList.remove('visible'); return; }
+  if (n === 0) {
+    bar.classList.remove('visible');
+    if (toolbar) toolbar.style.display = 'none';
+    return;
+  }
   bar.classList.add('visible');
   document.getElementById('bulk-count-label').textContent = n + ' asset' + (n > 1 ? 's' : '') + ' selected';
+  if (toolbar) {
+    toolbar.style.display = 'flex';
+    const lbl = document.getElementById('sel-toolbar-count');
+    if (lbl) lbl.textContent = n + ' asset' + (n > 1 ? 's' : '') + ' selected';
+  }
 }
 
 function clearBulkSelection() {
@@ -2942,12 +3222,13 @@ function clearBulkSelection() {
 
 function bulkDelete() {
   const n = selectedAssetIds.size;
-  if (!n) return;
-  if (!confirm('Delete ' + n + ' selected asset(s)? This cannot be undone.')) return;
+  if (!n) { toast('No assets selected', '⚠', true); return; }
+  if (!confirm('Permanently delete ' + n + ' selected asset(s)?\n\nThis cannot be undone.')) return;
+  selectedAssetIds.forEach(id => deleteXlData(id)); // clean up xl data for each
   assets = assets.filter(a => !selectedAssetIds.has(a.id));
   addAudit('BULK_DELETE', 'MULTIPLE', 'Admin User', n + ' assets deleted');
   save(); clearBulkSelection(); renderAssets(); renderDashboard();
-  toast(n + ' assets deleted', '🗑');
+  toast(n + ' asset' + (n > 1 ? 's' : '') + ' deleted', '🗑');
 }
 
 function bulkExportCSV() {
@@ -3768,7 +4049,7 @@ function docOcrSaveDocument() {
   const title = document.getElementById('doc-ocr-save-title').value.trim() || 'Extracted Document';
   const fmt = document.getElementById('doc-ocr-save-format').value;
 
-  let content, ext;
+  let content, ext, mimeType;
   if (fmt === 'json') {
     const doc = {
       title,
@@ -3788,15 +4069,45 @@ function docOcrSaveDocument() {
     };
     content = JSON.stringify(doc, null, 2);
     ext = 'json';
+    mimeType = 'application/json';
+  } else if (fmt === 'doc') {
+    // Save as .doc (RTF-based Word-compatible format)
+    const parsedName = document.getElementById('doc-op-name').value || '';
+    const parsedType = document.getElementById('doc-op-type').value || '';
+    const parsedCond = document.getElementById('doc-op-cond').value || '';
+    const parsedMat  = document.getElementById('doc-op-material').value || '';
+    const parsedLat  = document.getElementById('doc-op-lat').value || '';
+    const parsedLng  = document.getElementById('doc-op-lng').value || '';
+    content = '{\\rtf1\\ansi\\deff0\n' +
+      '{\\fonttbl{\\f0 Arial;}}\n' +
+      '{\\colortbl ;\\red0\\green135\\blue83;}\n' +
+      '\\f0\\fs24\n' +
+      '{\\b\\fs32 ' + title.replace(/[\\{}]/g,'') + '}\\par\n' +
+      '\\par\n' +
+      '{\\b Extracted from:} ' + (docOcrFile ? docOcrFile.name.replace(/[\\{}]/g,'') : 'unknown') + '\\par\n' +
+      '{\\b Date:} ' + new Date().toLocaleString().replace(/[\\{}]/g,'') + '\\par\n' +
+      (parsedName ? '{\\b Asset Name:} ' + parsedName.replace(/[\\{}]/g,'') + '\\par\n' : '') +
+      (parsedType ? '{\\b Asset Type:} ' + parsedType.replace(/[\\{}]/g,'') + '\\par\n' : '') +
+      (parsedCond ? '{\\b Condition:} ' + parsedCond.replace(/[\\{}]/g,'') + '\\par\n' : '') +
+      (parsedMat  ? '{\\b Material:} ' + parsedMat.replace(/[\\{}]/g,'') + '\\par\n' : '') +
+      (parsedLat && parsedLng ? '{\\b Coordinates:} ' + parsedLat + ', ' + parsedLng + '\\par\n' : '') +
+      '\\par\n' +
+      '{\\b\\fs28 Extracted Content}\\par\n' +
+      '\\par\n' +
+      text.replace(/[\\{}]/g,'').replace(/\n/g,'\\par\n') + '\\par\n' +
+      '}';
+    ext = 'doc';
+    mimeType = 'application/msword';
   } else {
     content = title + '\n' + '='.repeat(Math.min(title.length, 60)) + '\n' +
       'Extracted from: ' + (docOcrFile ? docOcrFile.name : 'unknown') + '\n' +
       'Date: ' + new Date().toLocaleString() + '\n\n' +
       text;
     ext = 'txt';
+    mimeType = 'text/plain';
   }
 
-  const blob = new Blob([content], { type: ext === 'json' ? 'application/json' : 'text/plain' });
+  const blob = new Blob([content], { type: mimeType });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = title.replace(/[^a-zA-Z0-9_\- ]/g, '_') + '.' + ext;
@@ -4068,6 +4379,177 @@ function condColors(c) {
 }
 
 function xlImportAll() {
+  if (!xlCategorised.length) { toast('No data to import', '⚠', true); return; }
+  openXLAttachModal();
+}
+
+// ── EXCEL ATTACH MODAL ──
+function openXLAttachModal() {
+  // Build modal HTML
+  const existingOptions = assets.map(a =>
+    `<option value="${a.id}">${a.id} — ${a.name || 'Unnamed'} (${a.type || '—'})</option>`
+  ).join('');
+
+  const modal = document.getElementById('modal-overlay');
+  document.getElementById('modal-title').textContent = 'ATTACH EXCEL DATA TO ASSET';
+  document.getElementById('modal-body-inner').className = '';
+  document.getElementById('modal-body-inner').innerHTML = `
+    <div style="padding:4px 0">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">
+        <strong style="color:var(--accent)">${xlCategorised.length} rows</strong> extracted from Excel.
+        These rows are <em>not</em> automatically registered as assets — floors, rooms and maintenance records may belong under a single asset.
+        Choose what to do with this data:
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:18px">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:14px;border:2px solid var(--border);border-radius:10px;transition:border-color 0.15s" id="xl-opt-attach-label">
+          <input type="radio" name="xl-attach-mode" value="attach" id="xl-opt-attach" style="margin-top:3px;accent-color:var(--accent)" ${assets.length?'checked':'disabled'} onchange="xlToggleAttachMode()">
+          <div>
+            <div style="font-weight:600;font-size:13px;margin-bottom:3px">📎 Attach to Existing Asset</div>
+            <div style="font-size:11px;color:var(--text3)">Store this data under an existing asset record. Ideal for building floors, maintenance records, etc.</div>
+          </div>
+        </label>
+
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;padding:14px;border:2px solid var(--border);border-radius:10px;transition:border-color 0.15s" id="xl-opt-new-label">
+          <input type="radio" name="xl-attach-mode" value="new" id="xl-opt-new" style="margin-top:3px;accent-color:var(--accent)" ${assets.length?'':'checked'} onchange="xlToggleAttachMode()">
+          <div>
+            <div style="font-weight:600;font-size:13px;margin-bottom:3px">✦ Create New Asset + Attach Data</div>
+            <div style="font-size:11px;color:var(--text3)">Register a brand new asset and store the extracted rows as its structured data payload.</div>
+          </div>
+        </label>
+      </div>
+
+      <!-- Attach to existing -->
+      <div id="xl-attach-existing-panel" style="${assets.length?'':'display:none'}">
+        <label class="form-label">Select Existing Asset</label>
+        <select class="form-control" id="xl-attach-target-id" style="margin-bottom:10px">
+          ${existingOptions || '<option value="">No assets found</option>'}
+        </select>
+        <div style="font-size:11px;color:var(--text3)">The Excel data will be stored as a <code>_xlData</code> payload on the selected asset and will be visible in the asset detail view.</div>
+      </div>
+
+      <!-- Create new asset -->
+      <div id="xl-new-asset-panel" style="${assets.length?'display:none':''}">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="form-group">
+            <label class="form-label">Asset Name *</label>
+            <input class="form-control" id="xl-new-name" placeholder="e.g. Federal Secretariat Awka">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Asset Type *</label>
+            <select class="form-control" id="xl-new-type">
+              <option value="">— Select —</option>
+              <option>Infrastructure</option><option>Land / Property</option>
+              <option>Utility</option><option>Environmental</option><option>Equipment</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Condition</label>
+            <select class="form-control" id="xl-new-cond">
+              <option>Good</option><option>Fair</option><option>Poor</option><option>Critical</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Geometry</label>
+            <select class="form-control" id="xl-new-geom">
+              <option>Point</option><option>Polygon</option><option>Linear</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Latitude</label>
+            <input class="form-control" id="xl-new-lat" placeholder="e.g. 6.2115">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Longitude</label>
+            <input class="form-control" id="xl-new-lng" placeholder="e.g. 7.0735">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Notes / Description</label>
+          <textarea class="form-control" id="xl-new-notes" style="min-height:50px" placeholder="Asset description…"></textarea>
+        </div>
+      </div>
+    </div>`;
+
+  document.getElementById('modal-footer').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="xlConfirmAttach()">Confirm & Save</button>`;
+
+  modal.classList.add('open');
+  xlToggleAttachMode();
+}
+
+function xlToggleAttachMode() {
+  const mode = document.querySelector('input[name="xl-attach-mode"]:checked')?.value;
+  const existPanel = document.getElementById('xl-attach-existing-panel');
+  const newPanel = document.getElementById('xl-new-asset-panel');
+  const attachLabel = document.getElementById('xl-opt-attach-label');
+  const newLabel = document.getElementById('xl-opt-new-label');
+  if (!existPanel || !newPanel) return;
+  if (mode === 'attach') {
+    existPanel.style.display = 'block';
+    newPanel.style.display = 'none';
+    if (attachLabel) attachLabel.style.borderColor = 'var(--accent)';
+    if (newLabel) newLabel.style.borderColor = 'var(--border)';
+  } else {
+    existPanel.style.display = 'none';
+    newPanel.style.display = 'block';
+    if (newLabel) newLabel.style.borderColor = 'var(--accent)';
+    if (attachLabel) attachLabel.style.borderColor = 'var(--border)';
+  }
+}
+
+function xlConfirmAttach() {
+  const mode = document.querySelector('input[name="xl-attach-mode"]:checked')?.value;
+  const xlPayload = xlCategorised.map(r => {
+    const o = {};
+    xlHeaders.forEach(h => { o[h] = r[h] !== undefined ? r[h] : ''; });
+    return o;
+  });
+
+  if (mode === 'attach') {
+    const targetId = document.getElementById('xl-attach-target-id').value;
+    if (!targetId) { toast('Please select a target asset', '⚠', true); return; }
+    const a = assets.find(x => x.id === targetId);
+    if (!a) { toast('Asset not found', '⚠', true); return; }
+    if (!a._xlData) a._xlData = [];
+    a._xlData.push({ importedAt: new Date().toISOString(), rows: xlPayload, headers: xlHeaders });
+    saveXlData(targetId, a._xlData); // persist immediately to separate key
+    addAudit('EXCEL_ATTACHED', targetId, 'Admin User', xlCategorised.length + ' rows attached from Excel import');
+    save(); renderAssets(); renderDashboard();
+    closeModal();
+    toast(xlCategorised.length + ' rows attached to asset ' + targetId, '📎');
+
+  } else {
+    const name = document.getElementById('xl-new-name').value.trim();
+    const type = document.getElementById('xl-new-type').value;
+    if (!name) { toast('Asset Name is required', '⚠', true); return; }
+    if (!type) { toast('Asset Type is required', '⚠', true); return; }
+    const lat = parseFloat(document.getElementById('xl-new-lat').value) || (6.2 + Math.random() * 0.6);
+    const lng = parseFloat(document.getElementById('xl-new-lng').value) || (7.0 + Math.random() * 0.5);
+    assetCounter++;
+    const xlDataArr = [{ importedAt: new Date().toISOString(), rows: xlPayload, headers: xlHeaders }];
+    const a = {
+      id: 'AST-' + assetCounter,
+      name, type,
+      geom: document.getElementById('xl-new-geom').value || 'Point',
+      condition: document.getElementById('xl-new-cond').value || 'Good',
+      notes: document.getElementById('xl-new-notes').value || '',
+      lat: lat.toFixed(6), lng: lng.toFixed(6),
+      agent: 'Excel Import', date: new Date().toISOString().slice(0, 10), ts: Date.now(),
+      _xlData: xlDataArr
+    };
+    saveXlData(a.id, xlDataArr); // persist immediately to separate key
+    assets.unshift(a);
+    addAudit('ASSET_CREATED', a.id, 'Admin User', 'Created from Excel import — ' + name);
+    addAudit('EXCEL_ATTACHED', a.id, 'Admin User', xlCategorised.length + ' rows attached from Excel import');
+    save(); renderAssets(); renderDashboard();
+    closeModal();
+    toast('Asset ' + a.id + ' created with ' + xlCategorised.length + ' Excel rows attached', '✦');
+  }
+}
+
+function _xlImportAll_orig() {
   if (!xlCategorised.length) return;
   let added = 0;
   xlCategorised.forEach(r => {
@@ -5012,5 +5494,399 @@ window.renderDashboard = function() {
   }, 10);
 };
 </script>
+
+<!-- ══════════════════════════════════════════════════════════
+     FILE DATABASE
+══════════════════════════════════════════════════════════ -->
+<script>
+// ── FILE DATABASE STORAGE ──
+let fileDB = LS.get('asdm_filedb') || [];
+let _fdbPendingFiles = [];
+
+function saveFileDB() { LS.set('asdm_filedb', fileDB); }
+
+function fdbDrop(e) {
+  e.preventDefault();
+  document.getElementById('fdb-dropzone').style.borderColor = 'var(--border2)';
+  fdbHandleFiles(e.dataTransfer.files);
+}
+
+function fdbHandleFiles(fileList) {
+  _fdbPendingFiles = Array.from(fileList).filter(f => /\.(xlsx|xls|csv)$/i.test(f.name));
+  if (!_fdbPendingFiles.length) { toast('Only .xlsx, .xls, .csv files supported', '⚠', true); return; }
+
+  // Read files as base64 for storage
+  const previewList = document.getElementById('fdb-preview-list');
+  previewList.innerHTML = '';
+  let readCount = 0;
+  _fdbPendingFiles.forEach((file, i) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      _fdbPendingFiles[i]._b64 = e.target.result; // data URL
+      readCount++;
+      if (readCount === _fdbPendingFiles.length) {
+        // Repopulate list once all read
+        previewList.innerHTML = _fdbPendingFiles.map((f,idx) => `
+          <div style="display:flex;align-items:center;gap:10px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:8px 12px">
+            <span style="font-size:18px">📊</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${f.name}</div>
+              <div style="font-size:10px;color:var(--text3)">${(f.size/1024).toFixed(1)} KB</div>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="_fdbPendingFiles.splice(${idx},1);fdbHandleFiles(new DataTransfer().files)">✕</button>
+          </div>`).join('');
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+
+  // Populate asset select
+  const sel = document.getElementById('fdb-asset-select');
+  sel.innerHTML = assets.map(a => `<option value="${a.id}">${a.id} — ${a.name||'Unnamed'}</option>`).join('') || '<option value="">No assets</option>';
+
+  document.getElementById('fdb-upload-preview').style.display = 'block';
+  document.getElementById('fdb-attach-options').style.display = 'block';
+  document.getElementById('fdb-upload-btn').style.display = 'block';
+  fdbToggleStoreMode();
+}
+
+function fdbToggleStoreMode() {
+  const mode = document.querySelector('input[name="fdb-store-mode"]:checked')?.value;
+  const wrap = document.getElementById('fdb-asset-select-wrap');
+  if (wrap) wrap.style.display = mode === 'attach' ? 'block' : 'none';
+}
+
+function fdbConfirmUpload() {
+  if (!_fdbPendingFiles.length) return;
+  const mode = document.querySelector('input[name="fdb-store-mode"]:checked')?.value;
+  const attachId = mode === 'attach' ? document.getElementById('fdb-asset-select').value : null;
+  const desc = document.getElementById('fdb-file-desc').value.trim();
+
+  let saved = 0;
+  _fdbPendingFiles.forEach(f => {
+    if (!f._b64) return;
+    const entry = {
+      id: 'FDB-' + Date.now() + '-' + Math.floor(Math.random()*1000),
+      name: f.name,
+      size: f.size,
+      type: f.name.split('.').pop().toLowerCase(),
+      uploadedAt: new Date().toISOString(),
+      attachedAssetId: attachId || null,
+      description: desc,
+      data: f._b64
+    };
+    fileDB.unshift(entry);
+    // Also attach reference to the asset if applicable
+    if (attachId) {
+      const a = assets.find(x => x.id === attachId);
+      if (a) {
+        if (!a._files) a._files = [];
+        a._files.push({ fileId: entry.id, name: f.name, uploadedAt: entry.uploadedAt });
+        save();
+      }
+    }
+    saved++;
+  });
+
+  saveFileDB();
+  addAudit('FILE_UPLOADED', attachId || 'STANDALONE', 'Admin User', saved + ' file(s) stored in File Database');
+  _fdbPendingFiles = [];
+
+  // Reset UI
+  document.getElementById('fdb-upload-preview').style.display = 'none';
+  document.getElementById('fdb-attach-options').style.display = 'none';
+  document.getElementById('fdb-upload-btn').style.display = 'none';
+  document.getElementById('fdb-file-desc').value = '';
+  document.getElementById('fdb-dropzone').style.borderColor = 'var(--border2)';
+
+  renderFileDB();
+  renderDashboard();
+  toast(saved + ' file(s) saved to database', '🗄');
+}
+
+function renderFileDB() {
+  const q = (document.getElementById('fdb-search')?.value || '').toLowerCase();
+  const filtered = fileDB.filter(f => !q || f.name.toLowerCase().includes(q) || (f.description||'').toLowerCase().includes(q));
+
+  // Badge
+  const badge = document.getElementById('nb-filedb');
+  if (badge) badge.textContent = fileDB.length;
+
+  // Summary
+  const summary = document.getElementById('fdb-summary');
+  if (summary) {
+    if (!fileDB.length) {
+      summary.innerHTML = '<div style="color:var(--text3);font-size:12px">No files stored yet.</div>';
+    } else {
+      const totalKB = (fileDB.reduce((s,f)=>s+f.size,0)/1024).toFixed(1);
+      const attached = fileDB.filter(f=>f.attachedAssetId).length;
+      const standalone = fileDB.length - attached;
+      summary.innerHTML = `
+        <div style="display:flex;gap:14px;flex-wrap:wrap">
+          <div style="text-align:center;padding:12px 18px;background:var(--surface2);border-radius:8px;flex:1">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent)">${fileDB.length}</div>
+            <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace">TOTAL FILES</div>
+          </div>
+          <div style="text-align:center;padding:12px 18px;background:var(--surface2);border-radius:8px;flex:1">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--accent2)">${attached}</div>
+            <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace">ATTACHED</div>
+          </div>
+          <div style="text-align:center;padding:12px 18px;background:var(--surface2);border-radius:8px;flex:1">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--warn)">${standalone}</div>
+            <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace">STANDALONE</div>
+          </div>
+          <div style="text-align:center;padding:12px 18px;background:var(--surface2);border-radius:8px;flex:1">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--text)">${totalKB}</div>
+            <div style="font-size:10px;color:var(--text3);font-family:'Space Mono',monospace">KB STORED</div>
+          </div>
+        </div>`;
+    }
+  }
+
+  // Table
+  const tbody = document.getElementById('fdb-tbody');
+  if (!tbody) return;
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="padding:28px;text-align:center;color:var(--text3)">' + (q ? 'No files match your search.' : 'No files stored yet.') + '</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(f => {
+    const linkedAsset = f.attachedAssetId ? assets.find(a => a.id === f.attachedAssetId) : null;
+    const assetCell = linkedAsset
+      ? `<span class="tag tag-green" style="cursor:pointer" onclick="showAssetDetail(assets.find(x=>x.id==='${linkedAsset.id}'))">${linkedAsset.id}</span> ${linkedAsset.name||''}`
+      : '<span class="tag tag-gray">Standalone</span>';
+    const extIcon = f.type === 'csv' ? '📋' : '📊';
+    return `<tr>
+      <td><span style="font-size:15px">${extIcon}</span> <strong>${f.name}</strong></td>
+      <td><span class="tag tag-blue" style="text-transform:uppercase">.${f.type}</span></td>
+      <td style="font-family:'Space Mono',monospace;font-size:10px">${(f.size/1024).toFixed(1)} KB</td>
+      <td style="font-family:'Space Mono',monospace;font-size:10px;color:var(--text3)">${new Date(f.uploadedAt).toLocaleDateString()}</td>
+      <td>${assetCell}</td>
+      <td style="color:var(--text3);font-size:12px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.description||'—'}</td>
+      <td style="display:flex;gap:5px;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" onclick="fdbDownload('${f.id}')">⬇ Download</button>
+        <button class="btn btn-secondary btn-sm" onclick="fdbAttachModal('${f.id}')">📎 Attach</button>
+        <button class="btn btn-danger btn-sm" onclick="fdbDelete('${f.id}')">✕</button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function fdbDownload(id) {
+  const f = fileDB.find(x => x.id === id);
+  if (!f || !f.data) { toast('File data not found', '⚠', true); return; }
+  const a = document.createElement('a');
+  a.href = f.data;
+  a.download = f.name;
+  a.click();
+  toast('Downloading ' + f.name, '⬇');
+}
+
+function fdbDelete(id) {
+  if (!confirm('Remove this file from the database?')) return;
+  fileDB = fileDB.filter(f => f.id !== id);
+  saveFileDB();
+  renderFileDB();
+  toast('File removed', '🗑');
+}
+
+function fdbAttachModal(fileId) {
+  const f = fileDB.find(x => x.id === fileId);
+  if (!f) return;
+  document.getElementById('modal-title').textContent = 'ATTACH FILE TO ASSET';
+  document.getElementById('modal-body-inner').className = '';
+  const opts = assets.map(a => `<option value="${a.id}" ${f.attachedAssetId===a.id?'selected':''}>${a.id} — ${a.name||'Unnamed'}</option>`).join('');
+  document.getElementById('modal-body-inner').innerHTML = `
+    <div style="padding:4px 0">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px">Attach <strong>${f.name}</strong> to an asset:</div>
+      <label class="form-label">Select Asset</label>
+      <select class="form-control" id="fdb-attach-sel">${opts || '<option value="">No assets</option>'}</select>
+      <div style="margin-top:10px">
+        <label class="form-label">Update Description</label>
+        <input class="form-control" id="fdb-attach-desc" value="${f.description||''}">
+      </div>
+    </div>`;
+  document.getElementById('modal-footer').innerHTML = `
+    <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-secondary" onclick="fdbDetach('${fileId}');closeModal()">Detach</button>
+    <button class="btn btn-primary" onclick="fdbDoAttach('${fileId}')">📎 Attach</button>`;
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function fdbDoAttach(fileId) {
+  const f = fileDB.find(x => x.id === fileId);
+  if (!f) return;
+  const newAssetId = document.getElementById('fdb-attach-sel').value;
+  const desc = document.getElementById('fdb-attach-desc').value;
+  f.attachedAssetId = newAssetId || null;
+  f.description = desc;
+  if (newAssetId) {
+    const a = assets.find(x => x.id === newAssetId);
+    if (a) { if (!a._files) a._files = []; if (!a._files.find(x=>x.fileId===fileId)) a._files.push({ fileId, name: f.name, uploadedAt: f.uploadedAt }); save(); }
+  }
+  saveFileDB();
+  renderFileDB();
+  closeModal();
+  toast('File attached to ' + newAssetId, '📎');
+}
+
+function fdbDetach(fileId) {
+  const f = fileDB.find(x => x.id === fileId);
+  if (!f) return;
+  if (f.attachedAssetId) {
+    const a = assets.find(x => x.id === f.attachedAssetId);
+    if (a && a._files) { a._files = a._files.filter(x=>x.fileId!==fileId); save(); }
+  }
+  f.attachedAssetId = null;
+  saveFileDB(); renderFileDB();
+  toast('File detached', '✓');
+}
+
+// Render filedb on nav
+const _origNavForFDB = window.nav;
+window.nav = function(el) {
+  if (typeof _origNavForFDB === 'function') _origNavForFDB(el);
+  if (el && el.dataset && el.dataset.page === 'filedb') setTimeout(renderFileDB, 50);
+};
+
+// Init file DB badge on load
+document.addEventListener('DOMContentLoaded', () => { renderFileDB(); });
+</script>
+
+<!-- ══════════════════════════════════════════════════════════
+     CHECKPOINT DOWNLOADS
+══════════════════════════════════════════════════════════ -->
+<script>
+// ── CHECKPOINT: Download full app state at any time ──
+function downloadCheckpoint() {
+  const state = {
+    version: '1.0',
+    exportedAt: new Date().toISOString(),
+    assets,
+    users,
+    auditLog,
+    settings,
+    assetCounter,
+    fileDB: fileDB.map(f => ({ ...f, data: undefined })) // exclude binary data for size
+  };
+  const json = JSON.stringify(state, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'assetspatial_checkpoint_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Checkpoint saved — ' + assets.length + ' assets, ' + users.length + ' users', '💾');
+}
+
+function downloadCheckpointFull() {
+  // Full checkpoint including file binary data
+  const state = { version: '1.0', exportedAt: new Date().toISOString(), assets, users, auditLog, settings, assetCounter, fileDB };
+  const json = JSON.stringify(state, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'assetspatial_full_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('Full checkpoint saved (includes files)', '💾');
+}
+
+function restoreCheckpoint(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const state = JSON.parse(e.target.result);
+      if (!state.assets) { toast('Invalid checkpoint file', '⚠', true); return; }
+      if (!confirm('Restore checkpoint from ' + (state.exportedAt ? new Date(state.exportedAt).toLocaleString() : 'unknown date') + '?\nThis will REPLACE all current data.')) return;
+      assets = state.assets || [];
+      users = state.users || [];
+      auditLog = state.auditLog || [];
+      settings = state.settings || settings;
+      assetCounter = state.assetCounter || 1000;
+      if (state.fileDB) fileDB = state.fileDB;
+      save(); saveFileDB();
+      renderDashboard(); renderAssets(); renderUsers(); renderAudit(); renderFileDB();
+      toast('Checkpoint restored — ' + assets.length + ' assets loaded', '✓');
+    } catch(err) {
+      toast('Failed to restore: ' + err.message, '⚠', true);
+    }
+  };
+  reader.readAsText(file);
+}
+
+// Add checkpoint bar to header
+document.addEventListener('DOMContentLoaded', () => {
+  const headerActions = document.querySelector('.header-actions');
+  if (headerActions) {
+    const cpWrap = document.createElement('div');
+    cpWrap.style.cssText = 'display:flex;gap:6px;align-items:center;border-left:1px solid var(--border);padding-left:10px;margin-left:4px';
+    cpWrap.innerHTML = `
+      <button class="btn btn-secondary btn-sm" onclick="downloadCheckpoint()" title="Download checkpoint of all data" style="font-size:11px">💾 Checkpoint</button>
+      <label class="btn btn-secondary btn-sm" title="Restore from checkpoint" style="cursor:pointer;font-size:11px;margin:0">
+        ↩ Restore
+        <input type="file" accept=".json" style="display:none" onchange="restoreCheckpoint(this.files[0]);this.value=''">
+      </label>`;
+    headerActions.prepend(cpWrap);
+  }
+});
+</script>
+
+<!-- ══════════════════════════════════════════════════════════
+     OCR FIRST-ROW FALLBACK RULE
+══════════════════════════════════════════════════════════ -->
+<script>
+// Patch xlLoad to apply first-row-as-header fallback rule:
+// If auto-categorisation fails to find property/value meaning from row 1,
+// treat row 1 AND column 1 as headers (for sheets like AWKA where row 0 is a title, row 1 has real headers)
+const _origXlLoad = window.xlLoad;
+window.xlLoad = function(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary' });
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+      if (raw.length < 2) { toast('Sheet appears empty', '⚠', true); return; }
+
+      // ── FIRST-ROW FALLBACK RULE ──
+      // Heuristic: If row 0 has very few non-empty cells (≤2) OR is mostly merged/title text,
+      // treat it as a title row and use row 1 as headers instead.
+      const row0NonEmpty = raw[0].filter(c => String(c).trim()).length;
+      const row1NonEmpty = raw[1] ? raw[1].filter(c => String(c).trim()).length : 0;
+      let headerRowIndex = 0;
+      if (row0NonEmpty <= 2 && row1NonEmpty > row0NonEmpty) {
+        headerRowIndex = 1;
+        // Show a notice
+        setTimeout(() => toast('ℹ Row 1 had ' + row0NonEmpty + ' values — using row 2 as headers (first-row fallback)', '📋'), 500);
+      }
+
+      xlHeaders = raw[headerRowIndex].map(h => String(h).trim()).filter(h => h);
+      // Pad headers if needed (some columns may be empty in header row but have data)
+      const maxCols = Math.max(...raw.map(r => r.length));
+      while (xlHeaders.length < maxCols) xlHeaders.push('Column_' + (xlHeaders.length + 1));
+
+      xlData = raw.slice(headerRowIndex + 1).filter(row => row.some(c => String(c).trim())).map(row => {
+        const obj = {};
+        xlHeaders.forEach((h, i) => { obj[h] = String(row[i] || '').trim(); });
+        return obj;
+      });
+
+      autoMapColumns();
+      renderXLPreview([raw[headerRowIndex], ...raw.slice(headerRowIndex + 1, headerRowIndex + 6)]);
+      document.getElementById('xl-mapping-wrap').style.display = 'block';
+      document.getElementById('xl-preview-wrap').style.display = 'block';
+      toast(xlData.length + ' rows loaded from ' + file.name + (headerRowIndex > 0 ? ' (headers from row ' + (headerRowIndex+1) + ')' : ''), '📊');
+    } catch(err) {
+      toast('Could not parse file: ' + err.message, '⚠', true);
+    }
+  };
+  reader.readAsBinaryString(file);
+};
+</script>
+
 </body>
 </html>
