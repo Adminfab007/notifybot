@@ -1428,6 +1428,7 @@ document.addEventListener("click", function (e) {
 const cameraInput = document.getElementById('cap-camera');
 const preview = document.getElementById('cap-preview');
 
+window._pendingPhotos = [];
 function previewFiles(files) {
   Array.from(files).forEach(file => {
     const url = URL.createObjectURL(file);
@@ -1439,7 +1440,7 @@ function previewFiles(files) {
       // Convert to base64 for IndexedDB
       const reader = new FileReader();
       reader.onload = ev => {
-        window._pendingPhoto = ev.target.result; // store for captureAsset to pick up
+        window._pendingPhotos.push(ev.target.result); // accumulate all selected images
       };
       reader.readAsDataURL(file);
     } else if (file.type.startsWith('video')) {
@@ -2991,8 +2992,7 @@ function captureAsset() {
     agent: document.getElementById('cap-agent').value || 'Field Agent',
     date: document.getElementById('cap-date').value,
     notes: document.getElementById('cap-notes').value,
-    ts: Date.now(),
-    image:localStorage.getItem("camera")
+    ts: Date.now()
   };
   assets.unshift(a);
   addAudit('ASSET_CREATED', a.id, a.agent, a.name + ' captured at ' + lat + ', ' + lng);
@@ -3353,15 +3353,43 @@ async function renderPhotoGallery(assetId, containerId) {
   const el = document.getElementById(containerId);
   if (!el) return;
   const photos = await getPhotos(assetId);
+
+  const addBtn = `
+    <div style="margin-bottom:12px">
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px">
+        📷 Add Photo
+        <input type="file" accept="image/*" multiple style="display:none"
+          onchange="attachPhotosToAsset('${assetId}','${containerId}',this.files)">
+      </label>
+      <label class="btn btn-secondary btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;margin-left:6px">
+        📸 Camera
+        <input type="file" accept="image/*" capture="environment" style="display:none"
+          onchange="attachPhotosToAsset('${assetId}','${containerId}',this.files)">
+      </label>
+    </div>`;
+
   if (!photos.length) {
-    el.innerHTML = '<div style="color:var(--text3);font-size:12px;padding:12px 0">No photos yet. Use Field Capture to attach images.</div>';
+    el.innerHTML = addBtn + '<div style="color:var(--text3);font-size:12px;padding:4px 0">No photos yet.</div>';
     return;
   }
-  el.innerHTML = '<div class="photo-gallery">' +
+  el.innerHTML = addBtn + '<div class="photo-gallery">' +
     photos.map(p => `<div class="photo-thumb">
       <img src="${p.dataUrl}" onclick="openLightbox('${p.dataUrl}')" loading="lazy">
       <button class="del-photo" onclick="event.stopPropagation();deletePhotoFromGallery('${p.key}','${assetId}','${containerId}')">✕</button>
     </div>`).join('') + '</div>';
+}
+
+async function attachPhotosToAsset(assetId, containerId, files) {
+  if (!files || !files.length) return;
+  const reads = Array.from(files).map(file => new Promise(res => {
+    const reader = new FileReader();
+    reader.onload = ev => res(ev.target.result);
+    reader.readAsDataURL(file);
+  }));
+  const dataUrls = await Promise.all(reads);
+  await Promise.all(dataUrls.map(url => savePhoto(assetId, url)));
+  toast('📷 ' + files.length + ' photo(s) added', '✓');
+  renderPhotoGallery(assetId, containerId);
 }
 async function deletePhotoFromGallery(key, assetId, containerId) {
   await deletePhoto(key);
@@ -3378,6 +3406,21 @@ function openLightbox(src) {
 
 // Patch captureAsset to also save photo to IndexedDB
 const _origCapture = window.captureAsset;
+window.captureAsset = function() {
+  _origCapture();
+  // After the asset is created it becomes assets[0] (unshifted to front)
+  const newAsset = assets[0];
+  const pending = window._pendingPhotos || [];
+  if (newAsset && pending.length) {
+    Promise.all(pending.map(dataUrl => savePhoto(newAsset.id, dataUrl))).then(() => {
+      toast('📷 ' + pending.length + ' photo(s) attached to ' + newAsset.id, '✓');
+    });
+    window._pendingPhotos = [];
+    // Clear preview thumbnails
+    const previewEl = document.getElementById('cap-preview');
+    if (previewEl) previewEl.innerHTML = '';
+  }
+};
 
 // ── INIT ──
 initPhotoDB().then(() => renderDashboard());
@@ -3482,8 +3525,7 @@ function getTypeSpecificValues() {
   return out;
 }
 
-// Patch captureAsset to include type-specific fields
-const _origCaptureAsset = window.captureAsset;
+// (type-specific fields are merged in the DOMContentLoaded patch below)
 
 // ══════════════════════════════════════════════════════════════════
 // DATA VISUALISATION
