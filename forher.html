@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>for you</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400&display=swap');
+
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+
+:root{
+  --amber:#c8763a;
+  --amber-soft:#e8a96a;
+  --amber-pale:#fdf3e7;
+  --amber-warm:#f5dbb5;
+  --ink:#1a0f07;
+  --ink-mid:#4a2e18;
+  --ink-soft:#7a5a3a;
+  --paper:#fef8f0;
+  --candle:#ff9a3c;
+}
+
+html,body{
+  width:100%;height:100%;
+  background:#0d0906;
+  font-family:'Lora',Georgia,serif;
+  overflow:hidden;
+}
+
+canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;}
+
+/* ── layers ── */
+#layer-1,#layer-2,#layer-3{
+  position:fixed;inset:0;z-index:10;
+  display:flex;align-items:center;justify-content:center;
+  transition:opacity 0.8s ease;
+}
+.hidden{opacity:0;pointer-events:none;}
+
+/* ── Layer 1: just a small warm light ── */
+#light-orb{
+  width:64px;height:64px;border-radius:50%;
+  background:radial-gradient(circle at 40% 35%, #ffe0a0, #e8943a 60%, #8b4a10);
+  box-shadow:0 0 40px 12px rgba(200,118,58,0.5), 0 0 90px 30px rgba(200,118,58,0.18);
+  cursor:pointer;
+  animation:flicker 3s ease-in-out infinite;
+  transition:transform 0.3s ease, box-shadow 0.3s ease;
+}
+#light-orb:hover{
+  transform:scale(1.08);
+  box-shadow:0 0 56px 18px rgba(200,118,58,0.65), 0 0 110px 40px rgba(200,118,58,0.22);
+}
+@keyframes flicker{
+  0%,100%{opacity:1;transform:scale(1);}
+  30%{opacity:.92;transform:scale(.98);}
+  60%{opacity:.97;transform:scale(1.01);}
+  80%{opacity:.88;transform:scale(.99);}
+}
+#orb-hint{
+  margin-top:28px;
+  font-family:'DM Sans',sans-serif;
+  font-size:11px;font-weight:300;
+  letter-spacing:0.22em;color:rgba(200,118,58,0.6);
+  text-transform:uppercase;
+  animation:breathe 3s ease-in-out infinite;
+}
+@keyframes breathe{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* ── Layer 2: envelope ── */
+#envelope-wrap{display:flex;flex-direction:column;align-items:center;gap:0;}
+
+#envelope{
+  width:260px;height:182px;position:relative;cursor:pointer;
+  filter:drop-shadow(0 6px 28px rgba(200,118,58,0.3));
+  transition:transform 0.3s ease;
+}
+#envelope:hover{transform:translateY(-5px);}
+
+.env-body{
+  position:absolute;bottom:0;left:0;right:0;height:160px;
+  background:#f5dbb5;border-radius:3px 3px 10px 10px;
+  border:1.5px solid #c89a5a;
+}
+.env-l{position:absolute;bottom:0;left:0;width:0;height:0;
+  border-style:solid;border-width:80px 0 80px 84px;
+  border-color:transparent transparent transparent #e8c890;z-index:2;}
+.env-r{position:absolute;bottom:0;right:0;width:0;height:0;
+  border-style:solid;border-width:80px 84px 80px 0;
+  border-color:transparent #e8c890 transparent transparent;z-index:2;}
+.env-vb{position:absolute;bottom:0;left:0;width:0;height:0;
+  border-style:solid;border-width:0 0 92px 130px;
+  border-color:transparent transparent #edd9a8 transparent;z-index:3;}
+.env-vb2{position:absolute;bottom:0;right:0;width:0;height:0;
+  border-style:solid;border-width:0 130px 92px 0;
+  border-color:transparent transparent #edd9a8 transparent;z-index:3;}
+#env-flap{
+  position:absolute;top:0;left:0;
+  width:260px;height:118px;
+  clip-path:polygon(0 0,130px 94px,260px 0);
+  background:linear-gradient(170deg,#e8c890,#d4a86a);
+  transform-origin:top center;
+  transition:transform 0.7s cubic-bezier(.4,0,.2,1);
+  z-index:4;
+}
+#env-flap.lifted{transform:rotateX(180deg);}
+#env-seal{
+  position:absolute;bottom:60px;left:50%;transform:translateX(-50%);
+  width:30px;height:30px;border-radius:50%;
+  background:var(--amber);border:1.5px solid #8b4a10;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:#fdf3e7;z-index:5;
+  box-shadow:0 2px 10px rgba(139,74,16,0.35);
+  transition:opacity 0.3s,transform 0.3s;
+}
+#env-seal.gone{opacity:0;transform:translateX(-50%) scale(0.4);}
+#env-hint{
+  margin-top:20px;
+  font-family:'DM Sans',sans-serif;
+  font-size:11px;font-weight:300;
+  letter-spacing:0.2em;color:rgba(200,118,58,0.55);
+  text-transform:uppercase;
+  animation:breathe 2.5s ease-in-out infinite;
+}
+
+/* ── Layer 3: note ── */
+#note-wrap{
+  width:min(460px,88vw);
+  background:var(--paper);
+  border-radius:14px;
+  border:1px solid #d4b07a;
+  padding:44px 44px 36px;
+  box-shadow:0 20px 64px rgba(26,15,7,0.45);
+  position:relative;
+  transform:translateY(20px);
+  transition:transform 0.6s cubic-bezier(.4,0,.2,1);
+  max-height:82vh;overflow-y:auto;
+}
+#layer-3.hidden #note-wrap{transform:translateY(20px);}
+#layer-3:not(.hidden) #note-wrap{transform:translateY(0);}
+
+/* paper texture lines */
+#note-wrap::before{
+  content:'';position:absolute;inset:0;border-radius:14px;pointer-events:none;
+  background-image:repeating-linear-gradient(
+    transparent,transparent 27px,rgba(180,130,60,0.08) 27px,rgba(180,130,60,0.08) 28px
+  );
+}
+
+.note-eyebrow{
+  font-family:'DM Sans',sans-serif;
+  font-size:10px;font-weight:300;
+  letter-spacing:0.22em;color:var(--amber);
+  text-transform:uppercase;margin-bottom:24px;
+}
+.note-body{
+  font-size:17px;line-height:1.95;
+  color:var(--ink-mid);font-weight:400;
+}
+.note-body p{margin-bottom:16px;}
+.note-body em{color:var(--amber);font-style:italic;}
+
+.reassure{
+  margin:24px 0 20px;
+  padding:18px 22px;
+  border-left:2.5px solid var(--amber-soft);
+  background:rgba(200,118,58,0.05);
+  border-radius:0 8px 8px 0;
+}
+.reassure p{
+  font-size:16px;line-height:1.9;
+  color:var(--ink-soft);
+  margin-bottom:10px !important;
+}
+.reassure p:last-child{margin-bottom:0 !important;}
+
+.note-sig{
+  margin-top:24px;
+  font-size:16px;font-style:italic;
+  color:var(--amber);text-align:right;
+}
+
+#close-note{
+  display:block;margin:28px auto 0;
+  padding:10px 30px;
+  background:transparent;
+  border:1px solid #d4b07a;border-radius:999px;
+  color:var(--amber-soft);
+  font-family:'DM Sans',sans-serif;
+  font-size:11px;font-weight:300;
+  letter-spacing:0.18em;text-transform:uppercase;
+  cursor:pointer;
+  transition:background 0.2s,color 0.2s;
+}
+#close-note:hover{background:var(--amber);color:var(--paper);border-color:var(--amber);}
+
+/* note scrollbar */
+#note-wrap::-webkit-scrollbar{width:3px;}
+#note-wrap::-webkit-scrollbar-thumb{background:#d4b07a;border-radius:3px;}
+
+/* ── particles ── */
+.spark{
+  position:fixed;border-radius:50%;
+  pointer-events:none;z-index:2;
+  animation:sparkfall linear forwards;
+}
+@keyframes sparkfall{
+  0%{opacity:1;transform:translateY(0) scale(1);}
+  100%{opacity:0;transform:translateY(60px) scale(0.2);}
+}
+</style>
+</head>
+<body>
+
+<canvas id="sky"></canvas>
+
+<!-- Layer 1: candle light -->
+<div id="layer-1">
+  <div style="display:flex;flex-direction:column;align-items:center;">
+    <div id="light-orb" onclick="toLayer2()" role="button" aria-label="Open"></div>
+    <div id="orb-hint">something for you</div>
+  </div>
+</div>
+
+<!-- Layer 2: envelope -->
+<div id="layer-2" class="hidden">
+  <div id="envelope-wrap">
+    <div id="envelope" onclick="openEnvelope()" role="button" aria-label="Open envelope">
+      <div class="env-body"></div>
+      <div class="env-l"></div>
+      <div class="env-r"></div>
+      <div class="env-vb"></div>
+      <div class="env-vb2"></div>
+      <div id="env-flap"></div>
+      <div id="env-seal">&#9679;</div>
+    </div>
+    <div id="env-hint">open it</div>
+  </div>
+</div>
+
+<!-- Layer 3: note -->
+<div id="layer-3" class="hidden">
+  <div id="note-wrap" role="document">
+    <div class="note-eyebrow">for you, right now</div>
+    <div class="note-body">
+      <p>Hey.</p>
+      <p>You just woke up. The day hasn't asked anything of you yet. And before it does — I wanted to be here first.</p>
+      <p>Not to say anything big. Just to say I thought of you, and I made you this small thing, because you deserve to feel found on ordinary days.</p>
+
+      <div class="reassure">
+        <p>Whatever is sitting heavy right now,it does not define what happens next.</p>
+        <p><em>You are not behind or too much and you certainly  are not alone in it.</em></p>
+        <p>Take your time waking up. Nothing urgent. I've got you.Always</p>
+      </div>
+
+      <div class="note-sig">— always in your corner &#9679;</div>
+    </div>
+    <button id="close-note" onclick="closeNote()">close</button>
+  </div>
+</div>
+
+<script>
+/* ── Canvas: warm dark room ── */
+const canvas = document.getElementById('sky');
+const ctx    = canvas.getContext('2d');
+let W, H, particles = [];
+
+function resize(){
+  W = canvas.width  = window.innerWidth;
+  H = canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener('resize', resize);
+
+/* warm dust particles */
+function initDust(){
+  particles = [];
+  for(let i=0;i<80;i++){
+    particles.push({
+      x:Math.random()*W, y:Math.random()*H,
+      r:Math.random()*1.2+0.2,
+      vx:(Math.random()-.5)*0.12,
+      vy:-(Math.random()*0.08+0.02),
+      a:Math.random()*0.35+0.05,
+      hue:Math.random()*30+20
+    });
+  }
+}
+initDust();
+
+function drawScene(t){
+  ctx.clearRect(0,0,W,H);
+  /* dark warm room gradient */
+  const bg = ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*0.75);
+  bg.addColorStop(0,'#1e1008');
+  bg.addColorStop(0.55,'#100804');
+  bg.addColorStop(1,'#070402');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0,0,W,H);
+
+  /* subtle warm vignette glow from center */
+  const glow = ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,W*0.5);
+  glow.addColorStop(0,'rgba(180,90,20,0.08)');
+  glow.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0,0,W,H);
+
+  /* dust */
+  for(const p of particles){
+    p.x += p.vx; p.y += p.vy;
+    if(p.y < -5) p.y = H + 5;
+    if(p.x < -5) p.x = W + 5;
+    if(p.x > W+5) p.x = -5;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle = `hsla(${p.hue},70%,70%,${p.a*(0.6+0.4*Math.sin(t*0.0008+p.x))})`;
+    ctx.fill();
+  }
+}
+
+requestAnimationFrame(function loop(t){ drawScene(t); requestAnimationFrame(loop); });
+
+/* ── Ticking sound ── */
+let tickCtx = null, ticking = false, tickInterval = null;
+
+function startTick(){
+  if(ticking) return;
+  tickCtx = new (window.AudioContext||window.webkitAudioContext)();
+  ticking = true;
+  function tick(){
+    if(!ticking) return;
+    const buf = tickCtx.createBuffer(1,tickCtx.sampleRate*0.04,tickCtx.sampleRate);
+    const d   = buf.getChannelData(0);
+    for(let i=0;i<d.length;i++){
+      /* sharp transient then fast decay — warm wood clock tick */
+      d[i] = (Math.random()*2-1) * Math.pow(1 - i/d.length, 18) * 0.55;
+    }
+    const src  = tickCtx.createBufferSource();
+    const gain = tickCtx.createGain();
+    const eq   = tickCtx.createBiquadFilter();
+    eq.type = 'lowpass'; eq.frequency.value = 3200; eq.Q.value = 0.7;
+    src.buffer = buf;
+    src.connect(eq); eq.connect(gain); gain.connect(tickCtx.destination);
+    gain.gain.value = 0.7;
+    src.start();
+  }
+  tick();
+  /* tock slightly different pitch */
+  function tock(){
+    if(!ticking) return;
+    const buf = tickCtx.createBuffer(1,tickCtx.sampleRate*0.04,tickCtx.sampleRate);
+    const d   = buf.getChannelData(0);
+    for(let i=0;i<d.length;i++){
+      d[i] = (Math.random()*2-1) * Math.pow(1 - i/d.length, 22) * 0.38;
+    }
+    const src  = tickCtx.createBufferSource();
+    const gain = tickCtx.createGain();
+    const eq   = tickCtx.createBiquadFilter();
+    eq.type = 'lowpass'; eq.frequency.value = 2600; eq.Q.value = 0.6;
+    src.buffer = buf;
+    src.connect(eq); eq.connect(gain); gain.connect(tickCtx.destination);
+    gain.gain.value = 0.55;
+    src.start();
+  }
+  /* alternate tick / tock */
+  let phase = 0;
+  tickInterval = setInterval(()=>{
+    phase % 2 === 0 ? tick() : tock();
+    phase++;
+  }, 900);
+}
+
+function stopTick(){
+  ticking = false;
+  clearInterval(tickInterval);
+}
+
+/* ── Sparks on layer transitions ── */
+function spawnSparks(n=14){
+  for(let i=0;i<n;i++){
+    const el = document.createElement('div');
+    el.className='spark';
+    const size = Math.random()*4+2;
+    const dur  = Math.random()*0.8+0.5;
+    const x    = 40+Math.random()*20; /* near center-ish */
+    const hue  = Math.random()*30+20;
+    el.style.cssText=`
+      width:${size}px;height:${size}px;
+      left:${x}vw;top:${40+Math.random()*20}vh;
+      background:hsl(${hue},90%,72%);
+      animation-duration:${dur}s;
+    `;
+    document.body.appendChild(el);
+    setTimeout(()=>el.remove(),(dur+0.1)*1000);
+  }
+}
+
+/* ── State machine ── */
+let stage = 1;
+
+function toLayer2(){
+  if(stage!==1) return;
+  stage=2;
+  startTick();
+  spawnSparks(10);
+  document.getElementById('layer-1').classList.add('hidden');
+  setTimeout(()=>{
+    document.getElementById('layer-2').classList.remove('hidden');
+  },300);
+}
+
+function openEnvelope(){
+  if(stage!==2) return;
+  stage=3;
+  document.getElementById('env-flap').classList.add('lifted');
+  document.getElementById('env-seal').classList.add('gone');
+  document.getElementById('env-hint').style.opacity='0';
+  document.getElementById('envelope').onclick=null;
+  spawnSparks(6);
+  setTimeout(()=>{
+    stopTick();
+    document.getElementById('layer-2').classList.add('hidden');
+    setTimeout(()=>{
+      document.getElementById('layer-3').classList.remove('hidden');
+    },200);
+  },650);
+}
+
+function closeNote(){
+  document.getElementById('layer-3').classList.add('hidden');
+}
+
+/* start ticking on first touch/click anywhere to unlock audio context early */
+let audioUnlocked = false;
+document.addEventListener('click', ()=>{
+  if(!audioUnlocked){ audioUnlocked=true; }
+}, {once:true});
+</script>
+</body>
+</html>

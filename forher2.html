@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>for you</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400&display=swap');
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --amber:#c8763a;--amber-soft:#e8a96a;
+  --ink-mid:#4a2e18;--ink-soft:#7a5a3a;--paper:#fef8f0;
+}
+html,body{width:100%;height:100%;background:#0d0906;overflow:hidden;font-family:'Lora',Georgia,serif;}
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;}
+#flash{position:fixed;inset:0;z-index:50;background:#fff8ee;opacity:0;pointer-events:none;}
+
+.stage{position:fixed;inset:0;z-index:10;display:flex;align-items:center;justify-content:center;transition:opacity 0.7s ease;}
+.stage.hidden{opacity:0;pointer-events:none;}
+
+/* ── Stage 1 orb ── */
+#orb{
+  width:72px;height:72px;border-radius:50%;
+  background:radial-gradient(circle at 38% 32%,#ffe0a0 0%,#e8943a 55%,#7a3a08 100%);
+  box-shadow:0 0 40px 14px rgba(200,118,58,0.55),0 0 100px 36px rgba(200,118,58,0.18);
+  cursor:pointer;animation:flicker 3.2s ease-in-out infinite;
+  will-change:transform;
+}
+#orb:hover{filter:brightness(1.12);}
+@keyframes flicker{0%,100%{opacity:1;transform:scale(1);}28%{opacity:.9;transform:scale(.975);}55%{opacity:.96;transform:scale(1.012);}75%{opacity:.85;transform:scale(.985);}}
+#orb-hint{
+  margin-top:26px;font-family:'DM Sans',sans-serif;font-size:11px;font-weight:300;
+  letter-spacing:0.22em;color:rgba(200,118,58,0.55);text-transform:uppercase;
+  animation:breathe 3s ease-in-out infinite;
+}
+@keyframes breathe{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* ── Stage 2 bunny ── */
+#bunny-stage{align-items:center;}
+#bunny-scene{position:relative;width:300px;height:380px;}
+#bunny-svg{
+  position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:210px;
+  animation:bob 0.65s ease-in-out infinite alternate;
+}
+@keyframes bob{0%{transform:translateX(-50%) translateY(0);}100%{transform:translateX(-50%) translateY(-8px);}}
+#bubble{
+  position:absolute;top:0;left:50%;transform:translateX(-50%);
+  background:var(--paper);border:1.5px solid #d4b07a;border-radius:16px;
+  padding:14px 20px;width:250px;text-align:center;
+  font-family:'Lora',serif;font-size:14px;color:var(--ink-mid);line-height:1.65;
+  box-shadow:0 4px 20px rgba(26,15,7,0.25);
+  opacity:0;transition:opacity 0.5s ease;
+}
+#bubble::after{content:'';position:absolute;bottom:-12px;left:50%;transform:translateX(-50%);border:6px solid transparent;border-top-color:#d4b07a;}
+#bubble.show{opacity:1;}
+#arm-env{
+  position:absolute;bottom:68px;right:-14px;width:96px;
+  opacity:0;transform:translateX(24px);
+  transition:opacity 0.6s ease,transform 0.6s ease;
+  cursor:pointer;
+}
+#arm-env.show{opacity:1;transform:translateX(0);}
+#arm-env:hover{filter:brightness(1.08);}
+
+/* ── Stage 3 note ── */
+#note-outer{
+  width:min(480px,90vw);max-height:85vh;overflow-y:auto;
+  background:var(--paper);border-radius:14px;border:1px solid #d4b07a;
+  padding:44px 44px 36px;box-shadow:0 20px 64px rgba(26,15,7,0.5);position:relative;
+  transform:translateY(22px);transition:transform 0.6s cubic-bezier(.4,0,.2,1);
+}
+#stage-3:not(.hidden) #note-outer{transform:translateY(0);}
+#note-outer::before{
+  content:'';position:absolute;inset:0;border-radius:14px;pointer-events:none;
+  background-image:repeating-linear-gradient(transparent,transparent 27px,rgba(180,130,60,0.07) 27px,rgba(180,130,60,0.07) 28px);
+}
+.n-eye{font-family:'DM Sans',sans-serif;font-size:10px;font-weight:300;letter-spacing:0.22em;color:var(--amber);text-transform:uppercase;margin-bottom:24px;}
+.n-body{font-size:17px;line-height:2;color:var(--ink-mid);}
+.n-body p{margin-bottom:16px;}
+.n-body em{color:var(--amber);font-style:italic;}
+.reassure{
+  margin:22px 0 20px;padding:18px 22px;
+  border-left:2.5px solid var(--amber-soft);
+  background:rgba(200,118,58,0.05);border-radius:0 8px 8px 0;
+}
+.reassure p{font-size:16px;line-height:1.9;color:var(--ink-soft);margin-bottom:10px!important;}
+.reassure p:last-child{margin-bottom:0!important;}
+.n-sig{margin-top:24px;font-size:16px;font-style:italic;color:var(--amber);text-align:right;}
+#close-note{
+  display:block;margin:28px auto 0;padding:10px 30px;
+  background:transparent;border:1px solid #d4b07a;border-radius:999px;
+  color:var(--amber-soft);font-family:'DM Sans',sans-serif;font-size:11px;
+  font-weight:300;letter-spacing:0.18em;text-transform:uppercase;cursor:pointer;
+  transition:background 0.2s,color 0.2s;
+}
+#close-note:hover{background:var(--amber);color:var(--paper);border-color:var(--amber);}
+#note-outer::-webkit-scrollbar{width:3px;}
+#note-outer::-webkit-scrollbar-thumb{background:#d4b07a;border-radius:3px;}
+
+#music-btn{
+  position:fixed;bottom:22px;right:22px;z-index:90;
+  width:44px;height:44px;border-radius:50%;
+  background:rgba(200,118,58,0.1);border:1.5px solid rgba(200,118,58,0.4);
+  color:rgba(200,118,58,0.7);font-size:17px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;transition:all 0.2s;
+}
+#music-btn:hover{background:rgba(200,118,58,0.2);color:var(--amber);}
+#music-btn.on{color:var(--amber);border-color:var(--amber);background:rgba(200,118,58,0.15);}
+
+@keyframes wave{0%{transform:rotate(-22deg);}100%{transform:rotate(18deg);}}
+</style>
+</head>
+<body>
+<canvas id="sky"></canvas>
+<div id="flash"></div>
+
+<!-- Stage 1 -->
+<div class="stage" id="stage-1">
+  <div style="display:flex;flex-direction:column;align-items:center;">
+    <div id="orb" onclick="triggerBomb()" role="button" aria-label="Tap me"></div>
+    <div id="orb-hint">something for you</div>
+  </div>
+</div>
+
+<!-- Stage 2 -->
+<div class="stage hidden" id="stage-2">
+  <div id="bunny-scene">
+    <div id="bubble">Hey you &#128522;<br>I have something for you&hellip;</div>
+
+    <svg id="bunny-svg" viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">
+      <!-- inner ears -->
+      <ellipse cx="72" cy="52" rx="16" ry="40" fill="#f5dbb5" stroke="#c89a5a" stroke-width="2"/>
+      <ellipse cx="128" cy="52" rx="16" ry="40" fill="#f5dbb5" stroke="#c89a5a" stroke-width="2"/>
+      <ellipse cx="72" cy="52" rx="9" ry="30" fill="#f0b0b0"/>
+      <ellipse cx="128" cy="52" rx="9" ry="30" fill="#f0b0b0"/>
+      <!-- head -->
+      <ellipse cx="100" cy="108" rx="52" ry="48" fill="#f5dbb5" stroke="#c89a5a" stroke-width="2"/>
+      <!-- eyes -->
+      <circle cx="82" cy="100" r="7" fill="#fff" stroke="#c89a5a" stroke-width="1.5"/>
+      <circle cx="118" cy="100" r="7" fill="#fff" stroke="#c89a5a" stroke-width="1.5"/>
+      <circle cx="84" cy="100" r="4" fill="#3a1e10"/>
+      <circle cx="120" cy="100" r="4" fill="#3a1e10"/>
+      <circle cx="85" cy="98" r="1.4" fill="#fff"/>
+      <circle cx="121" cy="98" r="1.4" fill="#fff"/>
+      <!-- nose -->
+      <ellipse cx="100" cy="114" rx="5" ry="3.5" fill="#e8a0a0"/>
+      <!-- mouth -->
+      <path d="M95 118 Q100 124 105 118" fill="none" stroke="#c89a5a" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- cheeks -->
+      <ellipse cx="76" cy="118" rx="10" ry="6" fill="rgba(235,140,140,0.28)"/>
+      <ellipse cx="124" cy="118" rx="10" ry="6" fill="rgba(235,140,140,0.28)"/>
+      <!-- whiskers -->
+      <line x1="56" y1="112" x2="88" y2="116" stroke="#c89a5a" stroke-width="1" opacity="0.5"/>
+      <line x1="54" y1="118" x2="88" y2="118" stroke="#c89a5a" stroke-width="1" opacity="0.5"/>
+      <line x1="112" y1="116" x2="144" y2="112" stroke="#c89a5a" stroke-width="1" opacity="0.5"/>
+      <line x1="112" y1="118" x2="146" y2="118" stroke="#c89a5a" stroke-width="1" opacity="0.5"/>
+      <!-- body -->
+      <ellipse cx="100" cy="200" rx="50" ry="52" fill="#f5dbb5" stroke="#c89a5a" stroke-width="2"/>
+      <ellipse cx="100" cy="205" rx="28" ry="30" fill="#fdecd0"/>
+      <!-- waving left arm -->
+      <g id="wave-arm" style="transform-origin:60px 172px;">
+        <path d="M60 172 Q34 154 22 136" fill="none" stroke="#f5dbb5" stroke-width="17" stroke-linecap="round"/>
+        <path d="M60 172 Q34 154 22 136" fill="none" stroke="#c89a5a" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="22" cy="136" r="11" fill="#f5dbb5" stroke="#c89a5a" stroke-width="1.5"/>
+        <circle cx="15" cy="130" r="5" fill="#f5dbb5" stroke="#c89a5a" stroke-width="1.2"/>
+        <circle cx="22" cy="126" r="5" fill="#f5dbb5" stroke="#c89a5a" stroke-width="1.2"/>
+        <circle cx="29" cy="130" r="5" fill="#f5dbb5" stroke="#c89a5a" stroke-width="1.2"/>
+      </g>
+      <!-- right arm -->
+      <path d="M140 172 Q165 158 172 148" fill="none" stroke="#f5dbb5" stroke-width="17" stroke-linecap="round"/>
+      <path d="M140 172 Q165 158 172 148" fill="none" stroke="#c89a5a" stroke-width="1.8" stroke-linecap="round"/>
+      <!-- feet -->
+      <ellipse cx="76" cy="248" rx="22" ry="11" fill="#f5dbb5" stroke="#c89a5a" stroke-width="1.5"/>
+      <ellipse cx="124" cy="248" rx="22" ry="11" fill="#f5dbb5" stroke="#c89a5a" stroke-width="1.5"/>
+      <!-- tail -->
+      <circle cx="150" cy="214" r="13" fill="#fffaf5" stroke="#c89a5a" stroke-width="1.5"/>
+    </svg>
+
+    <!-- envelope held out -->
+    <svg id="arm-env" viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg" onclick="goToNote()" role="button" aria-label="Open envelope">
+      <path d="M88 75 Q92 58 86 44" fill="none" stroke="#f5dbb5" stroke-width="15" stroke-linecap="round"/>
+      <path d="M88 75 Q92 58 86 44" fill="none" stroke="#c89a5a" stroke-width="1.5" stroke-linecap="round"/>
+      <rect x="6" y="20" width="74" height="50" rx="4" fill="#f5dbb5" stroke="#c89a5a" stroke-width="1.5"/>
+      <polygon points="6,20 43,48 80,20" fill="#e8c890" stroke="#c89a5a" stroke-width="1.5"/>
+      <polygon points="6,20 6,70 30,44" fill="#edd9a8" stroke="#c89a5a" stroke-width="0.8"/>
+      <polygon points="80,20 80,70 56,44" fill="#edd9a8" stroke="#c89a5a" stroke-width="0.8"/>
+      <circle cx="43" cy="56" r="6" fill="#c8763a" stroke="#8b4a10" stroke-width="1"/>
+      <text x="43" y="78" text-anchor="middle" font-family="DM Sans,sans-serif" font-size="8" fill="rgba(200,118,58,0.65)" letter-spacing="1">open me</text>
+    </svg>
+  </div>
+</div>
+
+<!-- Stage 3 note -->
+<div class="stage hidden" id="stage-3">
+  <div id="note-outer">
+    <div class="n-eye">for you</div>
+    <p>Hey, sleepyhead.</p>
+<p>I know these past days have been a bit hectic… but you made it through, and I’m really glad you got some rest.</p>
+<p>You don’t have to rush back into anything. Just take your time.</p>
+
+<div class="reassure">
+  <p>I’m here for you, okay? I’ve got your back.Always❤️</p>
+  <p><em>No pressure, no stress… just ease into things.</em></p>
+  <p>Anywayysss ... I hope that nap actually slappped  and yu got some charge too.lol❤️</p>
+  
+</div>
+      </div>
+      <div class="n-sig">— always in your corner &nbsp;&#9679;</div>
+    </div>
+    <button id="close-note" onclick="closeNote()">close</button>
+  </div>
+</div>
+
+<button id="music-btn" onclick="toggleMusic()" aria-label="Toggle music">&#9835;</button>
+
+<script>
+/* ── Canvas ── */
+const cv=document.getElementById('sky'),cx=cv.getContext('2d');
+let W,H;
+const dust=[];
+function rsz(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
+rsz();window.addEventListener('resize',rsz);
+for(let i=0;i<90;i++)dust.push({x:Math.random()*1920,y:Math.random()*1080,r:Math.random()*1.1+0.2,vx:(Math.random()-.5)*0.1,vy:-(Math.random()*.07+.02),a:Math.random()*.3+.05,h:20+Math.random()*30});
+(function loop(t){
+  cx.clearRect(0,0,W,H);
+  const bg=cx.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*.8);
+  bg.addColorStop(0,'#1e1008');bg.addColorStop(.6,'#100804');bg.addColorStop(1,'#060402');
+  cx.fillStyle=bg;cx.fillRect(0,0,W,H);
+  for(const p of dust){
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.y<-5)p.y=H+5;if(p.x<-5)p.x=W+5;if(p.x>W+5)p.x=-5;
+    cx.beginPath();cx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    cx.fillStyle=`hsla(${p.h},65%,68%,${p.a*(.5+.5*Math.sin(t*.0007+p.x))})`;cx.fill();
+  }
+  requestAnimationFrame(loop);
+})();
+
+/* ── Audio ── */
+let ac=null,playing=false;
+function getAC(){if(!ac)ac=new(window.AudioContext||window.webkitAudioContext)();return ac;}
+
+function playSong(){
+  const a=getAC();
+  const master=a.createGain();master.gain.value=0.65;master.connect(a.destination);
+  /* reverb */
+  const rv=a.createConvolver();
+  const irL=a.sampleRate*1.4,irB=a.createBuffer(2,irL,a.sampleRate);
+  for(let c=0;c<2;c++){const d=irB.getChannelData(c);for(let i=0;i<irL;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/irL,3.5)*.35;}
+  rv.buffer=irB;rv.connect(master);
+  const dry=a.createGain();dry.gain.value=.62;dry.connect(master);
+  const wet=a.createGain();wet.gain.value=.38;wet.connect(rv);
+
+  function n(freq,start,dur,vol,type='sine'){
+    const o=a.createOscillator(),g=a.createGain();
+    o.type=type;o.frequency.value=freq;
+    const t0=a.currentTime+start;
+    g.gain.setValueAtTime(0,t0);
+    g.gain.linearRampToValueAtTime(vol,t0+.05);
+    g.gain.exponentialRampToValueAtTime(.001,t0+dur);
+    o.connect(g);g.connect(dry);g.connect(wet);
+    o.start(t0);o.stop(t0+dur+.1);
+  }
+
+  /* gentle fingerpicked melody in C major */
+  const bm=60/68;
+  [
+    [261.63,0],[329.63,bm],[392,bm*2],[349.23,bm*3],
+    [329.63,bm*4],[293.66,bm*5],[261.63,bm*6],[293.66,bm*7],
+    [329.63,bm*8],[261.63,bm*9],[220,bm*10],[246.94,bm*11],
+    [261.63,bm*12],[329.63,bm*13],[392,bm*14],[440,bm*15],
+    [392,bm*16],[349.23,bm*17],[329.63,bm*18],[293.66,bm*19],
+    [261.63,bm*20],[293.66,bm*21],[329.63,bm*22],[261.63,bm*23],
+    [261.63,bm*24]
+  ].forEach(([f,s])=>n(f,s,bm*1.5,.15));
+
+  /* bass */
+  [[130.81,0,bm*4],[174.61,bm*4,bm*4],[130.81,bm*8,bm*4],[110,bm*12,bm*4],[130.81,bm*16,bm*4],[174.61,bm*20,bm*4],[130.81,bm*24,bm*2]]
+  .forEach(([f,s,d])=>n(f,s,d,.1));
+
+  /* pad */
+  [[261.63,329.63,392,0],[174.61,261.63,349.23,bm*4],[130.81,261.63,329.63,bm*8],[110,220,293.66,bm*12],[130.81,261.63,392,bm*16],[174.61,261.63,349.23,bm*20]]
+  .forEach(([f1,f2,f3,s])=>[f1,f2,f3].forEach(f=>n(f,s,bm*4,.055)));
+
+  const loopMs=bm*26*1000;
+  setTimeout(()=>{if(playing)playSong();},loopMs);
+}
+
+function toggleMusic(){
+  const btn=document.getElementById('music-btn');
+  if(!ac){playSong();playing=true;btn.classList.add('on');}
+  else if(playing){ac.suspend();playing=false;btn.classList.remove('on');}
+  else{ac.resume();playing=true;btn.classList.add('on');}
+}
+
+/* ── Bomb ── */
+let bombing=false;
+function triggerBomb(){
+  if(bombing)return;
+  bombing=true;
+  if(!playing){playSong();playing=true;document.getElementById('music-btn').classList.add('on');}
+
+  const orb=document.getElementById('orb');
+  const hint=document.getElementById('orb-hint');
+  hint.style.transition='opacity .3s';hint.style.opacity='0';
+  orb.style.animation='none';
+  orb.style.transition='none';
+
+  const start=performance.now();
+  const flashEl=document.getElementById('flash');
+  flashEl.style.transition='none';
+
+  function frame(){
+    const el=(performance.now()-start)/1000;
+
+    if(el<.35){
+      /* vibrate phase */
+      const dx=(Math.random()-.5)*8,dy=(Math.random()-.5)*8;
+      const s=1+el*.5;
+      orb.style.transform=`translate(${dx}px,${dy}px) scale(${s})`;
+      orb.style.boxShadow=`0 0 ${50+s*20}px ${16+s*6}px rgba(230,140,50,.75),0 0 ${120+s*30}px ${50+s*15}px rgba(200,100,30,.3)`;
+      requestAnimationFrame(frame);
+    } else if(el<1.9){
+      /* expand to fill screen */
+      const t=(el-.35)/1.55;
+      const ease=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+      const s=1.7+ease*120;
+      orb.style.transform=`scale(${s})`;
+      orb.style.boxShadow=`0 0 300px 120px rgba(255,210,120,.95)`;
+      /* start flash at 70% */
+      if(ease>.55){
+        const fo=Math.min(1,(ease-.55)/.45);
+        flashEl.style.opacity=fo;
+      }
+      requestAnimationFrame(frame);
+    } else {
+      /* peak white */
+      flashEl.style.opacity='1';
+      document.getElementById('stage-1').classList.add('hidden');
+      setTimeout(()=>{
+        flashEl.style.transition='opacity 1.4s ease';
+        flashEl.style.opacity='0';
+        document.getElementById('stage-2').classList.remove('hidden');
+        launchBunny();
+      },100);
+    }
+  }
+  frame();
+}
+
+/* ── Bunny ── */
+function launchBunny(){
+  const arm=document.getElementById('wave-arm');
+  arm.style.animation='wave .55s ease-in-out infinite alternate';
+  arm.style.transformOrigin='60px 172px';
+
+  setTimeout(()=>{
+    document.getElementById('bubble').classList.add('show');
+  },700);
+
+  setTimeout(()=>{
+    document.getElementById('bubble').innerHTML='I made this for you &#x2709;&#xFE0F;<br><small style="font-family:DM Sans,sans-serif;font-size:12px;color:#7a5a3a;letter-spacing:.05em">tap the envelope</small>';
+    arm.style.animation='none';
+    document.getElementById('arm-env').classList.add('show');
+  },2800);
+}
+
+function goToNote(){
+  document.getElementById('stage-2').classList.add('hidden');
+  setTimeout(()=>document.getElementById('stage-3').classList.remove('hidden'),320);
+}
+function closeNote(){
+  document.getElementById('stage-3').classList.add('hidden');
+}
+</script>
+</body>
+</html>
